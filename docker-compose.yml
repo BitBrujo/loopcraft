@@ -1,35 +1,116 @@
-version: '3.8'
+version: "3.8"
 
 services:
+  # ─────────── Next.js (dev) ───────────
   app:
     build:
       context: .
-      target: builder
+      target: dev            # 👉 use the stage above
+    command: "next dev -H 0.0.0.0 -p 3000"
+    ports:
+      - "2999:3000"
+    volumes:
+      - .:/app               # code → container
+      - /app/node_modules    # docker volume so host doesn’t own them
+    environment:
+      NODE_ENV: development
+      # browser hits localhost → Kong on host
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:8000
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "${NEXT_PUBLIC_SUPABASE_ANON_KEY}"
+      # server-side calls stay inside compose network
+      SUPABASE_URL_INTERNAL: http://kong:8000
+    depends_on:
+      - kong
+
+
+  # ─────────── Postgres ───────────
+  db:
+    image: supabase/postgres:15.1.0.152
+    ports: ["5432:5432"]
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  # ─────────── Supabase suite ───────────
+  # (studio, auth, rest, realtime, meta) – your blocks are fine.
+  # Keep ports ≥1024; rootless Docker can publish them normally.
+
+  # ─────────── Kong gateway ───────────
+  kong:
+    image: kong:3.5
+    ports: ["8000:8000"]
+    volumes:
+      - ./supabase/kong.yml:/var/lib/kong/kong.yml:ro
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /var/lib/kong/kong.yml
+
+  # Auth (GoTrue)
+  auth:
+    image: supabase/gotrue:v2.123.0        # pinned tag, x86/arm citeturn6search0
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0            # fix leading dash citeturn10search0
+      GOTRUE_API_PORT: 9998
+      API_EXTERNAL_URL: http://localhost:8000
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_HOST: db
+      GOTRUE_DB_PORT: 5432
+      GOTRUE_DB_NAME: postgres
+      GOTRUE_DB_USER: postgres
+      GOTRUE_DB_PASSWORD: ${POSTGRES_PASSWORD:-your-super-secret-password}
+      GOTRUE_JWT_SECRET: ${GOTRUE_JWT_SECRET:-your-super-secret-jwt-token}
+      GOTRUE_JWT_EXP: 3599
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+    depends_on:
+      - db
+
+
+  # REST (PostgREST)
+  rest:
+    image: postgrest/postgrest:v11.2.2     # latest 11.x release
     ports:
       - "3000:3000"
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
     environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_SUPABASE_URL=http://supabase:8000
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-    command: npm run dev
+      PGRST_DB_URI: postgres://postgres:${POSTGRES_PASSWORD:-your-super-secret-password}@db:5432/postgres
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${GOTRUE_JWT_SECRET:-your-super-secret-jwt-token}
     depends_on:
-      - supabase
+      - db
 
-  supabase:
-    image: supabase/supabase-local
+
+  # Realtime (WS change feeds)
+  realtime:
+    image: supabase/realtime:v2.0.3        # pinned tag citeturn7search5
     ports:
-      - "8000:8000"  # API
-      - "5432:5432"  # Postgres
-      - "54321:54321" # Studio
+      - "3999:3999"
     environment:
-      - POSTGRES_PASSWORD=your-super-secret-password
-      - JWT_SECRET=your-super-secret-jwt-token
-    volumes:
-      - supabase-data:/var/lib/postgresql/data
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-your-super-secret-password}
+      PORT: 3999
+      JWT_SECRET: ${GOTRUE_JWT_SECRET:-your-super-secret-jwt-token}
+      REPLICATION_MODE: RLS
+      SECURE_CHANNELS: "true"
+    depends_on:
+      - db
+
+
+  # Postgres meta (DDL over HTTP, used by Studio)
+  meta:
+    image: supabase/postgres-meta:v0.60.2   # pinned tag citeturn7search8
+    ports:
+      - "8079:8079"
+    environment:
+      PG_META_PORT: 8079
+      PG_META_DB_HOST: db
+      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD:-your-super-secret-password}
+    depends_on:
+      - db
+
 
 volumes:
-  supabase-data:
+  db-data: {}

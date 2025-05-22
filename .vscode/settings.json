@@ -1,0 +1,8 @@
+{
+    "vim.surround": false,
+    "vim.targets.smartQuotes.aIncludesSurroundingSpaces": false,
+    "vim.targets.smartQuotes.breakThroughLines": false,
+    "vim.useCtrlKeys": false,
+    "vim.targets.smartQuotes.enable": false,
+    "vim.autoindent": false
+}
