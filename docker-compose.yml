@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      target: builder
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_SUPABASE_URL=http://supabase:8000
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+    command: npm run dev
+    depends_on:
+      - supabase
+
+  supabase:
+    image: supabase/supabase-local
+    ports:
+      - "8000:8000"  # API
+      - "5432:5432"  # Postgres
+      - "54321:54321" # Studio
+    environment:
+      - POSTGRES_PASSWORD=your-super-secret-password
+      - JWT_SECRET=your-super-secret-jwt-token
+    volumes:
+      - supabase-data:/var/lib/postgresql/data
+
+volumes:
+  supabase-data:
