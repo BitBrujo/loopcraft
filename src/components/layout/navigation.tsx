@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase/client'
+import { ThemeToggle } from '@/components/theme/theme-toggle'
 
 export function Navigation() {
   const router = useRouter()
@@ -26,6 +27,7 @@ export function Navigation() {
             <Link href="/dashboard">
               <Button variant="ghost">Dashboard</Button>
             </Link>
+            <ThemeToggle />
             <Button onClick={handleSignOut} variant="outline">
               Sign Out
             </Button>

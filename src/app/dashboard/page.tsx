@@ -13,16 +13,16 @@ const sampleItems = [
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Navigation />
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-8">Dashboard</h1>
 
           {/* Interactive Components Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <Counter title="Page Views" initialValue={42} />
-            <Toggle title="Dark Mode" onToggle={(isOn) => console.log('Dark mode:', isOn)} />
+            <Toggle title="Dark Mode" />
             <div className="grid gap-2">
               <AnimatedCard
                 title="Welcome!"
