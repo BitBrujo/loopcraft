@@ -33,6 +33,8 @@ export function ThemeProvider({
   }, [storageKey])
 
   useEffect(() => {
+    if (!mounted) return
+    
     const root = window.document.documentElement
 
     root.classList.remove('light', 'dark')
@@ -48,7 +50,7 @@ export function ThemeProvider({
     }
 
     root.classList.add(theme)
-  }, [theme])
+  }, [theme, mounted])
 
   const value = {
     theme,
@@ -56,10 +58,6 @@ export function ThemeProvider({
       localStorage?.setItem(storageKey, theme)
       setTheme(theme)
     },
-  }
-
-  if (!mounted) {
-    return <>{children}</>
   }
 
   return (
@@ -72,12 +70,8 @@ export function ThemeProvider({
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext)
 
-  if (context === undefined) {
-    if (typeof window === 'undefined') {
-      return { theme: 'system' as Theme, setTheme: () => {} }
-    }
+  if (context === undefined)
     throw new Error('useTheme must be used within a ThemeProvider')
-  }
 
   return context
 }
