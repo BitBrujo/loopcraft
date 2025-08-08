@@ -12,41 +12,53 @@ import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-const loginSchema = z.object({
+const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 })
 
-type LoginForm = z.infer<typeof loginSchema>
+type RegisterForm = z.infer<typeof registerSchema>
 
-export function LoginForm() {
+export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string>('')
+  const [success, setSuccess] = useState<string>('')
   const router = useRouter()
 
-  const form = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<RegisterForm>({
+    resolver: zodResolver(registerSchema),
     defaultValues: {
       email: '',
       password: '',
+      confirmPassword: '',
     },
   })
 
-  const onSubmit = async (data: LoginForm) => {
+  const onSubmit = async (data: RegisterForm) => {
     try {
       setIsLoading(true)
       setError('')
-      const { error } = await supabase.auth.signInWithPassword({
+      setSuccess('')
+      
+      const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
       })
 
       if (error) throw error
 
-      router.push('/dashboard')
+      if (authData.user && !authData.session) {
+        setSuccess('Please check your email for a confirmation link to complete your registration.')
+      } else if (authData.session) {
+        router.push('/dashboard')
+      }
     } catch (error: any) {
       console.error('Error:', error)
-      setError(error.message || 'An error occurred during login')
+      setError(error.message || 'An error occurred during registration')
     } finally {
       setIsLoading(false)
     }
@@ -55,7 +67,7 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Sign In</CardTitle>
+        <CardTitle>Create Account</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -63,6 +75,11 @@ export function LoginForm() {
             {error && (
               <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-3">
                 {error}
+              </div>
+            )}
+            {success && (
+              <div className="text-sm text-green-600 bg-green-50 border border-green-200 rounded-md p-3">
+                {success}
               </div>
             )}
             <FormField
@@ -91,15 +108,28 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? 'Creating account...' : 'Create Account'}
             </Button>
           </form>
         </Form>
         <div className="mt-4 text-center text-sm">
-          Don't have an account?{' '}
-          <Link href="/auth/register" className="text-blue-600 hover:underline">
-            Create one here
+          Already have an account?{' '}
+          <Link href="/auth/login" className="text-blue-600 hover:underline">
+            Sign in here
           </Link>
         </div>
       </CardContent>
