@@ -1,15 +1,14 @@
 "use client";
 
 import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { useAISDKRuntime } from "@assistant-ui/react-ai-sdk";
-import { useChat } from "@ai-sdk/react";
+import { useChatRuntime } from "@assistant-ui/react-ai-sdk";
 import { Thread } from "@/components/assistant-ui/thread";
 import { ThreadList } from "@/components/assistant-ui/thread-list";
 
 export const Assistant = () => {
-  const chat = useChat();
-
-  const runtime = useAISDKRuntime(chat);
+  const runtime = useChatRuntime({
+    api: "/api/chat",
+  });
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
