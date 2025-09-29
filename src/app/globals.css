@@ -159,4 +159,118 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Enhanced scrolling performance and smoothness */
+  * {
+    scroll-behavior: smooth;
+  }
+
+  /* CSS Animation Keyframes */
+  @keyframes message-enter {
+    0% {
+      opacity: 0;
+      transform: translateY(8px) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes welcome-message {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes suggestion-enter {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Animation Classes */
+  .message-enter {
+    animation: message-enter 0.3s ease-out forwards;
+  }
+
+  .welcome-message-1 {
+    animation: welcome-message 0.4s ease-out forwards;
+  }
+
+  .welcome-message-2 {
+    animation: welcome-message 0.4s ease-out 0.1s both;
+  }
+
+  .welcome-message-3 {
+    animation: welcome-message 0.4s ease-out 0.2s both;
+  }
+
+  .suggestion-enter {
+    animation: suggestion-enter 0.4s ease-out both;
+  }
+
+  /* Optimized viewport for smooth scrolling */
+  .aui-thread-viewport {
+    contain: content;
+    overflow-anchor: auto;
+  }
+
+  /* Only apply will-change during animations */
+  .message-enter,
+  .welcome-message-1,
+  .welcome-message-2,
+  .welcome-message-3,
+  .suggestion-enter {
+    will-change: transform, opacity;
+  }
+
+  /* Remove will-change after animation completes */
+  .message-enter.animation-complete,
+  .welcome-message-1.animation-complete,
+  .welcome-message-2.animation-complete,
+  .welcome-message-3.animation-complete,
+  .suggestion-enter.animation-complete {
+    will-change: auto;
+  }
+
+  /* Smooth scrollbar styling */
+  .aui-thread-viewport::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .aui-thread-viewport::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .aui-thread-viewport::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+  }
+
+  .aui-thread-viewport::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  /* Respect user's motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    .message-enter,
+    .welcome-message-1,
+    .welcome-message-2,
+    .welcome-message-3,
+    .suggestion-enter {
+      animation: none;
+    }
+  }
 }

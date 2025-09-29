@@ -5,6 +5,7 @@ import {
   ErrorPrimitive,
   MessagePrimitive,
   ThreadPrimitive,
+  useThread,
 } from "@assistant-ui/react";
 import {
   ArrowDownIcon,
@@ -18,6 +19,7 @@ import {
   Square,
 } from "lucide-react";
 import type { FC } from "react";
+import { useEffect, useRef } from "react";
 
 import {
   ComposerAddAttachment,
@@ -29,37 +31,72 @@ import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
-import * as m from "motion/react-m";
 
 export const Thread: FC = () => {
-  return (
-    <LazyMotion features={domAnimation}>
-      <MotionConfig reducedMotion="user">
-        <ThreadPrimitive.Root
-          className="aui-root aui-thread-root @container flex h-full flex-col bg-background"
-          style={{
-            ["--thread-max-width" as string]: "48rem",
-          }}
-        >
-          <ThreadPrimitive.Viewport className="aui-thread-viewport relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll px-4">
-            <ThreadWelcome />
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const thread = useThread();
+  const isStreaming = thread.isRunning;
 
-            <ThreadPrimitive.Messages
-              components={{
-                UserMessage,
-                EditComposer,
-                AssistantMessage,
-              }}
-            />
-            <ThreadPrimitive.If empty={false}>
-              <div className="aui-thread-viewport-spacer min-h-8 grow" />
-            </ThreadPrimitive.If>
-            <Composer />
-          </ThreadPrimitive.Viewport>
-        </ThreadPrimitive.Root>
-      </MotionConfig>
-    </LazyMotion>
+  // Smooth auto-scroll without intervals
+  useEffect(() => {
+    if (isStreaming && viewportRef.current) {
+      const viewport = viewportRef.current;
+
+      const scrollToBottom = () => {
+        requestAnimationFrame(() => {
+          viewport.scrollTo({
+            top: viewport.scrollHeight,
+            behavior: "smooth"
+          });
+        });
+      };
+
+      // Use MutationObserver to detect content changes
+      const mutationObserver = new MutationObserver(() => {
+        scrollToBottom();
+      });
+
+      mutationObserver.observe(viewport, {
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
+
+      // Initial scroll
+      scrollToBottom();
+
+      return () => {
+        mutationObserver.disconnect();
+      };
+    }
+  }, [isStreaming]);
+
+  return (
+    <ThreadPrimitive.Root
+      className="aui-root aui-thread-root @container flex h-full flex-col bg-background"
+      style={{
+        ["--thread-max-width" as string]: "48rem",
+      }}
+    >
+      <ThreadPrimitive.Viewport
+        ref={viewportRef}
+        className="aui-thread-viewport relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll px-4"
+      >
+        <ThreadWelcome />
+
+        <ThreadPrimitive.Messages
+          components={{
+            UserMessage,
+            EditComposer,
+            AssistantMessage,
+          }}
+        />
+        <ThreadPrimitive.If empty={false}>
+          <div className="aui-thread-viewport-spacer min-h-8 grow" />
+        </ThreadPrimitive.If>
+        <Composer />
+      </ThreadPrimitive.Viewport>
+    </ThreadPrimitive.Root>
   );
 };
 
@@ -83,32 +120,15 @@ const ThreadWelcome: FC = () => {
       <div className="aui-thread-welcome-root mx-auto my-auto flex w-full max-w-[var(--thread-max-width)] flex-grow flex-col">
         <div className="aui-thread-welcome-center flex w-full flex-grow flex-col items-center justify-center">
           <div className="aui-thread-welcome-message flex size-full flex-col justify-center px-8 text-center">
-            <m.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="aui-thread-welcome-message-motion-1 text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"
-            >
+            <div className="welcome-message-1 text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Welcome to HyperFace
-            </m.div>
-            <m.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ delay: 0.1 }}
-              className="aui-thread-welcome-message-motion-2 text-lg text-muted-foreground mt-2"
-            >
+            </div>
+            <div className="welcome-message-2 text-lg text-muted-foreground mt-2">
               Your private AI assistant powered by local models via Ollama
-            </m.div>
-            <m.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ delay: 0.2 }}
-              className="aui-thread-welcome-message-motion-3 text-sm text-muted-foreground/75 mt-4"
-            >
+            </div>
+            <div className="welcome-message-3 text-sm text-muted-foreground/75 mt-4">
               Start a conversation below or try one of these suggestions:
-            </m.div>
+            </div>
           </div>
         </div>
       </div>
@@ -141,13 +161,10 @@ const ThreadWelcomeSuggestions: FC = () => {
           action: "Help me debug a technical issue in my application",
         },
       ].map((suggestedAction, index) => (
-        <m.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          transition={{ delay: 0.05 * index }}
+        <div
           key={`suggested-action-${suggestedAction.title}-${index}`}
-          className="aui-thread-welcome-suggestion-display [&:nth-child(n+3)]:hidden @md:[&:nth-child(n+3)]:block"
+          className="aui-thread-welcome-suggestion-display [&:nth-child(n+3)]:hidden @md:[&:nth-child(n+3)]:block suggestion-enter"
+          style={{ animationDelay: `${0.05 * index}s` }}
         >
           <ThreadPrimitive.Suggestion
             prompt={suggestedAction.action}
@@ -168,7 +185,7 @@ const ThreadWelcomeSuggestions: FC = () => {
               </span>
             </Button>
           </ThreadPrimitive.Suggestion>
-        </m.div>
+        </div>
       ))}
     </div>
   );
@@ -249,7 +266,7 @@ const AssistantMessage: FC = () => {
   return (
     <MessagePrimitive.Root asChild>
       <div
-        className="aui-assistant-message-root relative mx-auto w-full max-w-[var(--thread-max-width)] animate-in py-4 duration-200 fade-in slide-in-from-bottom-1 last:mb-24"
+        className="aui-assistant-message-root relative mx-auto w-full max-w-[var(--thread-max-width)] py-4 last:mb-24 message-enter"
         data-role="assistant"
       >
         <div className="aui-assistant-message-content mx-2 leading-7 break-words text-foreground">
@@ -302,7 +319,7 @@ const UserMessage: FC = () => {
   return (
     <MessagePrimitive.Root asChild>
       <div
-        className="aui-user-message-root mx-auto grid w-full max-w-[var(--thread-max-width)] animate-in auto-rows-auto grid-cols-[minmax(72px,1fr)_auto] gap-y-2 px-2 py-4 duration-200 fade-in slide-in-from-bottom-1 first:mt-3 last:mb-5 [&:where(>*)]:col-start-2"
+        className="aui-user-message-root mx-auto grid w-full max-w-[var(--thread-max-width)] auto-rows-auto grid-cols-[minmax(72px,1fr)_auto] gap-y-2 px-2 py-4 first:mt-3 last:mb-5 [&:where(>*)]:col-start-2 message-enter"
         data-role="user"
       >
         <UserMessageAttachments />
