@@ -263,6 +263,21 @@
     background-color: hsl(var(--muted-foreground) / 0.5);
   }
 
+  /* Disable animations during streaming to prevent jitter */
+  .streaming .message-enter,
+  .streaming .welcome-message-1,
+  .streaming .welcome-message-2,
+  .streaming .welcome-message-3,
+  .streaming .suggestion-enter {
+    animation: none !important;
+    will-change: auto;
+  }
+
+  /* Disable global smooth scroll during streaming */
+  .streaming {
+    scroll-behavior: auto !important;
+  }
+
   /* Respect user's motion preferences */
   @media (prefers-reduced-motion: reduce) {
     .message-enter,

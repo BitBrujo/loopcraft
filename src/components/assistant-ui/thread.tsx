@@ -46,14 +46,16 @@ export const Thread: FC = () => {
         requestAnimationFrame(() => {
           viewport.scrollTo({
             top: viewport.scrollHeight,
-            behavior: "smooth"
+            behavior: isStreaming ? "auto" : "smooth"
           });
         });
       };
 
-      // Use MutationObserver to detect content changes
+      // Use throttled MutationObserver to detect content changes
+      let scrollTimeout: NodeJS.Timeout;
       const mutationObserver = new MutationObserver(() => {
-        scrollToBottom();
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(scrollToBottom, 16); // ~60fps throttling
       });
 
       mutationObserver.observe(viewport, {
@@ -66,6 +68,7 @@ export const Thread: FC = () => {
       scrollToBottom();
 
       return () => {
+        clearTimeout(scrollTimeout);
         mutationObserver.disconnect();
       };
     }
@@ -80,7 +83,7 @@ export const Thread: FC = () => {
     >
       <ThreadPrimitive.Viewport
         ref={viewportRef}
-        className="aui-thread-viewport relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll px-4"
+        className={`aui-thread-viewport relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll px-4 ${isStreaming ? 'streaming' : ''}`}
       >
         <ThreadWelcome />
 
