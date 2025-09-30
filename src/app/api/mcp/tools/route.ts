@@ -6,7 +6,12 @@ export const dynamic = 'force-dynamic';
 // GET /api/mcp/tools - List all available tools from connected MCP servers
 export async function GET() {
   try {
+    console.log('🔧 Fetching tools from all connected MCP servers...');
+    const connectedServers = mcpClientManager.getConnectedServers();
+    console.log('   Connected servers:', connectedServers);
+
     const tools = await mcpClientManager.getAllTools();
+    console.log(`✅ Found ${tools.length} tools from MCP servers`);
 
     return NextResponse.json({
       success: true,
@@ -18,7 +23,8 @@ export async function GET() {
       })),
     });
   } catch (error) {
-    console.error('Error fetching MCP tools:', error);
+    console.error('❌ Error fetching MCP tools:', error);
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch tools',

@@ -28,12 +28,19 @@ export const defaultMCPConfig: MCPConfig = {
 export function loadMCPConfig(): MCPConfig {
   // Try to load from environment variable
   const envConfig = process.env.MCP_CONFIG;
+  console.log("DEBUG: MCP_CONFIG env var:", envConfig ? `${envConfig.substring(0, 100)}...` : "NOT SET");
+
   if (envConfig) {
     try {
-      return JSON.parse(envConfig);
-    } catch {
-      console.warn("Failed to parse MCP_CONFIG environment variable, using default");
+      const parsed = JSON.parse(envConfig);
+      console.log("DEBUG: Parsed MCP config successfully, servers:", parsed.servers?.length || 0);
+      return parsed;
+    } catch (error) {
+      console.warn("Failed to parse MCP_CONFIG environment variable:", error);
+      console.warn("  Value was:", envConfig);
     }
+  } else {
+    console.warn("MCP_CONFIG environment variable not set, using default (empty) config");
   }
 
   // For now, return default config

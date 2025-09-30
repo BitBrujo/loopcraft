@@ -1,12 +1,16 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "./ThemeToggle";
-import { MobileSidebar } from "./MobileSidebar";
 import { MessageSquare, Settings, LayoutDashboard } from "lucide-react";
+
+const MobileSidebar = dynamic(() => import("./MobileSidebar").then(mod => ({ default: mod.MobileSidebar })), {
+  ssr: false,
+});
 
 export function ChatHeader() {
   return (

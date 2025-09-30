@@ -26,10 +26,12 @@ export async function GET() {
       servers,
     });
   } catch (error) {
-    console.error('Error fetching MCP servers:', error);
+    console.error('❌ Error fetching MCP servers:', error);
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace available');
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch servers',
+      details: error instanceof Error ? error.stack : undefined,
     }, { status: 500 });
   }
 }
@@ -67,7 +69,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Connect to the server
+    console.log(`🔄 Attempting to connect to MCP server: ${serverName}`);
+    console.log(`   Command: ${server.command?.join(' ')}`);
     await mcpClientManager.connectToServer(server);
+    console.log(`✅ Successfully connected to MCP server: ${serverName}`);
 
     return NextResponse.json({
       success: true,
@@ -75,10 +80,12 @@ export async function POST(request: NextRequest) {
       connected: true,
     });
   } catch (error) {
-    console.error('Error connecting to MCP server:', error);
+    console.error(`❌ Error connecting to MCP server ${serverName}:`, error);
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace available');
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to connect to server',
+      details: error instanceof Error ? error.stack : undefined,
     }, { status: 500 });
   }
 }
@@ -110,10 +117,12 @@ export async function DELETE(request: NextRequest) {
       message: `Successfully disconnected from ${serverName}`,
     });
   } catch (error) {
-    console.error('Error disconnecting from MCP server:', error);
+    console.error(`❌ Error disconnecting from MCP server ${serverName}:`, error);
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace available');
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to disconnect from server',
+      details: error instanceof Error ? error.stack : undefined,
     }, { status: 500 });
   }
 }

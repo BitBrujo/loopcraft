@@ -18,20 +18,26 @@ async function initializeMCP() {
 
   try {
     const config = loadMCPConfig();
+    console.log("🔧 Initializing MCP with config:", JSON.stringify(config, null, 2));
 
     // Connect to configured MCP servers
     for (const server of config.servers) {
       try {
+        console.log(`📡 Attempting to connect to MCP server: ${server.name}`);
+        console.log(`   Command: ${server.command?.join(' ')}`);
         await mcpClientManager.connectToServer(server);
-        console.log(`Successfully connected to MCP server: ${server.name}`);
+        console.log(`✅ Successfully connected to MCP server: ${server.name}`);
       } catch (error) {
-        console.warn(`Failed to connect to MCP server ${server.name}:`, error);
+        console.error(`❌ Failed to connect to MCP server ${server.name}:`);
+        console.error(`   Error:`, error);
+        console.error(`   Stack:`, (error as Error).stack);
       }
     }
 
     mcpInitialized = true;
+    console.log("🎉 MCP initialization complete");
   } catch (error) {
-    console.error("Failed to initialize MCP:", error);
+    console.error("💥 Failed to initialize MCP:", error);
   }
 }
 

@@ -153,14 +153,24 @@ const ThreadWelcomeSuggestions: FC = () => {
     <div className="aui-thread-welcome-suggestions grid w-full gap-3 @md:grid-cols-2 px-4">
       {[
         {
-          title: "Explain MCP",
-          label: "Model Context Protocol",
-          action: "What is Model Context Protocol and how does it work?",
+          title: "🎨 Greeting Card",
+          label: "Show personalized greeting card",
+          action: "Show me a greeting card with my name Alex",
         },
         {
-          title: "Explain MCP-UI",
-          label: "MCP development framework",
-          action: "What is MCP-UI and how does it help with MCP development?",
+          title: "🔢 Interactive Counter",
+          label: "Create a counter component",
+          action: "Create an interactive counter starting at 5",
+        },
+        {
+          title: "📝 Contact Form",
+          label: "Display an interactive form",
+          action: "Display a contact form titled 'Get in Touch'",
+        },
+        {
+          title: "📊 Data Chart",
+          label: "Visualize data with charts",
+          action: "Show me a bar chart with the title 'Monthly Sales'",
         },
       ].map((suggestedAction, index) => (
         <div

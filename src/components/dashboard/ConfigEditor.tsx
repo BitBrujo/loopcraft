@@ -211,6 +211,19 @@ export function ConfigEditor() {
             formatOnPaste: true,
             formatOnType: true,
           }}
+          onMount={(editor, monaco) => {
+            // Suppress Monaco cancellation errors (harmless promise cancellations during unmount)
+            const originalError = console.error;
+            console.error = (...args) => {
+              if (
+                typeof args[0] === 'string' &&
+                (args[0].includes('Canceled') || args[0].includes('cancel'))
+              ) {
+                return; // Suppress cancellation errors
+              }
+              originalError.apply(console, args);
+            };
+          }}
         />
       </div>
 
