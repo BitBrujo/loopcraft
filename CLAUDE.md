@@ -419,14 +419,20 @@ Access `/settings` to configure:
 ### Recent Updates
 
 #### MCP-UI Iframe Rendering Fix (2025-09-30)
-Fixed critical bug preventing MCP-UI interactive components from rendering in iframes:
-- **Root Cause**: The `mcp-ui-renderer.tsx` component was not passing the `_meta` field from MCP server responses to the `UIResourceRenderer`
-- **Impact**: Without `_meta` metadata (`"mcpui.dev/ui-encoding"` and `"mcpui.dev/ui-contentType"`), the renderer couldn't decode base64 HTML or determine content type, causing HTML to display as text
+Fixed MCP-UI interactive components not rendering properly in iframes:
+- **Root Cause**: Incorrect usage of `UIResourceRenderer` API and wrong encoding configuration in demo server
+- **Issues Fixed**:
+  1. `UIResourceRenderer` expects `resource` prop, not `mcpData` (`src/components/assistant-ui/mcp-ui-renderer.tsx:66`)
+  2. Callback should be `onUIAction`, not `onResourceAction` (line 67)
+  3. Demo server was using manual resource creation instead of `@mcp-ui/server`'s `createUIResource`
+  4. Demo server was using `encoding: "text"` instead of `encoding: "blob"` for HTML content
 - **Solution**:
-  - Added `_meta` field preservation in mcpResponse resource object (`src/components/assistant-ui/mcp-ui-renderer.tsx:63`)
-  - Updated TypeScript interfaces to include `_meta?: Record<string, string>` typing (lines 12, 20)
-- **Result**: Demo MCP server UI components (greeting cards, counters, forms, charts) now properly render in sandboxed iframes
-- **Key Insight**: The demo server (`src/mcp-servers/demo-ui-server.ts`) was working correctly all along - the issue was purely client-side metadata handling
+  - Fixed `UIResourceRenderer` to use correct props: `resource={resource}` and `onUIAction={handleResourceAction}`
+  - Removed custom resource creation function in favor of `createUIResource` from `@mcp-ui/server`
+  - Changed all tool handlers to use `encoding: "blob"` so base64 HTML is placed in `blob` field, not `text` field
+  - Added debug logging to track MCP tool calls and UI resource rendering
+- **Result**: Demo MCP server UI components (greeting cards, counters, forms, charts) now properly render as interactive HTML in sandboxed iframes
+- **Key Learning**: MCP-UI requires `blob` field for base64-encoded HTML, and `text` field for plain text/URLs
 
 #### MCP Server Save & Select Feature (2025-09-30)
 Complete MCP server management with database persistence and full CRUD operations:
@@ -554,3 +560,4 @@ Complete dashboard and settings system for MCP-UI workflow:
 - **Hybrid Architecture**: Ollama AI inference with MCP ecosystem extensibility
 - **ollama-ai-provider-v2**: Upgraded to actively maintained v2 provider
 - **Assistant UI Integration**: Using `useChatRuntime({ api: "/api/chat" })` pattern
+- no fallbacks

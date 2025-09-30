@@ -6,33 +6,7 @@ import {
   ListPromptsRequestSchema,
   GetPromptRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-
-// Manual UI resource creation (avoiding @mcp-ui/server module resolution issues)
-function createUIResource(config: {
-  uri: string;
-  content: { type: string; htmlString?: string; iframeUrl?: string };
-  encoding: string;
-}) {
-  const { uri, content, encoding } = config;
-
-  // Convert HTML string to base64 if provided
-  let text = "";
-  if (content.htmlString) {
-    text = Buffer.from(content.htmlString, "utf-8").toString("base64");
-  } else if (content.iframeUrl) {
-    text = content.iframeUrl;
-  }
-
-  return {
-    uri,
-    mimeType: content.type === "rawHtml" ? "text/html" : "text/html",
-    text,
-    _meta: {
-      "mcpui.dev/ui-encoding": encoding,
-      "mcpui.dev/ui-contentType": content.type,
-    },
-  };
-}
+import { createUIResource } from "@mcp-ui/server";
 
 // Create MCP server instance
 const server = new Server(
@@ -184,7 +158,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           type: "rawHtml",
           htmlString: htmlContent,
         },
-        encoding: "text",
+        encoding: "blob",
       });
 
       return {
@@ -281,7 +255,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           type: "rawHtml",
           htmlString: htmlContent,
         },
-        encoding: "text",
+        encoding: "blob",
       });
 
       return {
@@ -415,7 +389,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           type: "rawHtml",
           htmlString: htmlContent,
         },
-        encoding: "text",
+        encoding: "blob",
       });
 
       return {
@@ -517,7 +491,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           type: "rawHtml",
           htmlString: htmlContent,
         },
-        encoding: "text",
+        encoding: "blob",
       });
 
       return {

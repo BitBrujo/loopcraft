@@ -24,6 +24,8 @@ interface MCPUIRendererProps {
 }
 
 export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content }) => {
+  console.log("🎨 MCPUIRenderer received content:", JSON.stringify(content, null, 2));
+
   const handleResourceAction = useCallback(async (result: UIActionResult) => {
     console.log("MCP UI Action:", result);
 
@@ -52,21 +54,7 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content }) => {
   // Check if this content is a UI resource
   if (content?.type === 'ui-resource' && content.resource) {
     const resource = content.resource;
-
-    // Create a mock MCP response structure for UIResourceRenderer
-    const mcpResponse = {
-      content: [
-        {
-          type: 'resource',
-          resource: {
-            uri: resource.uri || 'ui://dynamic-content',
-            mimeType: resource.mimeType || 'text/html',
-            text: resource.text || resource.htmlString || JSON.stringify(resource),
-            _meta: resource._meta || {},
-          },
-        },
-      ],
-    };
+    console.log("✅ Rendering UI resource:", resource);
 
     return (
       <div className="mcp-ui-container border rounded-lg p-4 my-4 bg-card">
@@ -75,8 +63,8 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content }) => {
         </div>
         <div className="mcp-ui-content">
           <UIResourceRenderer
-            mcpData={mcpResponse}
-            onResourceAction={handleResourceAction}
+            resource={resource}
+            onUIAction={handleResourceAction}
           />
         </div>
       </div>
@@ -84,6 +72,7 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content }) => {
   }
 
   // If it's not a UI resource, don't render anything
+  console.log("❌ Not a UI resource, returning null");
   return null;
 };
 

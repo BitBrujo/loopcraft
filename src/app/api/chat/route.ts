@@ -111,6 +111,8 @@ export async function POST(req: Request) {
 
     // Get MCP tools and convert them to AI SDK format
     const mcpTools = await mcpClientManager.getAllTools();
+    console.log(`🔧 Found ${mcpTools.length} MCP tools:`, mcpTools.map(t => `${t.serverName}/${t.name}`));
+
     const mcpToolsForAI = {} as Record<string, { description?: string; execute: (args: Record<string, unknown>) => Promise<unknown> }>;
 
     for (const tool of mcpTools) {
@@ -118,7 +120,9 @@ export async function POST(req: Request) {
         description: tool.description,
         execute: async (args: Record<string, unknown>) => {
           try {
+            console.log(`🔨 Calling MCP tool: ${tool.serverName}/${tool.name} with args:`, args);
             const result = await mcpClientManager.callTool(tool.serverName, tool.name, args);
+            console.log(`✅ Tool result:`, JSON.stringify(result, null, 2));
 
             // Check if the result contains UI resources
             if (result && typeof result === 'object' && 'content' in result) {
