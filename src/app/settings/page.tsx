@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Save, Plus, Trash2, Power, PowerOff, MessageSquare } from 'lucide-react';
+import { Save, Plus, Trash2, Power, PowerOff, MessageSquare, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -12,13 +12,15 @@ import { Badge } from '@/components/ui/badge';
 import { useSettingsStore } from '@/lib/stores/settings-store';
 import { useMCPStore } from '@/lib/stores/mcp-store';
 import { useDashboardStore } from '@/lib/stores/dashboard-store';
+import { AddServerDialog, MCPServerFormData } from '@/components/settings/AddServerDialog';
 import { cn } from '@/lib/utils';
 
 export default function SettingsPage() {
   const { settings, updateSettings, isSaving, setIsSaving } = useSettingsStore();
-  const { servers, setServers, toggleServer } = useMCPStore();
+  const { servers, setServers, toggleServer, editingServer, setEditingServer } = useMCPStore();
   const { addLog } = useDashboardStore();
   const [localSettings, setLocalSettings] = useState(settings);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     // Load MCP servers
@@ -99,6 +101,73 @@ export default function SettingsPage() {
       addLog({
         level: 'error',
         message: `Error disconnecting from ${serverName}: ${error}`,
+        source: 'Settings',
+      });
+    }
+  };
+
+  const handleAddServer = () => {
+    setEditingServer(null);
+    setDialogOpen(true);
+  };
+
+  const handleEditServer = (server: any) => {
+    setEditingServer(server);
+    setDialogOpen(true);
+  };
+
+  const handleSaveServer = async (formData: MCPServerFormData) => {
+    try {
+      const response = await fetch('/api/mcp/servers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ serverData: formData }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        addLog({
+          level: 'info',
+          message: `Server ${formData.name} saved successfully`,
+          source: 'Settings',
+        });
+        loadServers();
+      } else {
+        throw new Error(data.error || 'Failed to save server');
+      }
+    } catch (error) {
+      addLog({
+        level: 'error',
+        message: `Error saving server: ${error}`,
+        source: 'Settings',
+      });
+      throw error;
+    }
+  };
+
+  const handleDeleteServer = async (serverId: string, serverName: string) => {
+    if (!confirm(`Are you sure you want to delete server "${serverName}"?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/mcp/servers?id=${serverId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        addLog({
+          level: 'info',
+          message: `Server ${serverName} deleted successfully`,
+          source: 'Settings',
+        });
+        loadServers();
+      }
+    } catch (error) {
+      addLog({
+        level: 'error',
+        message: `Error deleting server: ${error}`,
         source: 'Settings',
       });
     }
@@ -205,7 +274,7 @@ export default function SettingsPage() {
           <section>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">MCP Servers</h2>
-              <Button size="sm" variant="outline" className="gap-2">
+              <Button size="sm" variant="outline" className="gap-2" onClick={handleAddServer}>
                 <Plus className="size-4" />
                 Add Server
               </Button>
@@ -214,7 +283,7 @@ export default function SettingsPage() {
             <div className="space-y-3">
               {servers.length === 0 && (
                 <Card className="p-6 text-center text-muted-foreground">
-                  No MCP servers configured. Add one from the MCP_CONFIG environment variable.
+                  No MCP servers configured. Add one using the button above.
                 </Card>
               )}
 
@@ -222,12 +291,17 @@ export default function SettingsPage() {
                 <Card key={server.id} className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold">{server.name}</h3>
                         <Badge variant={server.connected ? 'default' : 'secondary'}>
                           {server.connected ? 'Connected' : 'Disconnected'}
                         </Badge>
                         <Badge variant="outline">{server.type}</Badge>
+                        {server.source && (
+                          <Badge variant={server.source === 'database' ? 'default' : 'secondary'} className="text-xs">
+                            {server.source === 'database' ? 'Saved' : 'Env'}
+                          </Badge>
+                        )}
                       </div>
                       {server.description && (
                         <p className="text-sm text-muted-foreground mt-1">{server.description}</p>
@@ -238,6 +312,28 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {server.source === 'database' && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditServer(server)}
+                            className="gap-2"
+                          >
+                            <Edit2 className="size-4" />
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeleteServer(server.id, server.name)}
+                            className="gap-2 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="size-4" />
+                            Delete
+                          </Button>
+                        </>
+                      )}
                       {server.connected ? (
                         <Button
                           size="sm"
@@ -296,6 +392,14 @@ export default function SettingsPage() {
           </section>
         </div>
       </ScrollArea>
+
+      {/* Add/Edit Server Dialog */}
+      <AddServerDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSave={handleSaveServer}
+        editingServer={editingServer}
+      />
     </div>
   );
 }

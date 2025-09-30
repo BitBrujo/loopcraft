@@ -1,4 +1,6 @@
 import { MCPServer } from './mcp-client';
+import { getMCPServersByUserId, getEnabledMCPServers } from './dal/mcp-servers';
+import type { MCPServer as DBMCPServer } from './dal/types';
 
 export interface MCPConfig {
   servers: MCPServer[];
@@ -24,7 +26,7 @@ export const defaultMCPConfig: MCPConfig = {
   defaultModel: process.env.OLLAMA_MODEL || "llama3.2:latest"
 };
 
-// Load MCP configuration from environment or file
+// Load MCP configuration from environment only
 export function loadMCPConfig(): MCPConfig {
   // Try to load from environment variable
   const envConfig = process.env.MCP_CONFIG;
@@ -44,8 +46,45 @@ export function loadMCPConfig(): MCPConfig {
   }
 
   // For now, return default config
-  // In the future, this could load from a config file
   return defaultMCPConfig;
+}
+
+// Convert database MCP server to client MCP server format
+function dbServerToClientServer(dbServer: DBMCPServer): MCPServer {
+  return {
+    name: dbServer.name,
+    command: dbServer.command,
+    type: dbServer.type as 'stdio' | 'sse',
+    args: [],
+    env: dbServer.env,
+  };
+}
+
+// Load MCP configuration with user-specific servers from database
+export async function loadMCPConfigWithUser(userId?: string): Promise<MCPConfig> {
+  const envConfig = loadMCPConfig();
+
+  if (!userId) {
+    return envConfig;
+  }
+
+  try {
+    // Load enabled servers from database for this user
+    const dbServers = await getEnabledMCPServers(userId);
+    const userServers = dbServers.map(dbServerToClientServer);
+
+    // Merge env and user servers (avoid duplicates by name)
+    const envServerNames = new Set(envConfig.servers.map(s => s.name));
+    const uniqueUserServers = userServers.filter(s => !envServerNames.has(s.name));
+
+    return {
+      ...envConfig,
+      servers: [...envConfig.servers, ...uniqueUserServers],
+    };
+  } catch (error) {
+    console.error('Error loading user MCP servers from database:', error);
+    return envConfig;
+  }
 }
 
 // Example MCP servers you can use:

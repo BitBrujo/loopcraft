@@ -2,8 +2,9 @@ import { createOllama } from "ollama-ai-provider-v2";
 import { frontendTools } from "@assistant-ui/react-ai-sdk";
 import { streamText } from "ai";
 import { mcpClientManager } from "@/lib/mcp-client";
-import { loadMCPConfig } from "@/lib/mcp-config";
-import { getUserFromRequest } from "@/lib/auth";
+import { loadMCPConfigWithUser } from "@/lib/mcp-config";
+import { verifyToken } from "@/lib/auth";
+import { cookies } from 'next/headers';
 import { createMessage } from "@/lib/dal/messages";
 import { getConversationById, createConversation } from "@/lib/dal/conversations";
 // import { createUIResource } from "@mcp-ui/server"; // For future use
@@ -13,11 +14,26 @@ export const maxDuration = 30;
 // Initialize MCP connections on server start
 let mcpInitialized = false;
 
-async function initializeMCP() {
+// Helper to get user ID from request
+async function getUserIdFromRequest(): Promise<string | undefined> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+    if (!token) return undefined;
+
+    const payload = verifyToken(token);
+    return payload?.userId;
+  } catch (error) {
+    console.error('Error getting user from request:', error);
+    return undefined;
+  }
+}
+
+async function initializeMCP(userId?: string) {
   if (mcpInitialized) return;
 
   try {
-    const config = loadMCPConfig();
+    const config = await loadMCPConfigWithUser(userId);
     console.log("🔧 Initializing MCP with config:", JSON.stringify(config, null, 2));
 
     // Connect to configured MCP servers
@@ -42,8 +58,11 @@ async function initializeMCP() {
 }
 
 export async function POST(req: Request) {
-  // Initialize MCP if not already done
-  await initializeMCP();
+  // Get authenticated user ID to load their MCP servers
+  const userId = await getUserIdFromRequest();
+
+  // Initialize MCP with user-specific servers if authenticated
+  await initializeMCP(userId);
 
   // Get authenticated user (optional for now - can allow anonymous chat)
   const user = await getUserFromRequest(req);

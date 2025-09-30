@@ -4,12 +4,13 @@ export interface MCPServer {
   id: string;
   name: string;
   command: string[];
-  type: 'stdio' | 'sse';
+  type: 'stdio' | 'sse' | 'http';
   env?: Record<string, string>;
   enabled: boolean;
   description?: string;
   connected: boolean;
   lastError?: string;
+  source?: 'database' | 'environment'; // Track where the server config came from
 }
 
 export interface MCPResource {
@@ -54,9 +55,13 @@ interface MCPState {
   isConnecting: boolean;
   setIsConnecting: (connecting: boolean) => void;
 
-  // Selected server for config editing
+  // Selected server for config editing or adding
   selectedServerId: string | null;
   setSelectedServerId: (id: string | null) => void;
+
+  // Currently editing server (for dialog)
+  editingServer: MCPServer | null;
+  setEditingServer: (server: MCPServer | null) => void;
 }
 
 export const useMCPStore = create<MCPState>((set) => ({
@@ -97,4 +102,7 @@ export const useMCPStore = create<MCPState>((set) => ({
 
   selectedServerId: null,
   setSelectedServerId: (id) => set({ selectedServerId: id }),
+
+  editingServer: null,
+  setEditingServer: (server) => set({ editingServer: server }),
 }));

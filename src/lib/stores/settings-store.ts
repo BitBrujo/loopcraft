@@ -15,6 +15,7 @@ export interface UserSettings {
   // MCP Configuration
   mcpAutoConnect: boolean;
   mcpDebugMode: boolean;
+  mcpSelectedServers: string[]; // Array of server IDs to auto-connect
 
   // Dashboard preferences
   dashboardLayout: 'horizontal' | 'vertical';
@@ -43,6 +44,7 @@ const defaultSettings: UserSettings = {
   ollamaModel: 'llama3.2:latest',
   mcpAutoConnect: true,
   mcpDebugMode: false,
+  mcpSelectedServers: [], // No servers selected by default
   dashboardLayout: 'horizontal',
   panelSizes: {},
   customSettings: {},
