@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import {
   DatabaseIcon,
@@ -8,9 +9,11 @@ import {
   ActivityIcon,
   BugIcon,
   TerminalIcon,
-  RefreshCwIcon
+  RefreshCwIcon,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useDashboardStore } from '@/lib/stores/dashboard-store';
 import { ResourceExplorer } from '@/components/dashboard/ResourceExplorer';
 import { ConfigEditor } from '@/components/dashboard/ConfigEditor';
@@ -37,8 +40,16 @@ export default function DashboardPage() {
     <div className="flex h-screen flex-col bg-background">
       {/* Header */}
       <div className="flex h-14 items-center justify-between border-b border-border bg-card/30 px-4">
-        <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold">MCP-UI Lab Dashboard</h1>
+        <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+              <MessageSquare className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <h1 className="text-lg font-semibold tracking-tight">LoopCraft</h1>
+          </Link>
+          <Badge variant="secondary" className="text-xs">
+            MCP-UI Lab
+          </Badge>
         </div>
         <div className="flex items-center gap-2">
           <Button
