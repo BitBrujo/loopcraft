@@ -136,10 +136,10 @@ const ThreadWelcome: FC = () => {
               Welcome to HyperFace
             </div>
             <div className="welcome-message-2 text-lg text-muted-foreground mt-2">
-              Your private AI assistant powered by local models via Ollama
+              MCP-UI Lab
             </div>
             <div className="welcome-message-3 text-sm text-muted-foreground/75 mt-4">
-              Start a conversation below or try one of these suggestions:
+              Pick a test below or start your own conversation
             </div>
           </div>
         </div>
@@ -153,24 +153,14 @@ const ThreadWelcomeSuggestions: FC = () => {
     <div className="aui-thread-welcome-suggestions grid w-full gap-3 @md:grid-cols-2 px-4">
       {[
         {
-          title: "Help me code",
-          label: "a React component",
-          action: "Help me create a React component with TypeScript",
+          title: "Explain MCP",
+          label: "Model Context Protocol",
+          action: "What is Model Context Protocol and how does it work?",
         },
         {
-          title: "Explain AI concepts",
-          label: "like machine learning",
-          action: "Explain machine learning concepts in simple terms",
-        },
-        {
-          title: "Write documentation",
-          label: "for my project",
-          action: "Help me write clear documentation for my software project",
-        },
-        {
-          title: "Debug an issue",
-          label: "in my application",
-          action: "Help me debug a technical issue in my application",
+          title: "Explain MCP-UI",
+          label: "MCP development framework",
+          action: "What is MCP-UI and how does it help with MCP development?",
         },
       ].map((suggestedAction, index) => (
         <div
