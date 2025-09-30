@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     baseURL: process.env.OLLAMA_BASE_URL,
   });
 
-  const modelName = process.env.OLLAMA_MODEL;
+  const modelName = process.env.OLLAMA_MODEL || "llama3.2:latest";
 
   try {
     console.log("Model name:", modelName);
@@ -80,23 +80,27 @@ export async function POST(req: Request) {
 
     // Get MCP tools and convert them to AI SDK format
     const mcpTools = await mcpClientManager.getAllTools();
-    const mcpToolsForAI = mcpTools.reduce((acc, tool) => {
-      acc[`mcp_${tool.serverName}_${tool.name}`] = {
+    const mcpToolsForAI = {} as Record<string, { description?: string; execute: (args: Record<string, unknown>) => Promise<unknown> }>;
+
+    for (const tool of mcpTools) {
+      mcpToolsForAI[`mcp_${tool.serverName}_${tool.name}`] = {
         description: tool.description,
-        parameters: tool.inputSchema || {},
         execute: async (args: Record<string, unknown>) => {
           try {
             const result = await mcpClientManager.callTool(tool.serverName, tool.name, args);
 
             // Check if the result contains UI resources
-            if (result.content) {
-              for (const content of result.content) {
-                if (content.type === 'resource' && content.resource?.uri?.startsWith('ui://')) {
-                  // This is a UI resource, return it in a format that can be rendered
-                  return {
-                    type: 'ui-resource',
-                    resource: content.resource
-                  };
+            if (result && typeof result === 'object' && 'content' in result) {
+              const resultContent = (result as { content?: Array<{ type?: string; resource?: { uri?: string } }> }).content;
+              if (Array.isArray(resultContent)) {
+                for (const content of resultContent) {
+                  if (content.type === 'resource' && content.resource?.uri?.startsWith('ui://')) {
+                    // This is a UI resource, return it in a format that can be rendered
+                    return {
+                      type: 'ui-resource',
+                      resource: content.resource
+                    };
+                  }
                 }
               }
             }
@@ -108,8 +112,7 @@ export async function POST(req: Request) {
           }
         }
       };
-      return acc;
-    }, {} as Record<string, { description?: string; parameters: object; execute: (args: Record<string, unknown>) => Promise<unknown> }>);
+    }
 
     const result = streamText({
       model: ollama(modelName),
@@ -119,36 +122,6 @@ export async function POST(req: Request) {
       tools: {
         ...frontendTools(tools || {}),
         ...mcpToolsForAI,
-        // MCP resource fetcher tool
-        getMCPResource: {
-          description: "Fetch a resource from an MCP server",
-          parameters: {
-            type: "object",
-            properties: {
-              serverName: { type: "string", description: "Name of the MCP server" },
-              uri: { type: "string", description: "URI of the resource to fetch" }
-            },
-            required: ["serverName", "uri"]
-          },
-          execute: async ({ serverName, uri }: { serverName: string; uri: string }) => {
-            try {
-              const resource = await mcpClientManager.getResource(serverName, uri);
-
-              // If it's a UI resource, return it in a special format
-              if (uri.startsWith('ui://')) {
-                return {
-                  type: 'ui-resource',
-                  resource: resource.contents?.[0] || resource
-                };
-              }
-
-              return resource;
-            } catch (error) {
-              console.error(`Error fetching MCP resource ${uri}:`, error);
-              return { error: `Failed to fetch resource: ${error}` };
-            }
-          }
-        }
       },
     });
 
