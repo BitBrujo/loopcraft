@@ -3,7 +3,7 @@ import { frontendTools } from "@assistant-ui/react-ai-sdk";
 import { streamText } from "ai";
 import { mcpClientManager } from "@/lib/mcp-client";
 import { loadMCPConfigWithUser } from "@/lib/mcp-config";
-import { verifyToken } from "@/lib/auth";
+import { verifyToken, getUserFromRequest } from "@/lib/auth";
 import { cookies } from 'next/headers';
 import { createMessage } from "@/lib/dal/messages";
 import { getConversationById, createConversation } from "@/lib/dal/conversations";
