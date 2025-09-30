@@ -2,6 +2,7 @@ import type { ToolCallMessagePartComponent } from "@assistant-ui/react";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { MCPUIRenderer } from "./mcp-ui-renderer";
 
 export const ToolFallback: ToolCallMessagePartComponent = ({
   toolName,
@@ -9,6 +10,31 @@ export const ToolFallback: ToolCallMessagePartComponent = ({
   result,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
+
+  // Check if this is a UI resource from MCP
+  const resultObj = result as { type?: string; content?: Array<{ type: string; resource?: { uri?: string } }> } | undefined;
+  const isUIResource = resultObj?.type === 'ui-resource' ||
+                       (resultObj?.content && Array.isArray(resultObj.content) &&
+                        resultObj.content.some((item) =>
+                          item.type === 'resource' && item.resource?.uri?.startsWith('ui://')));
+
+  // If it's a UI resource, render it with MCP-UI
+  if (isUIResource) {
+    return (
+      <div className="aui-tool-fallback-root mb-4 w-full">
+        <MCPUIRenderer content={result} />
+        {/* Optional: Show tool details in collapsed form */}
+        <div className="mt-2 text-xs text-muted-foreground">
+          <details>
+            <summary className="cursor-pointer">Tool: {toolName}</summary>
+            <pre className="mt-2 whitespace-pre-wrap text-xs">{argsText}</pre>
+          </details>
+        </div>
+      </div>
+    );
+  }
+
+  // Default tool fallback UI for non-UI resources
   return (
     <div className="aui-tool-fallback-root mb-4 flex w-full flex-col gap-3 rounded-lg border py-3">
       <div className="aui-tool-fallback-header flex items-center gap-2 px-4">

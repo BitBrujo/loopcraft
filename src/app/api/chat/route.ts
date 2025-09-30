@@ -1,10 +1,41 @@
 import { createOllama } from "ollama-ai-provider-v2";
 import { frontendTools } from "@assistant-ui/react-ai-sdk";
 import { streamText } from "ai";
+import { mcpClientManager } from "@/lib/mcp-client";
+import { loadMCPConfig } from "@/lib/mcp-config";
+// import { createUIResource } from "@mcp-ui/server"; // For future use
 
 export const maxDuration = 30;
 
+// Initialize MCP connections on server start
+let mcpInitialized = false;
+
+async function initializeMCP() {
+  if (mcpInitialized) return;
+
+  try {
+    const config = loadMCPConfig();
+
+    // Connect to configured MCP servers
+    for (const server of config.servers) {
+      try {
+        await mcpClientManager.connectToServer(server);
+        console.log(`Successfully connected to MCP server: ${server.name}`);
+      } catch (error) {
+        console.warn(`Failed to connect to MCP server ${server.name}:`, error);
+      }
+    }
+
+    mcpInitialized = true;
+  } catch (error) {
+    console.error("Failed to initialize MCP:", error);
+  }
+}
+
 export async function POST(req: Request) {
+  // Initialize MCP if not already done
+  await initializeMCP();
+
   const body = await req.json();
   console.log("Received body:", JSON.stringify(body, null, 2));
 
@@ -47,14 +78,77 @@ export async function POST(req: Request) {
     console.log("Original messages:", JSON.stringify(messages, null, 2));
     console.log("Converted messages:", JSON.stringify(convertedMessages, null, 2));
 
+    // Get MCP tools and convert them to AI SDK format
+    const mcpTools = await mcpClientManager.getAllTools();
+    const mcpToolsForAI = mcpTools.reduce((acc, tool) => {
+      acc[`mcp_${tool.serverName}_${tool.name}`] = {
+        description: tool.description,
+        parameters: tool.inputSchema || {},
+        execute: async (args: Record<string, unknown>) => {
+          try {
+            const result = await mcpClientManager.callTool(tool.serverName, tool.name, args);
+
+            // Check if the result contains UI resources
+            if (result.content) {
+              for (const content of result.content) {
+                if (content.type === 'resource' && content.resource?.uri?.startsWith('ui://')) {
+                  // This is a UI resource, return it in a format that can be rendered
+                  return {
+                    type: 'ui-resource',
+                    resource: content.resource
+                  };
+                }
+              }
+            }
+
+            return result;
+          } catch (error) {
+            console.error(`Error calling MCP tool ${tool.name}:`, error);
+            return { error: `Failed to call tool: ${error}` };
+          }
+        }
+      };
+      return acc;
+    }, {} as Record<string, { description?: string; parameters: object; execute: (args: Record<string, unknown>) => Promise<unknown> }>);
+
     const result = streamText({
       model: ollama(modelName),
       // @ts-expect-error - Type conversion is correct, TS inference issue
       messages: convertedMessages,
-      system: system || "You are HyperFace, an advanced AI assistant designed to help with programming, problem-solving, and creative tasks. You are knowledgeable, helpful, and provide clear, detailed responses.",
+      system: system || "You are HyperFace, an advanced AI assistant with access to Model Context Protocol (MCP) tools and resources. You can interact with various external services, file systems, and data sources through MCP. You can also render interactive UI components. You are knowledgeable, helpful, and provide clear, detailed responses.",
       tools: {
         ...frontendTools(tools || {}),
-        // add backend tools here
+        ...mcpToolsForAI,
+        // MCP resource fetcher tool
+        getMCPResource: {
+          description: "Fetch a resource from an MCP server",
+          parameters: {
+            type: "object",
+            properties: {
+              serverName: { type: "string", description: "Name of the MCP server" },
+              uri: { type: "string", description: "URI of the resource to fetch" }
+            },
+            required: ["serverName", "uri"]
+          },
+          execute: async ({ serverName, uri }: { serverName: string; uri: string }) => {
+            try {
+              const resource = await mcpClientManager.getResource(serverName, uri);
+
+              // If it's a UI resource, return it in a special format
+              if (uri.startsWith('ui://')) {
+                return {
+                  type: 'ui-resource',
+                  resource: resource.contents?.[0] || resource
+                };
+              }
+
+              return resource;
+            } catch (error) {
+              console.error(`Error fetching MCP resource ${uri}:`, error);
+              return { error: `Failed to fetch resource: ${error}` };
+            }
+          }
+        }
       },
     });
 
