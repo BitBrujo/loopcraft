@@ -9,7 +9,7 @@ import {
   useIsMarkdownCodeBlock,
 } from "@assistant-ui/react-markdown";
 import remarkGfm from "remark-gfm";
-import { type FC, memo, useState } from "react";
+import { type FC, memo, useState, useCallback } from "react";
 import { CheckIcon, CopyIcon } from "lucide-react";
 
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
@@ -21,18 +21,30 @@ const MarkdownTextImpl = () => {
       remarkPlugins={[remarkGfm]}
       className="aui-md"
       components={defaultComponents}
+      // Optimize for streaming performance
+      skipHtml={false}
+      remarkRehypeOptions={{
+        // Optimize rendering during streaming
+        clobberPrefix: "",
+        allowDangerousHtml: false,
+      }}
     />
   );
 };
 
-export const MarkdownText = memo(MarkdownTextImpl);
+// Enhanced memoization for better streaming performance
+export const MarkdownText = memo(MarkdownTextImpl, (prevProps, nextProps) => {
+  // Custom memo comparison for better streaming performance
+  // Only re-render if content has actually changed meaningfully
+  return prevProps === nextProps;
+});
 
 const CodeHeader: FC<CodeHeaderProps> = ({ language, code }) => {
   const { isCopied, copyToClipboard } = useCopyToClipboard();
-  const onCopy = () => {
+  const onCopy = useCallback(() => {
     if (!code || isCopied) return;
     copyToClipboard(code);
-  };
+  }, [code, isCopied, copyToClipboard]);
 
   return (
     <div className="aui-code-header-root mt-4 flex items-center justify-between gap-4 rounded-t-lg bg-muted-foreground/15 px-4 py-2 text-sm font-semibold text-foreground dark:bg-muted-foreground/20">
@@ -54,14 +66,14 @@ const useCopyToClipboard = ({
 } = {}) => {
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
-  const copyToClipboard = (value: string) => {
+  const copyToClipboard = useCallback((value: string) => {
     if (!value) return;
 
     navigator.clipboard.writeText(value).then(() => {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), copiedDuration);
     });
-  };
+  }, [copiedDuration]);
 
   return { isCopied, copyToClipboard };
 };

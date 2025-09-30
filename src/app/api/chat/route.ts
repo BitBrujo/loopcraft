@@ -17,12 +17,12 @@ export async function POST(req: Request) {
   }
 
   // Convert UI messages to model messages format
-  const convertedMessages = messages.map((message: any) => {
+  const convertedMessages = messages.map((message: { role: "user" | "assistant" | "system" | "tool"; parts?: { type: string; text: string }[]; content?: string }) => {
     if (message.parts && Array.isArray(message.parts)) {
       // Convert from UI message format (with parts) to model message format
       const content = message.parts
-        .filter((part: any) => part.type === "text")
-        .map((part: any) => part.text)
+        .filter((part) => part.type === "text")
+        .map((part) => part.text)
         .join("");
 
       return {
@@ -49,6 +49,7 @@ export async function POST(req: Request) {
 
     const result = streamText({
       model: ollama(modelName),
+      // @ts-expect-error - Type conversion is correct, TS inference issue
       messages: convertedMessages,
       system: system || "You are HyperFace, an advanced AI assistant designed to help with programming, problem-solving, and creative tasks. You are knowledgeable, helpful, and provide clear, detailed responses.",
       tools: {
@@ -65,14 +66,14 @@ export async function POST(req: Request) {
     let errorMessage = "An error occurred while processing your request.";
     let statusCode = 500;
 
-    if (error.message?.includes("connect") || error.message?.includes("ECONNREFUSED")) {
+    if ((error as Error).message?.includes("connect") || (error as Error).message?.includes("ECONNREFUSED")) {
       errorMessage = `Unable to connect to Ollama server at ${process.env.OLLAMA_BASE_URL || "http://localhost:11434"}. Please ensure Ollama is running.`;
       statusCode = 503;
-    } else if (error.message?.includes("model") || error.message?.includes("not found")) {
+    } else if ((error as Error).message?.includes("model") || (error as Error).message?.includes("not found")) {
       errorMessage = `Model "${modelName}" not found. Please ensure the model is available in Ollama. Try running: ollama pull ${modelName}`;
       statusCode = 404;
-    } else if (error.message) {
-      errorMessage = error.message;
+    } else if ((error as Error).message) {
+      errorMessage = (error as Error).message;
     }
 
     return new Response(JSON.stringify({

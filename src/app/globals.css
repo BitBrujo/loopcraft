@@ -220,10 +220,27 @@
     animation: suggestion-enter 0.4s ease-out both;
   }
 
-  /* Optimized viewport for smooth scrolling */
+  /* Optimized viewport for smooth scrolling and streaming */
   .aui-thread-viewport {
     contain: content;
     overflow-anchor: auto;
+    /* GPU acceleration for smoother rendering */
+    transform: translateZ(0);
+    /* Optimize text rendering during streaming */
+    text-rendering: optimizeSpeed;
+    /* Improve scrolling performance */
+    scroll-behavior: auto;
+  }
+
+  /* Enhanced performance during streaming */
+  .aui-thread-viewport.streaming {
+    /* Disable subpixel antialiasing during streaming for performance */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Use content-visibility for better rendering performance */
+    content-visibility: auto;
+    /* Force GPU layer for smoother updates */
+    will-change: scroll-position;
   }
 
   /* Only apply will-change during animations */
@@ -271,11 +288,46 @@
   .streaming .suggestion-enter {
     animation: none !important;
     will-change: auto;
+    /* Force static positioning during streaming */
+    transform: none !important;
   }
 
   /* Disable global smooth scroll during streaming */
   .streaming {
     scroll-behavior: auto !important;
+  }
+
+  /* Streaming message optimizations */
+  .streaming .aui-assistant-message-root {
+    /* Disable any potential micro-animations */
+    transition: none !important;
+    /* Ensure stable positioning */
+    transform: none !important;
+    /* Optimize rendering during streaming */
+    contain: layout style;
+  }
+
+  /* Streaming text content optimizations */
+  .streaming .aui-assistant-message-content,
+  .streaming .aui-md-p,
+  .streaming .aui-md {
+    /* Force text to avoid any subpixel positioning issues */
+    text-rendering: optimizeSpeed;
+    /* Disable font feature settings during streaming */
+    font-feature-settings: normal;
+    /* Prevent any text transform animations */
+    transform: none !important;
+    /* Stable text positioning */
+    backface-visibility: hidden;
+  }
+
+  /* Markdown code blocks during streaming */
+  .streaming .aui-md-pre,
+  .streaming .aui-md-inline-code {
+    /* Optimize code rendering during streaming */
+    text-rendering: optimizeSpeed;
+    /* Prevent layout shifts */
+    contain: layout;
   }
 
   /* Respect user's motion preferences */

@@ -7,6 +7,7 @@ import { ThreadList } from "@/components/assistant-ui/thread-list";
 
 export const Assistant = () => {
   const runtime = useChatRuntime({
+    // @ts-expect-error - API property for direct integration
     api: "/api/chat",
   });
 

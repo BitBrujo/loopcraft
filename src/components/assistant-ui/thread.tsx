@@ -37,39 +37,48 @@ export const Thread: FC = () => {
   const thread = useThread();
   const isStreaming = thread.isRunning;
 
-  // Smooth auto-scroll without intervals
+  // Optimized smooth auto-scroll for streaming
   useEffect(() => {
     if (isStreaming && viewportRef.current) {
       const viewport = viewportRef.current;
+      let lastScrollHeight = viewport.scrollHeight;
+      let rafId: number;
+      let isScrolling = false;
 
       const scrollToBottom = () => {
+        if (isScrolling) return;
+        isScrolling = true;
+
+        viewport.scrollTo({
+          top: viewport.scrollHeight,
+          behavior: "auto" // Always use auto during streaming to prevent conflicts
+        });
+
+        // Reset flag after scroll completes
         requestAnimationFrame(() => {
-          viewport.scrollTo({
-            top: viewport.scrollHeight,
-            behavior: isStreaming ? "auto" : "smooth"
-          });
+          isScrolling = false;
         });
       };
 
-      // Use throttled MutationObserver to detect content changes
-      let scrollTimeout: NodeJS.Timeout;
-      const mutationObserver = new MutationObserver(() => {
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(scrollToBottom, 16); // ~60fps throttling
-      });
+      // RAF-based content change detection (smoother than MutationObserver)
+      const checkForChanges = () => {
+        if (viewport.scrollHeight !== lastScrollHeight) {
+          lastScrollHeight = viewport.scrollHeight;
+          scrollToBottom();
+        }
 
-      mutationObserver.observe(viewport, {
-        childList: true,
-        subtree: true,
-        characterData: true
-      });
+        if (isStreaming) {
+          rafId = requestAnimationFrame(checkForChanges);
+        }
+      };
 
-      // Initial scroll
-      scrollToBottom();
+      // Start monitoring
+      checkForChanges();
 
       return () => {
-        clearTimeout(scrollTimeout);
-        mutationObserver.disconnect();
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+        }
       };
     }
   }, [isStreaming]);
