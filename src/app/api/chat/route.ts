@@ -37,10 +37,10 @@ export async function POST(req: Request) {
 
   // Configure Ollama provider
   const ollama = createOllama({
-    baseURL: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
+    baseURL: process.env.OLLAMA_BASE_URL,
   });
 
-  const modelName = process.env.OLLAMA_MODEL || "mistral-nemo:12b";
+  const modelName = process.env.OLLAMA_MODEL;
 
   try {
     console.log("Model name:", modelName);
