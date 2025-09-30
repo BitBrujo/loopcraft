@@ -418,6 +418,16 @@ Access `/settings` to configure:
 
 ### Recent Updates
 
+#### MCP-UI Iframe Rendering Fix (2025-09-30)
+Fixed critical bug preventing MCP-UI interactive components from rendering in iframes:
+- **Root Cause**: The `mcp-ui-renderer.tsx` component was not passing the `_meta` field from MCP server responses to the `UIResourceRenderer`
+- **Impact**: Without `_meta` metadata (`"mcpui.dev/ui-encoding"` and `"mcpui.dev/ui-contentType"`), the renderer couldn't decode base64 HTML or determine content type, causing HTML to display as text
+- **Solution**:
+  - Added `_meta` field preservation in mcpResponse resource object (`src/components/assistant-ui/mcp-ui-renderer.tsx:63`)
+  - Updated TypeScript interfaces to include `_meta?: Record<string, string>` typing (lines 12, 20)
+- **Result**: Demo MCP server UI components (greeting cards, counters, forms, charts) now properly render in sandboxed iframes
+- **Key Insight**: The demo server (`src/mcp-servers/demo-ui-server.ts`) was working correctly all along - the issue was purely client-side metadata handling
+
 #### MCP Server Save & Select Feature (2025-09-30)
 Complete MCP server management with database persistence and full CRUD operations:
 - **AddServerDialog Component**: Form-based dialog for adding/editing MCP servers
