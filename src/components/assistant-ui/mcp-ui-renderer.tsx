@@ -9,6 +9,7 @@ interface MCPUIRendererProps {
       mimeType?: string;
       text?: string;
       htmlString?: string;
+      _meta?: Record<string, string>;
     };
     content?: Array<{
       type: string;
@@ -16,6 +17,7 @@ interface MCPUIRendererProps {
         uri?: string;
         mimeType?: string;
         text?: string;
+        _meta?: Record<string, string>;
       };
     }>;
   };
@@ -60,6 +62,7 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content }) => {
             uri: resource.uri || 'ui://dynamic-content',
             mimeType: resource.mimeType || 'text/html',
             text: resource.text || resource.htmlString || JSON.stringify(resource),
+            _meta: resource._meta || {},
           },
         },
       ],
