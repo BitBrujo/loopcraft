@@ -62,6 +62,8 @@ src/
 │   │   ├── MetricsDashboard.tsx # Performance metrics
 │   │   ├── DebuggerPanel.tsx    # Request/response inspector
 │   │   └── ConsolePanel.tsx     # Log viewer
+│   ├── settings/          # Settings page components
+│   │   └── AddServerDialog.tsx  # MCP server add/edit dialog
 │   ├── chat/             # Chat-specific components (header, layout, mobile sidebar, theme toggle)
 │   ├── providers/        # React context providers (theme provider)
 │   └── ui/              # shadcn/ui components (button, dialog, sheet, etc.)
@@ -415,6 +417,44 @@ Access `/settings` to configure:
 - Dashboard behavior (auto-connect, debug mode)
 
 ### Recent Updates
+
+#### MCP Server Save & Select Feature (2025-09-30)
+Complete MCP server management with database persistence and full CRUD operations:
+- **AddServerDialog Component**: Form-based dialog for adding/editing MCP servers
+  - Fields: name, command, type (stdio/sse/http), environment variables, description
+  - Validation for required fields with support for add and edit modes
+  - Visual environment variable management with add/remove functionality
+- **Enhanced API Endpoints** (`/api/mcp/servers`):
+  - **GET**: Lists servers merged from environment config AND database (per-user)
+  - **POST**: Create new server in database OR connect to existing server
+  - **PUT**: Update existing server configuration in database
+  - **DELETE**: Delete server from database OR disconnect from connected server
+  - Full JWT authentication with user isolation for all database operations
+  - Servers automatically labeled by source ('database' vs 'environment')
+- **Database Integration**:
+  - `loadMCPConfigWithUser()`: Automatically merges environment + database servers
+  - Converts database MCP server format to client format seamlessly
+  - Deduplicates servers by name to prevent conflicts
+- **Settings Page Enhancements**:
+  - "Add Server" button opens creation dialog with full form
+  - Edit/Delete buttons for user-saved servers (database servers only)
+  - Visual badges showing server source (Saved vs Env) for easy identification
+  - Full CRUD operations with user feedback via dashboard logs
+  - Connect/Disconnect functionality preserved for all server types
+- **Store Updates**:
+  - MCP Store: Added `source` field and `editingServer` state for dialog management
+  - Settings Store: Added `mcpSelectedServers` array for tracking active servers
+- **Chat API Integration**:
+  - Automatically loads user-specific servers from database on initialization
+  - Merges with environment servers for complete MCP ecosystem
+  - `getUserIdFromRequest()` helper for seamless authentication
+- **Key Features**:
+  - ✅ Save MCP server configs to MySQL database with per-user association
+  - ✅ Add/Edit/Delete UI in Settings page with intuitive controls
+  - ✅ Auto-load user servers on chat initialization (no manual setup)
+  - ✅ Environment servers are read-only (protected from modification)
+  - ✅ Database servers fully manageable by authenticated users
+  - ✅ User isolation ensures privacy and security with JWT authentication
 
 #### MCP Server Management & Debug Tooling (2025-09-30)
 Enhanced MCP server management with comprehensive debugging capabilities:
