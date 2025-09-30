@@ -1,12 +1,17 @@
 {
-  "name": "hyperface",
+  "name": "loopcraft",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "docker:build": "docker-compose --env-file .env.docker.local build",
+    "docker:up": "docker-compose --env-file .env.docker.local up -d",
+    "docker:down": "docker-compose --env-file .env.docker.local down",
+    "docker:logs": "docker-compose --env-file .env.docker.local logs -f",
+    "docker:mysql": "docker exec -it loopcraft-mysql mysql -u loopcraft -p${MYSQL_PASSWORD} loopcraft"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.38",
@@ -25,8 +30,10 @@
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@supabase/supabase-js": "^2.58.0",
     "ai": "^5.0.56",
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.11.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -47,6 +54,8 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

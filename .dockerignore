@@ -1,0 +1,52 @@
+# Node modules
+node_modules
+npm-debug.log
+yarn-error.log
+# package-lock.json is needed for npm ci in Docker
+yarn.lock
+pnpm-lock.yaml
+
+# Next.js build outputs
+.next
+out
+build
+dist
+
+# Environment files
+.env*
+!.env.example
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Development files
+*.md
+!README.md
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Testing
+coverage
+.nyc_output
+
+# Misc
+.DS_Store
+*.pem
+.husky
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Vercel
+.vercel
+
+# Claude
+CLAUDE.md
+Claude.md

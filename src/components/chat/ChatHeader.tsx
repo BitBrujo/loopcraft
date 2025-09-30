@@ -18,7 +18,7 @@ export function ChatHeader() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <MessageSquare className="h-4 w-4 text-primary-foreground" />
             </div>
-            <h1 className="text-lg font-semibold tracking-tight">HyperFace</h1>
+            <h1 className="text-lg font-semibold tracking-tight">LoopCraft</h1>
           </Link>
           <Separator orientation="vertical" className="h-6 hidden sm:block" />
           <Badge variant="secondary" className="text-xs hidden sm:block">

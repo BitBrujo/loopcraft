@@ -4,14 +4,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-HyperFace is a Next.js 15 AI chat application that provides a modern interface for interacting with AI models and Model Context Protocol (MCP) servers. The application uses React 19, TypeScript, Tailwind CSS, the Assistant UI framework, and MCP-UI for interactive components. It combines the power of local AI models via Ollama with the extensibility of the Model Context Protocol ecosystem.
+LoopCraft is a fully self-contained, Docker-based Next.js 15 AI chat application that provides a modern interface for interacting with AI models and Model Context Protocol (MCP) servers. The application uses React 19, TypeScript, Tailwind CSS, the Assistant UI framework, and MCP-UI for interactive components. It combines the power of local AI models via Ollama with a local MySQL database and the extensibility of the Model Context Protocol ecosystem. Everything runs locally with no external dependencies.
 
 ## Common Development Commands
 
+### Local Development
 - `npm run dev` - Start development server with Turbopack
 - `npm run build` - Build for production with Turbopack
 - `npm start` - Start production server
 - `npm run lint` - Run ESLint
+
+### Docker Commands
+- `npm run docker:build` - Build all Docker images
+- `npm run docker:up` - Start full stack (MySQL, Ollama, Next.js app)
+- `npm run docker:down` - Stop and remove containers
+- `npm run docker:logs` - View service logs
+- `npm run docker:mysql` - Connect to MySQL CLI
 
 ## Architecture
 
@@ -26,7 +34,9 @@ HyperFace is a Next.js 15 AI chat application that provides a modern interface f
 - **Ollama** for local AI model inference via `ollama-ai-provider-v2` ^1.3.1 (actively maintained)
 - **MCP SDK** (`@modelcontextprotocol/sdk` ^1.18.2) for Model Context Protocol integration
 - **MCP-UI** (`@mcp-ui/client` ^5.12.0, `@mcp-ui/server` ^5.11.0) for interactive UI components
-- **Supabase** for backend database, authentication, and storage (`@supabase/mcp-server-supabase@latest` via MCP)
+- **MySQL 8.0** for local database with connection pooling via `mysql2` ^3.11.6
+- **JWT Authentication** via `jsonwebtoken` ^9.0.2 with bcrypt password hashing
+- **Docker** for containerization and orchestration (MySQL, Ollama, Next.js app)
 
 ### Project Structure
 
@@ -58,7 +68,15 @@ src/
 └── lib/
     ├── mcp-client.ts     # MCP client management service
     ├── mcp-config.ts     # MCP server configuration
-    ├── supabase-client.ts # Supabase client setup
+    ├── mysql-client.ts   # MySQL connection pool and query utilities
+    ├── auth.ts           # JWT authentication and password hashing
+    ├── dal/              # Data Access Layer
+    │   ├── types.ts      # TypeScript interfaces for database models
+    │   ├── users.ts      # User profile and settings operations
+    │   ├── conversations.ts # Conversation management
+    │   ├── messages.ts   # Message persistence
+    │   ├── mcp-servers.ts # MCP server configurations
+    │   └── files.ts      # File upload tracking
     ├── stores/           # Zustand state management
     │   ├── dashboard-store.ts # Dashboard state (logs, metrics, debug)
     │   ├── mcp-store.ts      # MCP state (servers, resources, tools)
@@ -99,40 +117,71 @@ components/                 # Legacy components directory
    - Interactive UI resource rendering via MCP-UI
    - System prompt configuration enhanced for MCP capabilities
 
-5. **Backend Architecture**: Supabase-powered backend with comprehensive data management:
-   - **Authentication**: Built on Supabase Auth with automatic user profile creation
-   - **Database**: PostgreSQL with full Row Level Security (RLS) policies
-   - **MCP Integration**: Direct database access via Supabase MCP server
-   - **Storage**: File upload management with temporary file support (TTL-based cleanup)
-   - **Real-time**: Ready for real-time subscriptions via Supabase Realtime
+5. **Backend Architecture**: Self-hosted MySQL database with JWT authentication:
+   - **Authentication**: JWT-based with bcrypt password hashing, HTTP-only cookies
+   - **Database**: MySQL 8.0 with connection pooling and transaction support
+   - **Data Access Layer**: Type-safe DAL with CRUD operations for all tables
+   - **Message Persistence**: Conversations and messages stored in MySQL
+   - **User Management**: Profile, settings, and MCP server configurations per user
+   - **File Tracking**: File upload records with TTL-based cleanup for temporary files
+
+6. **Docker Architecture**: Fully containerized stack for easy deployment:
+   - **MySQL Container**: Persistent database with automatic schema initialization
+   - **Ollama Container**: Local AI model server with model persistence
+   - **Next.js App Container**: Production-optimized multi-stage build
+   - **Docker Compose**: Orchestration with health checks and service dependencies
+   - **Networking**: Internal Docker network for secure service communication
 
 ### Environment Configuration
 
-**Required environment variables** (must be set in `.env.local` - no fallbacks):
+**Required environment variables** (must be set in `.env.local` for local dev or `.env.docker` for Docker):
 
+**MySQL Configuration:**
+- `MYSQL_HOST` - MySQL host (default: `localhost` for dev, `mysql` for Docker)
+- `MYSQL_PORT` - MySQL port (default: `3306`)
+- `MYSQL_DATABASE` - Database name (default: `hyperface`)
+- `MYSQL_USER` - Database user (default: `hyperface`)
+- `MYSQL_PASSWORD` - Database password (MUST change in production)
+- `MYSQL_ROOT_PASSWORD` - Root password for initial setup (Docker only)
+
+**Ollama Configuration:**
 - `OLLAMA_BASE_URL` - Ollama server URL (must include `/api` path)
 - `OLLAMA_MODEL` - Model name to use
-- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous/public API key
-- `SUPABASE_ACCESS_TOKEN` - Personal access token for Supabase MCP server
-- `SUPABASE_PROJECT_REF` - Supabase project reference ID
 
-**Optional environment variables**:
+**Authentication Configuration:**
+- `JWT_SECRET` - Secret key for JWT signing (MUST be 32+ characters in production)
+- `JWT_EXPIRES_IN` - Token expiration time (default: `7d`)
 
+**Application Configuration:**
+- `NODE_ENV` - Environment (`development` or `production`)
+- `NEXT_PUBLIC_APP_URL` - Public URL for the application
+
+**Optional environment variables:**
 - `MCP_CONFIG` - JSON string defining MCP servers to connect to
 
-**Current Configuration (from .env.local):**
+**Local Development Configuration (.env.local):**
 ```
-OLLAMA_BASE_URL=http://100.87.169.2:11434/api
-OLLAMA_MODEL=gpt-oss:20b
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_DATABASE=loopcraft
+MYSQL_USER=loopcraft
+MYSQL_PASSWORD=loopcraft_password
 
-NEXT_PUBLIC_SUPABASE_URL=https://gvnypwkxumqznqcxzulm.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-SUPABASE_ACCESS_TOKEN=sbp_****** (personal access token - keep secure!)
-SUPABASE_PROJECT_REF=gvnypwkxumqznqcxzulm
+OLLAMA_BASE_URL=http://localhost:11434/api
+OLLAMA_MODEL=llama3.2:latest
 
-# Supabase MCP Server Configuration
-MCP_CONFIG={"servers":[{"name":"supabase","command":["npx","-y","@supabase/mcp-server-supabase@latest","--project-ref=gvnypwkxumqznqcxzulm"],"type":"stdio","env":{"SUPABASE_ACCESS_TOKEN":"sbp_******"}}]}
+JWT_SECRET=dev-secret-key-change-in-production
+JWT_EXPIRES_IN=7d
+
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+MCP_CONFIG=
+```
+
+**Docker Configuration (.env.docker):**
+```
+MYSQL_HOST=mysql
+OLLAMA_BASE_URL=http://ollama:11434/api
+# Other variables same as above but with production-grade secrets
 ```
 
 **Available Model Options:**
@@ -145,17 +194,14 @@ MCP_CONFIG={"servers":[{"name":"supabase","command":["npx","-y","@supabase/mcp-s
 
 **MCP Server Configuration Examples:**
 ```
-# Supabase MCP server (current setup - full read/write access):
-MCP_CONFIG={"servers":[{"name":"supabase","command":["npx","-y","@supabase/mcp-server-supabase@latest","--project-ref=YOUR_PROJECT_REF"],"type":"stdio","env":{"SUPABASE_ACCESS_TOKEN":"YOUR_TOKEN"}}]}
-
-# Supabase MCP server (read-only mode for safety):
-MCP_CONFIG={"servers":[{"name":"supabase","command":["npx","-y","@supabase/mcp-server-supabase@latest","--read-only","--project-ref=YOUR_PROJECT_REF"],"type":"stdio","env":{"SUPABASE_ACCESS_TOKEN":"YOUR_TOKEN"}}]}
-
 # Basic filesystem server for current directory:
 MCP_CONFIG={"servers":[{"name":"filesystem","command":["npx","-y","@modelcontextprotocol/server-filesystem","."],"type":"stdio"}]}
 
-# Multiple servers (Supabase + filesystem):
-MCP_CONFIG={"servers":[{"name":"supabase","command":["npx","-y","@supabase/mcp-server-supabase@latest","--project-ref=YOUR_PROJECT_REF"],"type":"stdio","env":{"SUPABASE_ACCESS_TOKEN":"YOUR_TOKEN"}},{"name":"filesystem","command":["npx","-y","@modelcontextprotocol/server-filesystem","."],"type":"stdio"}]}
+# Memory server for persistent context:
+MCP_CONFIG={"servers":[{"name":"memory","command":["npx","-y","@modelcontextprotocol/server-memory"],"type":"stdio"}]}
+
+# Multiple servers (filesystem + memory):
+MCP_CONFIG={"servers":[{"name":"filesystem","command":["npx","-y","@modelcontextprotocol/server-filesystem","."],"type":"stdio"},{"name":"memory","command":["npx","-y","@modelcontextprotocol/server-memory"],"type":"stdio"}]}
 ```
 
 ### Styling System
@@ -196,118 +242,149 @@ MCP_CONFIG={"servers":[{"name":"supabase","command":["npx","-y","@supabase/mcp-s
 - `@mcp-ui/server` (^5.11.0) - MCP-UI server SDK for creating UI resources
 - `zod` (^4.1.11) - Schema validation for MCP data structures
 
+### Database & Authentication
+- `mysql2` (^3.11.6) - MySQL client with promise support and connection pooling
+- `jsonwebtoken` (^9.0.2) - JWT token generation and verification
+- `bcrypt` (^5.1.1) - Password hashing with salt rounds
+
 ### Dashboard & Visualization
 - `react-resizable-panels` (^3.0.6) - Resizable dashboard panel layouts
 - `recharts` (^3.2.1) - Charts and metrics visualization
 - `@monaco-editor/react` (^4.7.0) - Monaco code editor for JSON config editing
 - `date-fns` (^4.1.0) - Date formatting and manipulation
 - `zustand` (^5.0.8) - State management for dashboard and settings
-- `@supabase/supabase-js` (^2.58.0) - Supabase JavaScript client
 
 ## Database Schema
 
-### Tables Overview
+### Tables Overview (MySQL 8.0)
 
 1. **user_profiles** - Extended user profile information
-   - `id` (UUID, FK to auth.users)
-   - `username` (TEXT, unique)
-   - `display_name` (TEXT)
+   - `id` (CHAR(36), UUID primary key)
+   - `username` (VARCHAR(255), unique, NOT NULL)
+   - `email` (VARCHAR(255), unique, NOT NULL)
+   - `password_hash` (VARCHAR(255), NOT NULL)
+   - `display_name` (VARCHAR(255))
    - `avatar_url` (TEXT)
    - `bio` (TEXT)
    - Timestamps: `created_at`, `updated_at`
+   - Indexes: username, email
 
 2. **user_settings** - Per-user application settings
-   - `id` (UUID, primary key)
-   - `user_id` (UUID, FK to auth.users, unique)
-   - `theme` (TEXT: 'light', 'dark', 'system')
-   - `language` (TEXT, default 'en')
-   - `notifications_enabled` (BOOLEAN)
-   - `ai_model_preference` (TEXT)
-   - `custom_settings` (JSONB) - Flexible settings storage
+   - `id` (CHAR(36), UUID primary key)
+   - `user_id` (CHAR(36), FK to user_profiles, unique)
+   - `theme` (VARCHAR(50): 'light', 'dark', 'system')
+   - `language` (VARCHAR(10), default 'en')
+   - `notifications_enabled` (BOOLEAN, default TRUE)
+   - `ai_model_preference` (VARCHAR(255))
+   - `custom_settings` (JSON) - Flexible settings storage
    - Timestamps: `created_at`, `updated_at`
+   - Foreign key cascade on user deletion
 
 3. **conversations** - Chat conversation threads
-   - `id` (UUID, primary key)
-   - `user_id` (UUID, FK to auth.users)
-   - `title` (TEXT)
-   - `model` (TEXT) - AI model used
+   - `id` (CHAR(36), UUID primary key)
+   - `user_id` (CHAR(36), FK to user_profiles)
+   - `title` (VARCHAR(500))
+   - `model` (VARCHAR(255)) - AI model used
    - `system_prompt` (TEXT)
-   - `metadata` (JSONB) - Additional conversation metadata
+   - `metadata` (JSON) - Additional conversation metadata
    - Timestamps: `created_at`, `updated_at`
+   - Foreign key cascade on user deletion
+   - Index: (user_id, created_at DESC)
 
 4. **messages** - Individual chat messages
-   - `id` (UUID, primary key)
-   - `conversation_id` (UUID, FK to conversations)
-   - `role` (TEXT: 'user', 'assistant', 'system', 'tool')
+   - `id` (CHAR(36), UUID primary key)
+   - `conversation_id` (CHAR(36), FK to conversations)
+   - `role` (VARCHAR(50): 'user', 'assistant', 'system', 'tool')
    - `content` (TEXT)
-   - `tool_calls` (JSONB) - Tool invocations
-   - `tool_results` (JSONB) - Tool execution results
-   - `metadata` (JSONB)
-   - `created_at` (TIMESTAMPTZ)
+   - `tool_calls` (JSON) - Tool invocations
+   - `tool_results` (JSON) - Tool execution results
+   - `metadata` (JSON)
+   - `created_at` (TIMESTAMP)
+   - Foreign key cascade on conversation deletion
+   - Index: (conversation_id, created_at ASC)
 
 5. **mcp_servers** - User-configured MCP server definitions
-   - `id` (UUID, primary key)
-   - `user_id` (UUID, FK to auth.users)
-   - `name` (TEXT, unique per user)
-   - `command` (TEXT[]) - Command array to spawn server
-   - `type` (TEXT: 'stdio', 'http')
-   - `env` (JSONB) - Environment variables
-   - `enabled` (BOOLEAN)
+   - `id` (CHAR(36), UUID primary key)
+   - `user_id` (CHAR(36), FK to user_profiles)
+   - `name` (VARCHAR(255), unique per user)
+   - `command` (JSON) - Command array to spawn server
+   - `type` (VARCHAR(50): 'stdio', 'sse', 'http')
+   - `env` (JSON) - Environment variables
+   - `enabled` (BOOLEAN, default TRUE)
    - `description` (TEXT)
    - Timestamps: `created_at`, `updated_at`
+   - Foreign key cascade on user deletion
+   - Unique constraint: (user_id, name)
+   - Index: (user_id, enabled)
 
 6. **file_uploads** - File upload tracking with temporary file support
-   - `id` (UUID, primary key)
-   - `user_id` (UUID, FK to auth.users)
-   - `conversation_id` (UUID, FK to conversations, nullable)
-   - `file_name` (TEXT)
-   - `file_path` (TEXT) - Storage path
+   - `id` (CHAR(36), UUID primary key)
+   - `user_id` (CHAR(36), FK to user_profiles)
+   - `conversation_id` (CHAR(36), FK to conversations, nullable)
+   - `file_name` (VARCHAR(500))
+   - `file_path` (VARCHAR(1000)) - Storage path
    - `file_size` (BIGINT)
-   - `mime_type` (TEXT)
-   - `is_temporary` (BOOLEAN) - For auto-cleanup
-   - `expires_at` (TIMESTAMPTZ) - TTL for temp files
-   - `metadata` (JSONB)
-   - `created_at` (TIMESTAMPTZ)
+   - `mime_type` (VARCHAR(255))
+   - `is_temporary` (BOOLEAN, default FALSE)
+   - `expires_at` (TIMESTAMP, nullable) - TTL for temp files
+   - `metadata` (JSON)
+   - `created_at` (TIMESTAMP)
+   - Foreign key cascade on user deletion
+   - Foreign key set null on conversation deletion
+   - Indexes: user_id, conversation_id, expires_at
 
 ### Security Features
 
-- **Row Level Security (RLS)**: Enabled on all tables
-- **User Isolation**: All policies enforce user-level data access
-- **Automatic Profile Creation**: Trigger creates profile and settings on user signup
+- **User Isolation**: All tables have user_id foreign keys for data separation
+- **JWT Authentication**: Secure token-based authentication with HTTP-only cookies
+- **Password Security**: bcrypt hashing with configurable salt rounds (default 10)
+- **Foreign Key Cascades**: Automatic cleanup of related records on user deletion
 - **Updated Timestamps**: Automatic `updated_at` triggers on relevant tables
-- **Temporary File Cleanup**: Function `delete_expired_files()` for TTL-based cleanup
+- **Temporary File Cleanup**: MySQL event `delete_expired_files` runs hourly for TTL-based cleanup
+- **Default Admin Account**: Initial admin user created on database initialization
+  - Username: `admin`
+  - Password: `admin123` (MUST change after first login)
 
 ### Indexes
 
 - Optimized for common query patterns:
-  - User lookups (username, user_id)
-  - Conversation listings (user_id, created_at DESC)
-  - Message retrieval (conversation_id, created_at)
-  - File expiration checks (expires_at for temp files)
+  - User lookups: username, email (unique indexes)
+  - Conversation listings: (user_id, created_at DESC)
+  - Message retrieval: (conversation_id, created_at ASC)
+  - MCP servers: (user_id, enabled)
+  - File expiration: expires_at for temp file cleanup
 
-## Supabase MCP Server
+### Views
 
-### Available Tools
+- **active_conversations**: Conversation list with message count and last message timestamp
+  - Joins conversations and messages tables
+  - Useful for conversation list UI
+  - Pre-aggregated for performance
 
-The Supabase MCP server provides these tools via MCP:
+## API Endpoints
 
-- **Database Operations**: `execute_sql`, `list_tables`, `list_migrations`, `apply_migration`
-- **Project Management**: `get_project_url`, `get_anon_key`, `generate_typescript_types`
-- **Edge Functions**: `list_edge_functions`, `get_edge_function`, `deploy_edge_function`
-- **Branching**: `create_branch`, `list_branches`, `delete_branch`, `merge_branch`, `reset_branch`, `rebase_branch`
-- **Monitoring**: `get_logs`, `get_advisors` (security & performance)
+### Authentication
+- `POST /api/auth/register` - Create new user account
+- `POST /api/auth/login` - Authenticate and receive JWT token
+- `POST /api/auth/logout` - Clear authentication cookie
+- `GET /api/auth/me` - Get current user profile (requires auth)
 
-### Security Best Practices
+### Conversations
+- `GET /api/conversations` - List user's conversations (requires auth)
+- `POST /api/conversations` - Create new conversation (requires auth)
+- `GET /api/conversations/[id]` - Get conversation with messages (requires auth)
+- `PATCH /api/conversations/[id]` - Update conversation (requires auth)
+- `DELETE /api/conversations/[id]` - Delete conversation (requires auth)
 
-1. **Project Scoping**: Always use `--project-ref` to limit access to single project
-2. **Token Security**: Keep `SUPABASE_ACCESS_TOKEN` in `.env.local` (gitignored)
-3. **Read-Only Mode**: Use `--read-only` flag when appropriate for safety
-4. **RLS Policies**: Always implement Row Level Security on tables
-5. **Development Only**: Use MCP server for development, not production user access
+### Chat
+- `POST /api/chat` - Stream AI responses with message persistence (auth optional)
+
+### Health
+- `GET /api/health` - Check database connection and service health
 
 ## MCP-UI Lab Workflow
 
-HyperFace now includes a comprehensive dashboard for working with MCP servers following the typical MCP-UI workflow:
+LoopCraft now includes a comprehensive dashboard for working with MCP servers following the typical MCP-UI workflow:
 
 ### Typical Workflow
 
@@ -339,34 +416,58 @@ Access `/settings` to configure:
 
 ### Recent Updates
 
+#### Rebranding to LoopCraft (2025-09-30)
+Complete rebranding from HyperFace to LoopCraft with security hardening:
+- Removed all fallback values for environment variables
+- Removed hardcoded IP addresses and passwords from codebase
+- Updated all documentation and configuration files
+
+#### Docker Migration & MySQL Backend (2025-09-30)
+Complete migration from Supabase to self-hosted MySQL with Docker:
+- **Docker Infrastructure**: Full containerization with docker-compose
+  - MySQL 8.0 container with automatic schema initialization
+  - Ollama container for local AI model serving
+  - Next.js app container with production-optimized build
+  - Health checks and service dependencies
+  - Persistent volumes for database and model storage
+- **MySQL Database**: Complete database schema with 6 tables
+  - User profiles and settings with JWT authentication
+  - Conversations and messages with JSON fields for metadata
+  - MCP server configurations per user
+  - File upload tracking with TTL-based cleanup
+- **Authentication System**: JWT-based auth with bcrypt password hashing
+  - Registration, login, logout, and user profile endpoints
+  - HTTP-only cookies for secure token storage
+  - Protected API routes with authentication middleware
+- **Data Access Layer**: Type-safe DAL for all database operations
+  - `mysql-client.ts` for connection pooling and queries
+  - Individual DAL modules for each table (users, conversations, messages, mcp-servers, files)
+  - Transaction support with begin/commit/rollback
+- **Message Persistence**: Chat messages automatically saved to MySQL
+  - Conversation history stored with user association
+  - Tool calls and results stored in JSON fields
+- **Removed Dependencies**: Eliminated all Supabase dependencies
+  - Removed `@supabase/supabase-js` package
+  - Removed Supabase MCP server configuration
+  - Deleted supabase-client.ts
+- **New Dependencies**: Added MySQL and auth packages
+  - `mysql2` for MySQL connection pooling
+  - `jsonwebtoken` for JWT token management
+  - `bcrypt` for password hashing
+- **Environment Updates**: New environment variables for MySQL and auth
+  - MySQL connection configuration
+  - JWT secret and expiration settings
+  - Removed all Supabase-related variables
+
 #### MCP-UI Lab Dashboard & Settings (2025-09-30)
 Complete dashboard and settings system for MCP-UI workflow:
-- **Dashboard Page** (`/dashboard`): Full-featured MCP-UI Lab with 5 interactive panels
-  - Resource Explorer: Browse and preview MCP resources from connected servers
-  - Config Editor: Monaco-powered JSON editor for MCP server configurations
-  - Metrics Dashboard: Real-time performance charts (latency, success rate, tool calls)
-  - Debugger Panel: Request/response inspector for MCP operations
-  - Console Panel: Filterable log viewer with export capabilities
-- **Settings Page** (`/settings`): Comprehensive configuration management
-  - User preferences (theme, language, notifications)
-  - AI model configuration (Ollama base URL and model selection)
-  - MCP server management (connect/disconnect, status monitoring)
-  - Dashboard preferences (auto-connect, debug mode)
-- **State Management**: Zustand stores for dashboard, MCP, and settings state
-- **API Routes**: `/api/mcp/*` for server/resource/tool operations, `/api/metrics` for performance data
-- **New Dependencies**: react-resizable-panels, recharts, @monaco-editor/react, date-fns, @supabase/supabase-js
+- MCP-UI Lab with 5 interactive panels (Resource Explorer, Config Editor, Metrics, Debugger, Console)
+- Settings page for user preferences, AI model config, and MCP server management
+- Zustand state management for dashboard and settings
 
 #### Previous Updates
-- **Supabase Backend Integration** (2025-09-30): Full Supabase database setup with authentication, conversations, settings, MCP server configs, and file storage
-- **MCP Integration**: Added full Model Context Protocol support with MCP-UI for interactive components
-- **Dynamic Tool Discovery**: Automatically discovers and integrates tools from connected MCP servers
-- **Interactive UI Components**: Support for MCP-UI resources rendered securely in sandboxed iframes
-- **Hybrid Architecture**: Combines Ollama AI inference with MCP ecosystem extensibility
-- **MCP Client Management**: Comprehensive MCP server connection and lifecycle management
-- **Environment Configuration**: Extended configuration for MCP servers via JSON in environment variables
-- **Upgraded to ollama-ai-provider-v2**: Switched from unmaintained v1 to actively maintained v2 provider
-- **Message Format Compatibility**: Added conversion between Assistant UI message format (with `parts`) and AI SDK format (with `content`)
-- **Enhanced Error Handling**: Improved error messages for connection issues and missing models
-- **Configuration Fixes**: Updated environment variables to use correct API endpoints
-- **Fixed Provider Context Issues**: Resolved `ThreadListItem is only available inside <AssistantProvider />` error
-- **Simplified Integration**: Using `useChatRuntime({ api: "/api/chat" })` pattern for reliable AI SDK integration
+- **MCP Integration**: Full Model Context Protocol support with dynamic tool discovery
+- **Interactive UI Components**: MCP-UI resources rendered in sandboxed iframes
+- **Hybrid Architecture**: Ollama AI inference with MCP ecosystem extensibility
+- **ollama-ai-provider-v2**: Upgraded to actively maintained v2 provider
+- **Assistant UI Integration**: Using `useChatRuntime({ api: "/api/chat" })` pattern

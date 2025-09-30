@@ -14,7 +14,7 @@ export function CustomMessageInput() {
         <div className="flex items-end space-x-2 p-3">
           <div className="flex-1 relative">
             <ComposerPrimitive.Input
-              placeholder="Message HyperFace..."
+              placeholder="Message LoopCraft..."
               className="max-h-32 min-h-12 w-full resize-none bg-transparent px-3 py-3 text-sm outline-none placeholder:text-muted-foreground focus:outline-none"
               rows={1}
               autoFocus

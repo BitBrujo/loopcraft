@@ -3,6 +3,9 @@ import { frontendTools } from "@assistant-ui/react-ai-sdk";
 import { streamText } from "ai";
 import { mcpClientManager } from "@/lib/mcp-client";
 import { loadMCPConfig } from "@/lib/mcp-config";
+import { getUserFromRequest } from "@/lib/auth";
+import { createMessage } from "@/lib/dal/messages";
+import { getConversationById, createConversation } from "@/lib/dal/conversations";
 // import { createUIResource } from "@mcp-ui/server"; // For future use
 
 export const maxDuration = 30;
@@ -36,10 +39,13 @@ export async function POST(req: Request) {
   // Initialize MCP if not already done
   await initializeMCP();
 
+  // Get authenticated user (optional for now - can allow anonymous chat)
+  const user = await getUserFromRequest(req);
+
   const body = await req.json();
   console.log("Received body:", JSON.stringify(body, null, 2));
 
-  const { messages, system, tools } = body;
+  const { messages, system, tools, conversationId } = body;
 
   // Validate messages
   if (!messages || !Array.isArray(messages)) {
@@ -118,10 +124,43 @@ export async function POST(req: Request) {
       model: ollama(modelName),
       // @ts-expect-error - Type conversion is correct, TS inference issue
       messages: convertedMessages,
-      system: system || "You are HyperFace, an advanced AI assistant with access to Model Context Protocol (MCP) tools and resources. You can interact with various external services, file systems, and data sources through MCP. You can also render interactive UI components. You are knowledgeable, helpful, and provide clear, detailed responses.",
+      system: system || "You are LoopCraft, an advanced AI assistant with access to Model Context Protocol (MCP) tools and resources. You can interact with various external services, file systems, and data sources through MCP. You can also render interactive UI components. You are knowledgeable, helpful, and provide clear, detailed responses.",
       tools: {
         ...frontendTools(tools || {}),
         ...mcpToolsForAI,
+      },
+      onFinish: async ({ text, toolCalls, toolResults }) => {
+        // Save messages to database if user is authenticated
+        if (user && conversationId) {
+          try {
+            // Verify conversation exists and belongs to user
+            const conversation = await getConversationById(conversationId);
+            if (conversation && conversation.user_id === user.id) {
+              // Save user message
+              const userMessage = convertedMessages[convertedMessages.length - 1];
+              if (userMessage && userMessage.role === 'user') {
+                await createMessage({
+                  conversation_id: conversationId,
+                  role: 'user',
+                  content: userMessage.content || '',
+                  metadata: {},
+                });
+              }
+
+              // Save assistant message
+              await createMessage({
+                conversation_id: conversationId,
+                role: 'assistant',
+                content: text,
+                tool_calls: toolCalls || {},
+                tool_results: toolResults || {},
+                metadata: {},
+              });
+            }
+          } catch (error) {
+            console.error('Failed to save messages to database:', error);
+          }
+        }
       },
     });
 

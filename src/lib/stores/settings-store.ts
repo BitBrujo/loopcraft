@@ -38,9 +38,9 @@ const defaultSettings: UserSettings = {
   theme: 'system',
   language: 'en',
   notificationsEnabled: true,
-  aiModelPreference: 'gpt-oss:20b',
-  ollamaBaseUrl: 'http://100.87.169.2:11434/api',
-  ollamaModel: 'gpt-oss:20b',
+  aiModelPreference: 'llama3.2:latest',
+  ollamaBaseUrl: 'http://localhost:11434/api',
+  ollamaModel: 'llama3.2:latest',
   mcpAutoConnect: true,
   mcpDebugMode: false,
   dashboardLayout: 'horizontal',
@@ -62,7 +62,7 @@ export const useSettingsStore = create<SettingsState>()(
       setLastSaved: (date) => set({ lastSaved: date }),
     }),
     {
-      name: 'hyperface-settings',
+      name: 'loopcraft-settings',
     }
   )
 );

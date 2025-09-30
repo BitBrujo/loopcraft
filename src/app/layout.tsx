@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "HyperFace - AI Assistant",
+  title: "LoopCraft - AI Assistant",
   description: "Advanced AI chat interface powered by modern technologies",
 };
 

@@ -133,7 +133,7 @@ const ThreadWelcome: FC = () => {
         <div className="aui-thread-welcome-center flex w-full flex-grow flex-col items-center justify-center">
           <div className="aui-thread-welcome-message flex size-full flex-col justify-center px-8 text-center">
             <div className="welcome-message-1 text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Welcome to HyperFace
+              Welcome to LoopCraft
             </div>
             <div className="welcome-message-2 text-lg text-muted-foreground mt-2">
               MCP-UI Lab
@@ -203,7 +203,7 @@ const Composer: FC = () => {
       <ComposerPrimitive.Root className="aui-composer-root relative flex w-full flex-col rounded-2xl border border-border bg-muted/50 backdrop-blur-sm shadow-lg px-1 pt-2">
         <ComposerAttachments />
         <ComposerPrimitive.Input
-          placeholder="Message HyperFace..."
+          placeholder="Message LoopCraft..."
           className="aui-composer-input mb-1 max-h-32 min-h-14 w-full resize-none bg-transparent px-4 pt-3 pb-3 text-sm outline-none placeholder:text-muted-foreground focus:outline-none"
           rows={1}
           autoFocus
