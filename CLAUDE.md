@@ -416,6 +416,39 @@ Access `/settings` to configure:
 
 ### Recent Updates
 
+#### MCP Server Management & Debug Tooling (2025-09-30)
+Enhanced MCP server management with comprehensive debugging capabilities:
+- **Enhanced Error Logging**: Added detailed error logging with stack traces across all MCP API routes
+  - `POST /api/mcp/servers` now logs connection attempts with full command details
+  - `DELETE /api/mcp/servers` logs disconnection operations with error details
+  - `GET /api/mcp/tools` logs tool discovery operations from connected servers
+- **Improved Error Handling**: Better error messages with stack traces and diagnostic details
+- **Debug Tooling**: Added comprehensive console logging with emoji indicators (✅❌🔧📡🎉💥) for better visibility
+- **Interactive UI Examples**: Updated welcome suggestions with MCP-UI component examples:
+  - Greeting card with personalization
+  - Interactive counter component
+  - Contact form with validation
+  - Data visualization with charts
+- **Monaco Editor Improvements**: Suppressed harmless cancellation errors during unmount
+- **Code Splitting**: Dynamic import for MobileSidebar to improve initial page load
+- **Development Dependencies**: Added `tsx` (^4.20.6) for TypeScript execution in development scripts
+- **MCP Configuration**: Enhanced config loading with detailed debug output for troubleshooting connection issues
+
+#### Demo MCP Server (2025-09-30)
+Added comprehensive demo MCP server showcasing MCP-UI capabilities:
+- **Location**: `src/mcp-servers/demo-ui-server.ts`
+- **Framework**: Built with `@mcp-ui/server` SDK demonstrating interactive components
+- **Tools Implemented**:
+  - `greet_user` - Personalized greeting cards with custom styling
+  - `create_counter` - Interactive counters with increment/decrement controls
+  - `show_form` - Contact forms with validation and submission
+  - `show_chart` - Data visualization with bar/line/pie chart options
+- **Startup Scripts**:
+  - `scripts/start-demo-server.ts` - TypeScript launcher for the demo server
+  - `start-dev.sh` - Shell script to run demo server with tsx
+- **Usage**: Perfect for testing MCP-UI integration and developing new interactive tools
+- **Status Endpoint**: Added `GET /api/mcp/status` to monitor MCP server connection health
+
 #### Rebranding to LoopCraft (2025-09-30)
 Complete rebranding from HyperFace to LoopCraft with security hardening:
 - Removed all fallback values for environment variables
