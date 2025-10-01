@@ -60,6 +60,7 @@ src/
 └── lib/
     ├── mcp-client.ts     # MCP client management service (refactored with SDK convenience methods)
     ├── mcp-config.ts     # MCP server configuration
+    ├── mcp-ui-helpers.ts # MCP-UI resource creation helpers (HTML, external URLs, Remote DOM)
     ├── supabase-client.ts # Supabase client setup
     ├── stores/           # Zustand state management
     │   ├── dashboard-store.ts # Dashboard state (logs, metrics, debug)
