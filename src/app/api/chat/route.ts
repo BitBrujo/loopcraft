@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     baseURL: process.env.OLLAMA_BASE_URL,
   });
 
-  const modelName = process.env.OLLAMA_MODEL;
+  const modelName = process.env.OLLAMA_MODEL || 'llama3.2:latest';
 
   try {
     console.log("Model name:", modelName);
@@ -80,13 +80,24 @@ export async function POST(req: Request) {
 
     // Get MCP tools and convert them to AI SDK format
     const mcpTools = await mcpClientManager.getAllTools();
+    console.log("MCP tools fetched:", JSON.stringify(mcpTools, null, 2));
     const mcpToolsForAI = mcpTools.reduce((acc, tool) => {
       acc[`mcp_${tool.serverName}_${tool.name}`] = {
         description: tool.description,
         parameters: tool.inputSchema || {},
         execute: async (args: Record<string, unknown>) => {
           try {
-            const result = await mcpClientManager.callTool(tool.serverName, tool.name, args);
+            const result = await mcpClientManager.callTool(tool.serverName, tool.name, args) as {
+              content?: Array<{
+                type: string;
+                resource?: {
+                  uri?: string;
+                  [key: string]: unknown;
+                };
+                [key: string]: unknown;
+              }>;
+              [key: string]: unknown;
+            };
 
             // Check if the result contains UI resources
             if (result.content) {
@@ -111,6 +122,37 @@ export async function POST(req: Request) {
       return acc;
     }, {} as Record<string, { description?: string; parameters: object; execute: (args: Record<string, unknown>) => Promise<unknown> }>);
 
+    // Define MCP resource fetcher tool separately to avoid type inference issues
+    const getMCPResourceTool = {
+      description: "Fetch a resource from an MCP server",
+      parameters: {
+        type: "object",
+        properties: {
+          serverName: { type: "string", description: "Name of the MCP server" },
+          uri: { type: "string", description: "URI of the resource to fetch" }
+        },
+        required: ["serverName", "uri"]
+      },
+      execute: async ({ serverName, uri }: { serverName: string; uri: string }) => {
+        try {
+          const resource = await mcpClientManager.getResource(serverName, uri);
+
+          // If it's a UI resource, return it in a special format
+          if (uri.startsWith('ui://')) {
+            return {
+              type: 'ui-resource',
+              resource: (resource as { contents?: unknown[] }).contents?.[0] || resource
+            };
+          }
+
+          return resource;
+        } catch (error) {
+          console.error(`Error fetching MCP resource ${uri}:`, error);
+          return { error: `Failed to fetch resource: ${error}` };
+        }
+      }
+    } as { description: string; parameters: object; execute: (args: Record<string, unknown>) => Promise<unknown> };
+
     const result = streamText({
       model: ollama(modelName),
       // @ts-expect-error - Type conversion is correct, TS inference issue
@@ -119,36 +161,8 @@ export async function POST(req: Request) {
       tools: {
         ...frontendTools(tools || {}),
         ...mcpToolsForAI,
-        // MCP resource fetcher tool
-        getMCPResource: {
-          description: "Fetch a resource from an MCP server",
-          parameters: {
-            type: "object",
-            properties: {
-              serverName: { type: "string", description: "Name of the MCP server" },
-              uri: { type: "string", description: "URI of the resource to fetch" }
-            },
-            required: ["serverName", "uri"]
-          },
-          execute: async ({ serverName, uri }: { serverName: string; uri: string }) => {
-            try {
-              const resource = await mcpClientManager.getResource(serverName, uri);
-
-              // If it's a UI resource, return it in a special format
-              if (uri.startsWith('ui://')) {
-                return {
-                  type: 'ui-resource',
-                  resource: resource.contents?.[0] || resource
-                };
-              }
-
-              return resource;
-            } catch (error) {
-              console.error(`Error fetching MCP resource ${uri}:`, error);
-              return { error: `Failed to fetch resource: ${error}` };
-            }
-          }
-        }
+        // @ts-expect-error - Tool schema type inference issue with AI SDK
+        getMCPResource: getMCPResourceTool,
       },
     });
 
