@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type PanelView = 'resources' | 'config' | 'metrics' | 'debugger' | 'console';
+export type PanelView = 'resources' | 'config' | 'metrics' | 'debugger' | 'console' | 'ui-builder';
 
 export interface LogEntry {
   id: string;

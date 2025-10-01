@@ -9,6 +9,7 @@ import {
   BugIcon,
   TerminalIcon,
   RefreshCwIcon,
+  LayoutTemplateIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AppHeader } from '@/components/chat/AppHeader';
@@ -18,6 +19,7 @@ import { ConfigEditor } from '@/components/dashboard/ConfigEditor';
 import { MetricsDashboard } from '@/components/dashboard/MetricsDashboard';
 import { DebuggerPanel } from '@/components/dashboard/DebuggerPanel';
 import { ConsolePanel } from '@/components/dashboard/ConsolePanel';
+import { UIBuilderPanel } from '@/components/dashboard/UIBuilderPanel';
 import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
@@ -27,6 +29,7 @@ export default function DashboardPage() {
   const panels = [
     { id: 'resources', label: 'Resources', icon: DatabaseIcon, component: ResourceExplorer },
     { id: 'config', label: 'Config', icon: SettingsIcon, component: ConfigEditor },
+    { id: 'ui-builder', label: 'UI Builder', icon: LayoutTemplateIcon, component: UIBuilderPanel },
     { id: 'metrics', label: 'Metrics', icon: ActivityIcon, component: MetricsDashboard },
     { id: 'debugger', label: 'Debugger', icon: BugIcon, component: DebuggerPanel },
     { id: 'console', label: 'Console', icon: TerminalIcon, component: ConsolePanel },
