@@ -270,6 +270,8 @@ export function BuilderLayout() {
         <ExportDialog
           onClose={() => setShowExportDialog(false)}
           resource={currentResource}
+          actionMappings={actionMappings}
+          mcpContext={mcpContext}
         />
       )}
     </div>
