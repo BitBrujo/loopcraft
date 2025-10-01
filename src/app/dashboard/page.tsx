@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import {
   DatabaseIcon,
@@ -8,7 +9,9 @@ import {
   ActivityIcon,
   BugIcon,
   TerminalIcon,
-  RefreshCwIcon
+  RefreshCwIcon,
+  Home,
+  LayoutDashboard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDashboardStore } from '@/lib/stores/dashboard-store';
@@ -37,8 +40,25 @@ export default function DashboardPage() {
     <div className="flex h-screen flex-col bg-background">
       {/* Header */}
       <div className="flex h-14 items-center justify-between border-b border-border bg-card/30 px-4">
-        <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold">LoopCraft Dashboard</h1>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <Home className="size-4" />
+                Home
+              </Button>
+            </Link>
+            <Button variant="ghost" size="sm" className="gap-2 bg-accent">
+              <LayoutDashboard className="size-4" />
+              Dashboard
+            </Button>
+            <Link href="/settings">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <SettingsIcon className="size-4" />
+                Settings
+              </Button>
+            </Link>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Button

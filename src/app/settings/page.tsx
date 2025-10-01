@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Save, Plus, Trash2, Power, PowerOff } from 'lucide-react';
+import Link from 'next/link';
+import { Save, Plus, Trash2, Power, PowerOff, Home, LayoutDashboard, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -107,7 +108,24 @@ export default function SettingsPage() {
     <div className="flex h-screen flex-col bg-background">
       {/* Header */}
       <div className="flex h-14 items-center justify-between border-b border-border bg-card/30 px-4">
-        <h1 className="text-lg font-semibold">Settings</h1>
+        <div className="flex items-center gap-2">
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <Home className="size-4" />
+              Home
+            </Button>
+          </Link>
+          <Link href="/dashboard">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <LayoutDashboard className="size-4" />
+              Dashboard
+            </Button>
+          </Link>
+          <Button variant="ghost" size="sm" className="gap-2 bg-accent">
+            <Settings className="size-4" />
+            Settings
+          </Button>
+        </div>
         <Button onClick={handleSaveSettings} disabled={isSaving} className="gap-2">
           <Save className="size-4" />
           {isSaving ? 'Saving...' : 'Save Settings'}
