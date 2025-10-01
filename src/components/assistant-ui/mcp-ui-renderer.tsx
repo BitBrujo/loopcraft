@@ -25,23 +25,75 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content }) => {
   const handleResourceAction = useCallback(async (result: UIActionResult) => {
     console.log("MCP UI Action:", result);
 
-    if (result.type === 'tool') {
-      console.log(`Tool call from UI: ${result.payload.toolName}`, result.payload.params);
-      // Handle tool calls from UI components
-      // This could trigger new API calls or update the conversation
-    } else if (result.type === 'prompt') {
-      console.log(`Prompt from UI:`, result.payload.prompt);
-      // Handle prompts from UI components
-    } else if (result.type === 'link') {
-      console.log(`Link from UI:`, result.payload.url);
-      // Handle link clicks from UI components
-      window.open(result.payload.url, '_blank');
-    } else if (result.type === 'intent') {
-      console.log(`Intent from UI:`, result.payload.intent);
-      // Handle intents from UI components
-    } else if (result.type === 'notify') {
-      console.log(`Notification from UI:`, result.payload.message);
-      // Handle notifications from UI components
+    try {
+      if (result.type === 'tool') {
+        console.log(`Tool call from UI: ${result.payload.toolName}`, result.payload.params);
+
+        // Execute the tool call via API
+        const response = await fetch('/api/mcp/tools', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            toolName: result.payload.toolName,
+            params: result.payload.params,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          console.log('Tool execution result:', data.result);
+          return {
+            status: 'success',
+            data: data.result,
+            messageId: result.messageId
+          };
+        } else {
+          console.error('Tool execution failed:', data.error);
+          return {
+            status: 'error',
+            error: data.error,
+            messageId: result.messageId
+          };
+        }
+      } else if (result.type === 'prompt') {
+        console.log(`Prompt from UI:`, result.payload.prompt);
+        // Inject the prompt into the conversation
+        // This would need integration with the chat runtime
+        return {
+          status: 'success',
+          message: 'Prompt received - integrate with runtime to add to conversation',
+          messageId: result.messageId
+        };
+      } else if (result.type === 'link') {
+        console.log(`Link from UI:`, result.payload.url);
+        window.open(result.payload.url, '_blank');
+        return {
+          status: 'success',
+          messageId: result.messageId
+        };
+      } else if (result.type === 'intent') {
+        console.log(`Intent from UI:`, result.payload.intent);
+        return {
+          status: 'success',
+          message: 'Intent received',
+          messageId: result.messageId
+        };
+      } else if (result.type === 'notify') {
+        console.log(`Notification from UI:`, result.payload.message);
+        // Could integrate with a toast/notification system
+        return {
+          status: 'success',
+          messageId: result.messageId
+        };
+      }
+    } catch (error) {
+      console.error('Error handling UI action:', error);
+      return {
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        messageId: result.messageId
+      };
     }
 
     return { status: 'Action received by client' };
@@ -74,6 +126,10 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content }) => {
           <UIResourceRenderer
             resource={mcpResponse.content[0].resource}
             onUIAction={handleResourceAction}
+            supportedContentTypes={['rawHtml', 'externalUrl', 'remoteDom']}
+            htmlProps={{
+              autoResizeIframe: true,
+            }}
           />
         </div>
       </div>

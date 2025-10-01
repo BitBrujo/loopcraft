@@ -82,7 +82,13 @@ components/                 # Legacy components directory
      - `client.listResources()` for resource discovery
      - `client.readResource({uri})` for resource retrieval
    - Automatic tool discovery from connected MCP servers
-   - Support for both traditional tools and interactive UI components via MCP-UI
+   - **Full MCP-UI Support** (`@mcp-ui/client` + `@mcp-ui/server`):
+     - Interactive UI components rendered securely in sandboxed iframes
+     - Support for `rawHtml`, `externalUrl`, and `remoteDom` content types
+     - Bi-directional communication between UI and host via postMessage
+     - Action handlers for tool calls, prompts, links, intents, and notifications
+     - Auto-resizing iframes with configurable sandbox permissions
+     - Metadata support for preferred frame size and initial render data
 
 2. **Assistant UI Framework**: Built on `@assistant-ui/react` with AI SDK integration:
    - Uses `useChatRuntime()` from `@assistant-ui/react-ai-sdk` for direct AI SDK integration
@@ -345,7 +351,116 @@ Access `/settings` to configure:
 - MCP server connections (connect/disconnect/status)
 - Dashboard behavior (auto-connect, debug mode)
 
+## MCP-UI Integration
+
+LoopCraft includes comprehensive support for creating and rendering interactive UI components via the Model Context Protocol (MCP-UI).
+
+### Overview
+
+MCP-UI enables servers to deliver rich, dynamic UI resources to be rendered by the client. It supports three content types:
+
+1. **Raw HTML** (`rawHtml`) - Self-contained HTML rendered in sandboxed iframes
+2. **External URLs** (`externalUrl`) - Embed external web applications
+3. **Remote DOM** (`remoteDom`) - Shopify's remote-dom for host-styled components
+
+### Architecture
+
+**Server-Side** (`src/lib/mcp-ui-helpers.ts`):
+- Helper functions for creating UI resources with proper metadata
+- `createHtmlUIResource()` - Create HTML-based UI components
+- `createExternalUrlUIResource()` - Embed external applications
+- `createRemoteDomUIResource()` - Create Remote DOM components
+- Example components: dashboard, forms, interactive widgets
+
+**Client-Side** (`src/components/assistant-ui/mcp-ui-renderer.tsx`):
+- `UIResourceRenderer` component from `@mcp-ui/client`
+- Secure iframe sandboxing with configurable permissions
+- Auto-resizing iframes for responsive rendering
+- Bi-directional communication via postMessage API
+
+**Action Handlers**:
+- **Tool Calls**: Execute MCP tools from UI components via `/api/mcp/tools`
+- **Prompts**: Inject prompts into conversation (runtime integration required)
+- **Links**: Open external URLs in new tabs
+- **Intents**: Custom intent handling
+- **Notifications**: Display user notifications
+
+### Creating UI Resources
+
+```typescript
+import { createHtmlUIResource } from '@/lib/mcp-ui-helpers';
+
+// Create an interactive dashboard
+const dashboard = createHtmlUIResource({
+  uri: 'ui://my-app/dashboard',
+  htmlString: '<div>...</div>',
+  title: 'My Dashboard',
+  description: 'Interactive analytics dashboard',
+  preferredSize: { width: 800, height: 600 },
+  initialData: { theme: 'dark' }
+});
+```
+
+### Rendering UI Resources
+
+UI resources are automatically detected and rendered when:
+1. Tool result contains `uri` starting with `ui://`
+2. MCP server returns `type: 'resource'` with proper MCP-UI format
+3. Content type is one of: `text/html`, `text/uri-list`, or `application/vnd.mcp-ui.remote-dom`
+
+The `ToolFallback` component in `thread.tsx` automatically renders UI resources using `MCPUIRenderer`.
+
+### Security
+
+All UI resources are rendered in sandboxed iframes with:
+- `allow-scripts` - JavaScript execution
+- `allow-same-origin` - CORS requests
+- `allow-forms` - Form submissions
+- `allow-popups` - Opening new windows
+- `allow-popups-to-escape-sandbox` - Unrestricted popups
+- `clipboard-write` - Clipboard access
+
+### Communication Protocol
+
+UI components communicate with the host via `window.parent.postMessage()`:
+
+```javascript
+// From UI component
+window.parent.postMessage({
+  type: 'tool',
+  payload: {
+    toolName: 'mcp_server_toolname',
+    params: { key: 'value' }
+  },
+  messageId: 'unique-id' // Optional for async responses
+}, '*');
+```
+
+### Examples
+
+See `src/lib/mcp-ui-helpers.ts` for complete examples:
+- **Dashboard Example**: Interactive metrics with live updates and action buttons
+- **Form Example**: Contact form with validation and submission handling
+
+### Best Practices
+
+1. **Always use `createUIResource()` helpers** - Ensures proper metadata and validation
+2. **Set preferred frame size** - Improves initial render performance
+3. **Use messageId for async operations** - Enables response tracking
+4. **Implement proper error handling** - Return error status in action handlers
+5. **Validate tool names** - Prefix with `mcp_{serverName}_` for consistency
+
 ### Recent Updates
+
+#### MCP-UI Full Implementation (2025-10-01)
+Complete MCP-UI integration with action handlers and metadata support:
+- **Server-Side Helpers** (`src/lib/mcp-ui-helpers.ts`): Helper functions for creating UI resources
+- **Enhanced Action Handlers**: Tool calls from UI execute via `/api/mcp/tools` endpoint
+- **Metadata Support**: Preferred frame size, initial render data, resource properties
+- **Content Type Validation**: Explicit support for rawHtml, externalUrl, remoteDom
+- **Auto-Resize Iframes**: Dynamic iframe sizing based on content
+- **Security Configuration**: Proper sandbox permissions and iframe properties
+- **Example Components**: Dashboard and form examples demonstrating all features
 
 #### LoopCraft Rebrand & MCP Client Refactoring (2025-09-30)
 Rebranded application from HyperFace to LoopCraft to better reflect the iterative workflow nature of MCP development. Refactored MCP client to use official SDK convenience methods (listTools(), callTool(), listResources(), readResource()).

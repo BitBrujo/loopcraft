@@ -3,7 +3,9 @@ import { frontendTools } from "@assistant-ui/react-ai-sdk";
 import { streamText } from "ai";
 import { mcpClientManager } from "@/lib/mcp-client";
 import { loadMCPConfig } from "@/lib/mcp-config";
-// import { createUIResource } from "@mcp-ui/server"; // For future use
+// Import for MCP UI resource creation - used by MCP servers via helper functions
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { createUIResource } from "@mcp-ui/server";
 
 export const maxDuration = 30;
 
