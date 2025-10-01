@@ -87,31 +87,8 @@ export async function POST(req: Request) {
         parameters: tool.inputSchema || {},
         execute: async (args: Record<string, unknown>) => {
           try {
-            const result = await mcpClientManager.callTool(tool.serverName, tool.name, args) as {
-              content?: Array<{
-                type: string;
-                resource?: {
-                  uri?: string;
-                  [key: string]: unknown;
-                };
-                [key: string]: unknown;
-              }>;
-              [key: string]: unknown;
-            };
-
-            // Check if the result contains UI resources
-            if (result.content) {
-              for (const content of result.content) {
-                if (content.type === 'resource' && content.resource?.uri?.startsWith('ui://')) {
-                  // This is a UI resource, return it in a format that can be rendered
-                  return {
-                    type: 'ui-resource',
-                    resource: content.resource
-                  };
-                }
-              }
-            }
-
+            const result = await mcpClientManager.callTool(tool.serverName, tool.name, args);
+            // Return the MCP tool result as-is in standard MCP format
             return result;
           } catch (error) {
             console.error(`Error calling MCP tool ${tool.name}:`, error);
@@ -136,15 +113,7 @@ export async function POST(req: Request) {
       execute: async ({ serverName, uri }: { serverName: string; uri: string }) => {
         try {
           const resource = await mcpClientManager.getResource(serverName, uri);
-
-          // If it's a UI resource, return it in a special format
-          if (uri.startsWith('ui://')) {
-            return {
-              type: 'ui-resource',
-              resource: (resource as { contents?: unknown[] }).contents?.[0] || resource
-            };
-          }
-
+          // Return the MCP resource as-is in standard MCP format
           return resource;
         } catch (error) {
           console.error(`Error fetching MCP resource ${uri}:`, error);

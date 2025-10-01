@@ -1,5 +1,5 @@
-import { UIResourceRenderer, UIActionResult } from "@mcp-ui/client";
-import { useCallback, createElement } from "react";
+import { UIResourceRenderer, UIActionResult, isUIResource } from "@mcp-ui/client";
+import { useCallback } from "react";
 
 interface MCPUIRendererProps {
   content: {
@@ -8,96 +8,70 @@ interface MCPUIRendererProps {
       uri?: string;
       mimeType?: string;
       text?: string;
-      htmlString?: string;
+      blob?: string;
+      _meta?: Record<string, unknown>;
     };
-    content?: Array<{
-      type: string;
-      resource?: {
-        uri?: string;
-        mimeType?: string;
-        text?: string;
-      };
-    }>;
   };
 }
 
 export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content }) => {
-  const handleResourceAction = useCallback(async (result: UIActionResult) => {
+  const handleUIAction = useCallback(async (result: UIActionResult) => {
     console.log("MCP UI Action:", result);
 
     if (result.type === 'tool') {
       console.log(`Tool call from UI: ${result.payload.toolName}`, result.payload.params);
-      // Handle tool calls from UI components
+      // TODO: Handle tool calls from UI components
       // This could trigger new API calls or update the conversation
     } else if (result.type === 'prompt') {
       console.log(`Prompt from UI:`, result.payload.prompt);
-      // Handle prompts from UI components
+      // TODO: Handle prompts from UI components
     } else if (result.type === 'link') {
       console.log(`Link from UI:`, result.payload.url);
       // Handle link clicks from UI components
       window.open(result.payload.url, '_blank');
     } else if (result.type === 'intent') {
       console.log(`Intent from UI:`, result.payload.intent);
-      // Handle intents from UI components
+      // TODO: Handle intents from UI components
     } else if (result.type === 'notify') {
       console.log(`Notification from UI:`, result.payload.message);
-      // Handle notifications from UI components
+      // TODO: Handle notifications from UI components
     }
 
-    return { status: 'Action received by client' };
+    return { status: 'handled' };
   }, []);
 
-  // Check if this content is a UI resource
-  if (content?.type === 'ui-resource' && content.resource) {
-    const resource = content.resource;
-
-    // Create a mock MCP response structure for UIResourceRenderer
-    const mcpResponse = {
-      content: [
-        {
-          type: 'resource',
-          resource: {
-            uri: resource.uri || 'ui://dynamic-content',
-            mimeType: resource.mimeType || 'text/html',
-            text: resource.text || resource.htmlString || JSON.stringify(resource),
-          },
-        },
-      ],
-    };
-
-    return (
-      <div className="mcp-ui-container border rounded-lg p-4 my-4 bg-card">
-        <div className="mcp-ui-header text-sm text-muted-foreground mb-2">
-          Interactive MCP Component
-        </div>
-        <div className="mcp-ui-content">
-          {/* Type assertion to bypass API mismatch with @mcp-ui/client */}
-          {createElement(UIResourceRenderer as unknown as React.ComponentType<{
-            mcpData: unknown;
-            onResourceAction: (result: UIActionResult) => Promise<{ status: string }>;
-          }>, {
-            mcpData: mcpResponse,
-            onResourceAction: handleResourceAction,
-          })}
-        </div>
-      </div>
-    );
+  // Check if this content is a UI resource using the official utility
+  if (!isUIResource(content)) {
+    return null;
   }
 
-  // If it's not a UI resource, don't render anything
-  return null;
+  const resource = content.resource;
+  if (!resource) {
+    return null;
+  }
+
+  return (
+    <div className="mcp-ui-container border rounded-lg p-4 my-4 bg-card">
+      <div className="mcp-ui-header text-sm text-muted-foreground mb-2">
+        Interactive MCP Component
+      </div>
+      <div className="mcp-ui-content">
+        <UIResourceRenderer
+          resource={resource}
+          onUIAction={handleUIAction}
+          htmlProps={{
+            autoResizeIframe: true,
+          }}
+        />
+      </div>
+    </div>
+  );
 };
 
 // Tool component that specifically handles MCP UI resources
 export const MCPUITool = ({ result }: { result: unknown }) => {
-  // Check if this tool result contains UI resources
-  const resultObj = result as { type?: string; content?: Array<{ type: string; resource?: { uri?: string } }> };
-  const hasUIResource = resultObj?.type === 'ui-resource' ||
-                        (resultObj?.content && Array.isArray(resultObj.content) &&
-                         resultObj.content.some((item) =>
-                           item.type === 'resource' && item.resource?.uri?.startsWith('ui://')));
-
-  if (!hasUIResource) {
+  // Use the official isUIResource utility to check if this is a UI resource
+  if (!isUIResource(result)) {
     return null;
   }
 
