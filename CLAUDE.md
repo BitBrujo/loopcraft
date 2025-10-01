@@ -28,7 +28,7 @@ LoopCraft is a Next.js 15 AI chat application that provides a modern interface f
 - **Ollama** for local AI model inference via `ollama-ai-provider-v2` ^1.3.1 (actively maintained)
 - **MCP SDK** (`@modelcontextprotocol/sdk` ^1.18.2) for Model Context Protocol integration
 - **MCP-UI** (`@mcp-ui/client` ^5.12.0, `@mcp-ui/server` ^5.11.0) for interactive UI components
-- **Supabase** for backend database, authentication, and storage (`@supabase/mcp-server-supabase@latest` via MCP)
+- **MySQL 8.0** for local database via Docker (`mysql2` ^3.15.1) with persistent storage
 
 ### Project Structure
 
@@ -36,9 +36,13 @@ LoopCraft is a Next.js 15 AI chat application that provides a modern interface f
 src/
 ├── app/                    # Next.js app router
 │   ├── api/
+│   │   ├── auth/          # Authentication endpoints (login)
 │   │   ├── chat/          # Chat API endpoint (MCP + Ollama integration)
+│   │   ├── conversations/ # Conversation management API
 │   │   ├── mcp/           # MCP API routes (servers, resources, tools)
-│   │   └── metrics/       # Metrics collection endpoint
+│   │   ├── metrics/       # Metrics collection endpoint
+│   │   ├── settings/      # User settings API
+│   │   └── templates/     # UI Builder templates API
 │   ├── dashboard/         # MCP-UI Lab dashboard page
 │   ├── settings/          # Settings and configuration page
 │   ├── layout.tsx         # Root layout with theme provider
@@ -81,15 +85,21 @@ src/
 │   ├── providers/        # React context providers (theme provider)
 │   └── ui/              # shadcn/ui components (button, dialog, sheet, etc.)
 └── lib/
+    ├── db.ts             # MySQL database connection pool and query helpers
+    ├── db/               # Database layer
+    │   ├── schema.sql    # Database schema (tables, indexes, constraints)
+    │   ├── users.ts      # User data access operations
+    │   ├── settings.ts   # Settings data access operations
+    │   ├── conversations.ts # Conversation/message data access operations
+    │   └── templates.ts  # Template data access operations
     ├── mcp-client.ts     # MCP client management service (refactored with SDK convenience methods)
     ├── mcp-config.ts     # MCP server configuration
     ├── mcp-ui-helpers.ts # MCP-UI resource creation helpers (HTML, external URLs, Remote DOM)
-    ├── supabase-client.ts # Supabase client setup
     ├── stores/           # Zustand state management
     │   ├── dashboard-store.ts  # Dashboard state (logs, metrics, debug)
     │   ├── mcp-store.ts        # MCP state (servers, resources, tools)
-    │   ├── settings-store.ts   # User settings (persisted)
-    │   └── ui-builder-store.ts # Function Builder state (context, mappings, validation)
+    │   ├── settings-store.ts   # User settings (API-backed)
+    │   └── ui-builder-store.ts # Function Builder state (API-backed templates)
     ├── utils.ts          # Utility functions (cn, etc.)
     └── CLAUDE.md         # Documentation for src/lib directory
 components/                 # Legacy components directory
@@ -138,40 +148,54 @@ components/                 # Legacy components directory
    - Interactive UI resource rendering via MCP-UI
    - System prompt configuration enhanced for MCP capabilities
 
-5. **Backend Architecture**: Supabase-powered backend with comprehensive data management:
-   - **Authentication**: Built on Supabase Auth with automatic user profile creation
-   - **Database**: PostgreSQL with full Row Level Security (RLS) policies
-   - **MCP Integration**: Direct database access via Supabase MCP server
-   - **Storage**: File upload management with temporary file support (TTL-based cleanup)
-   - **Real-time**: Ready for real-time subscriptions via Supabase Realtime
+5. **Database Architecture**: Local MySQL 8.0 database with Docker containerization:
+   - **Database**: MySQL 8.0 running in Docker container with persistent volumes
+   - **Connection Pool**: `mysql2/promise` connection pooling for efficient queries
+   - **Data Access Layer**: Type-safe TypeScript DAL for users, settings, conversations, templates
+   - **API Routes**: RESTful API endpoints for all data operations
+   - **State Management**: Zustand stores with API synchronization (replacing localStorage)
 
 ### Environment Configuration
 
 **Required environment variables** (must be set in `.env.local` - no fallbacks):
 
+- `MYSQL_HOST` - MySQL server host (default: localhost)
+- `MYSQL_PORT` - MySQL server port (default: 3306)
+- `MYSQL_DATABASE` - Database name (default: loopcraft)
+- `MYSQL_USER` - Database user (default: loopcraft)
+- `MYSQL_PASSWORD` - Database password
 - `OLLAMA_BASE_URL` - Ollama server URL (must include `/api` path)
 - `OLLAMA_MODEL` - Model name to use
-- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous/public API key
-- `SUPABASE_ACCESS_TOKEN` - Personal access token for Supabase MCP server
-- `SUPABASE_PROJECT_REF` - Supabase project reference ID
+- `JWT_SECRET` - Secret key for JWT token signing
+- `JWT_EXPIRES_IN` - JWT token expiration time (default: 7d)
 
 **Optional environment variables**:
 
 - `MCP_CONFIG` - JSON string defining MCP servers to connect to
+- `NEXT_PUBLIC_APP_URL` - Application URL
 
-**Current Configuration (from .env.local):**
+**Example Configuration (.env.local):**
 ```
-OLLAMA_BASE_URL=http://100.87.169.2:11434/api
+# MySQL Database Configuration
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_DATABASE=loopcraft
+MYSQL_USER=loopcraft
+MYSQL_PASSWORD=your_secure_password_here
+
+# Ollama AI Configuration
+OLLAMA_BASE_URL=http://localhost:11434/api
 OLLAMA_MODEL=gpt-oss:20b
 
-NEXT_PUBLIC_SUPABASE_URL=https://gvnypwkxumqznqcxzulm.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-SUPABASE_ACCESS_TOKEN=sbp_****** (personal access token - keep secure!)
-SUPABASE_PROJECT_REF=gvnypwkxumqznqcxzulm
+# Authentication Configuration
+JWT_SECRET=your-secret-key-change-in-production
+JWT_EXPIRES_IN=7d
 
-# Supabase MCP Server Configuration
-MCP_CONFIG={"servers":[{"name":"supabase","command":["npx","-y","@supabase/mcp-server-supabase@latest","--project-ref=gvnypwkxumqznqcxzulm"],"type":"stdio","env":{"SUPABASE_ACCESS_TOKEN":"sbp_******"}}]}
+# Application Configuration
+NEXT_PUBLIC_APP_URL=http://localhost:3004
+
+# MCP Configuration
+MCP_CONFIG='{"servers":[{"name":"memory","command":["npx","-y","@modelcontextprotocol/server-memory"],"type":"stdio"}]}'
 ```
 
 **Available Model Options:**
@@ -184,17 +208,14 @@ MCP_CONFIG={"servers":[{"name":"supabase","command":["npx","-y","@supabase/mcp-s
 
 **MCP Server Configuration Examples:**
 ```
-# Supabase MCP server (current setup - full read/write access):
-MCP_CONFIG={"servers":[{"name":"supabase","command":["npx","-y","@supabase/mcp-server-supabase@latest","--project-ref=YOUR_PROJECT_REF"],"type":"stdio","env":{"SUPABASE_ACCESS_TOKEN":"YOUR_TOKEN"}}]}
-
-# Supabase MCP server (read-only mode for safety):
-MCP_CONFIG={"servers":[{"name":"supabase","command":["npx","-y","@supabase/mcp-server-supabase@latest","--read-only","--project-ref=YOUR_PROJECT_REF"],"type":"stdio","env":{"SUPABASE_ACCESS_TOKEN":"YOUR_TOKEN"}}]}
+# Memory server (current setup - simple in-memory storage):
+MCP_CONFIG='{"servers":[{"name":"memory","command":["npx","-y","@modelcontextprotocol/server-memory"],"type":"stdio"}]}'
 
 # Basic filesystem server for current directory:
-MCP_CONFIG={"servers":[{"name":"filesystem","command":["npx","-y","@modelcontextprotocol/server-filesystem","."],"type":"stdio"}]}
+MCP_CONFIG='{"servers":[{"name":"filesystem","command":["npx","-y","@modelcontextprotocol/server-filesystem","."],"type":"stdio"}]}'
 
-# Multiple servers (Supabase + filesystem):
-MCP_CONFIG={"servers":[{"name":"supabase","command":["npx","-y","@supabase/mcp-server-supabase@latest","--project-ref=YOUR_PROJECT_REF"],"type":"stdio","env":{"SUPABASE_ACCESS_TOKEN":"YOUR_TOKEN"}},{"name":"filesystem","command":["npx","-y","@modelcontextprotocol/server-filesystem","."],"type":"stdio"}]}
+# Multiple servers (memory + filesystem):
+MCP_CONFIG='{"servers":[{"name":"memory","command":["npx","-y","@modelcontextprotocol/server-memory"],"type":"stdio"},{"name":"filesystem","command":["npx","-y","@modelcontextprotocol/server-filesystem","."],"type":"stdio"}]}'
 ```
 
 ### Styling System
@@ -241,108 +262,124 @@ MCP_CONFIG={"servers":[{"name":"supabase","command":["npx","-y","@supabase/mcp-s
 - `@monaco-editor/react` (^4.7.0) - Monaco code editor for JSON config editing
 - `date-fns` (^4.1.0) - Date formatting and manipulation
 - `zustand` (^5.0.8) - State management for dashboard and settings
-- `@supabase/supabase-js` (^2.58.0) - Supabase JavaScript client
+- `mysql2` (^3.15.1) - MySQL client for Node.js with promise support
+- `jsonwebtoken` - JWT authentication token generation and verification
 
 ## Database Schema
 
+### Setup and Initialization
+
+LoopCraft uses MySQL 8.0 running in a Docker container for local development. The database is automatically initialized using the provided script:
+
+```bash
+# Start MySQL container and initialize database
+./scripts/init-db.sh
+```
+
+This script will:
+- Start the Docker container (if not already running)
+- Create the database schema
+- Set up a demo user (username: `demo`, password: `demo123`)
+- Verify the installation
+
 ### Tables Overview
 
-1. **user_profiles** - Extended user profile information
-   - `id` (UUID, FK to auth.users)
-   - `username` (TEXT, unique)
-   - `display_name` (TEXT)
+1. **users** - User accounts and authentication
+   - `id` (CHAR(36), primary key, UUID)
+   - `username` (VARCHAR(50), unique, NOT NULL)
+   - `email` (VARCHAR(255), unique, NOT NULL)
+   - `password_hash` (VARCHAR(255), NOT NULL)
+   - `display_name` (VARCHAR(100))
    - `avatar_url` (TEXT)
    - `bio` (TEXT)
    - Timestamps: `created_at`, `updated_at`
 
 2. **user_settings** - Per-user application settings
-   - `id` (UUID, primary key)
-   - `user_id` (UUID, FK to auth.users, unique)
-   - `theme` (TEXT: 'light', 'dark', 'system')
-   - `language` (TEXT, default 'en')
+   - `id` (CHAR(36), primary key, UUID)
+   - `user_id` (CHAR(36), unique, FK to users)
+   - `theme` (VARCHAR: 'light', 'dark', 'system')
+   - `language` (VARCHAR, default 'en')
    - `notifications_enabled` (BOOLEAN)
-   - `ai_model_preference` (TEXT)
-   - `custom_settings` (JSONB) - Flexible settings storage
+   - `ai_model_preference`, `ollama_base_url`, `ollama_model` (VARCHAR)
+   - `mcp_auto_connect`, `mcp_debug_mode` (BOOLEAN)
+   - `dashboard_layout` (VARCHAR: 'horizontal', 'vertical')
+   - `panel_sizes`, `custom_settings` (JSON)
    - Timestamps: `created_at`, `updated_at`
 
 3. **conversations** - Chat conversation threads
-   - `id` (UUID, primary key)
-   - `user_id` (UUID, FK to auth.users)
-   - `title` (TEXT)
-   - `model` (TEXT) - AI model used
+   - `id` (CHAR(36), primary key, UUID)
+   - `user_id` (CHAR(36), FK to users)
+   - `title` (VARCHAR(255), default 'New Conversation')
+   - `model` (VARCHAR(100)) - AI model used
    - `system_prompt` (TEXT)
-   - `metadata` (JSONB) - Additional conversation metadata
+   - `metadata` (JSON) - Additional conversation metadata
    - Timestamps: `created_at`, `updated_at`
 
 4. **messages** - Individual chat messages
-   - `id` (UUID, primary key)
-   - `conversation_id` (UUID, FK to conversations)
-   - `role` (TEXT: 'user', 'assistant', 'system', 'tool')
+   - `id` (CHAR(36), primary key, UUID)
+   - `conversation_id` (CHAR(36), FK to conversations)
+   - `role` (VARCHAR: 'user', 'assistant', 'system', 'tool')
    - `content` (TEXT)
-   - `tool_calls` (JSONB) - Tool invocations
-   - `tool_results` (JSONB) - Tool execution results
-   - `metadata` (JSONB)
-   - `created_at` (TIMESTAMPTZ)
+   - `tool_calls`, `tool_results`, `metadata` (JSON)
+   - `created_at` (TIMESTAMP)
 
 5. **mcp_servers** - User-configured MCP server definitions
-   - `id` (UUID, primary key)
-   - `user_id` (UUID, FK to auth.users)
-   - `name` (TEXT, unique per user)
-   - `command` (TEXT[]) - Command array to spawn server
-   - `type` (TEXT: 'stdio', 'http')
-   - `env` (JSONB) - Environment variables
+   - `id` (CHAR(36), primary key, UUID)
+   - `user_id` (CHAR(36), FK to users)
+   - `name` (VARCHAR(100), unique per user)
+   - `command` (JSON) - Command array to spawn server
+   - `type` (VARCHAR: 'stdio', 'http')
+   - `env` (JSON) - Environment variables
    - `enabled` (BOOLEAN)
    - `description` (TEXT)
    - Timestamps: `created_at`, `updated_at`
 
-6. **file_uploads** - File upload tracking with temporary file support
-   - `id` (UUID, primary key)
-   - `user_id` (UUID, FK to auth.users)
-   - `conversation_id` (UUID, FK to conversations, nullable)
-   - `file_name` (TEXT)
-   - `file_path` (TEXT) - Storage path
-   - `file_size` (BIGINT)
-   - `mime_type` (TEXT)
-   - `is_temporary` (BOOLEAN) - For auto-cleanup
-   - `expires_at` (TIMESTAMPTZ) - TTL for temp files
-   - `metadata` (JSONB)
-   - `created_at` (TIMESTAMPTZ)
+6. **ui_builder_templates** - Saved UI Builder templates
+   - `id` (CHAR(36), primary key, UUID)
+   - `user_id` (CHAR(36), FK to users)
+   - `name` (VARCHAR(255), unique per user/category)
+   - `category` (VARCHAR(100))
+   - `description` (TEXT)
+   - `resource` (JSON) - UIResourceDraft object
+   - `action_mappings` (JSON) - Action mappings array
+   - Timestamps: `created_at`, `updated_at`
 
-### Security Features
+### Database Features
 
-- **Row Level Security (RLS)**: Enabled on all tables
-- **User Isolation**: All policies enforce user-level data access
-- **Automatic Profile Creation**: Trigger creates profile and settings on user signup
-- **Updated Timestamps**: Automatic `updated_at` triggers on relevant tables
-- **Temporary File Cleanup**: Function `delete_expired_files()` for TTL-based cleanup
+- **Foreign Key Constraints**: CASCADE delete for data integrity
+- **Automatic UUID Generation**: UUID() function for primary keys
+- **Automatic Timestamps**: ON UPDATE CURRENT_TIMESTAMP for `updated_at`
+- **Indexes**: Optimized for common query patterns (username, user_id, created_at, etc.)
+- **JSON Support**: Native JSON columns for flexible metadata storage
+- **Demo User**: Pre-created demo user for quick testing
 
-### Indexes
+### Docker Configuration
 
-- Optimized for common query patterns:
-  - User lookups (username, user_id)
-  - Conversation listings (user_id, created_at DESC)
-  - Message retrieval (conversation_id, created_at)
-  - File expiration checks (expires_at for temp files)
+The database runs in a Docker container (`loopcraft-mysql`) with:
+- **Image**: `mysql:8.0`
+- **Port**: `3306` (mapped to host)
+- **Volume**: `loopcraft_mysql_data` for persistent storage
+- **Health Check**: Automatic connection monitoring
+- **Auto-start**: Container configured with `restart: unless-stopped`
 
-## Supabase MCP Server
+### Docker Commands
 
-### Available Tools
+```bash
+# Start database
+docker compose up -d
 
-The Supabase MCP server provides these tools via MCP:
+# Stop database
+docker compose down
 
-- **Database Operations**: `execute_sql`, `list_tables`, `list_migrations`, `apply_migration`
-- **Project Management**: `get_project_url`, `get_anon_key`, `generate_typescript_types`
-- **Edge Functions**: `list_edge_functions`, `get_edge_function`, `deploy_edge_function`
-- **Branching**: `create_branch`, `list_branches`, `delete_branch`, `merge_branch`, `reset_branch`, `rebase_branch`
-- **Monitoring**: `get_logs`, `get_advisors` (security & performance)
+# View logs
+docker logs loopcraft-mysql
 
-### Security Best Practices
+# MySQL shell access
+docker exec -it loopcraft-mysql mysql -u loopcraft -p loopcraft
 
-1. **Project Scoping**: Always use `--project-ref` to limit access to single project
-2. **Token Security**: Keep `SUPABASE_ACCESS_TOKEN` in `.env.local` (gitignored)
-3. **Read-Only Mode**: Use `--read-only` flag when appropriate for safety
-4. **RLS Policies**: Always implement Row Level Security on tables
-5. **Development Only**: Use MCP server for development, not production user access
+# Reinitialize database (destructive)
+./scripts/init-db.sh
+```
 
 ## MCP-UI Lab Workflow
 
@@ -587,10 +624,20 @@ Complete dashboard and settings system for MCP-UI workflow:
   - Dashboard preferences (auto-connect, debug mode)
 - **State Management**: Zustand stores for dashboard, MCP, and settings state
 - **API Routes**: `/api/mcp/*` for server/resource/tool operations, `/api/metrics` for performance data
-- **New Dependencies**: react-resizable-panels, recharts, @monaco-editor/react, date-fns, @supabase/supabase-js
+- **New Dependencies**: react-resizable-panels, recharts, @monaco-editor/react, date-fns, mysql2, jsonwebtoken
+
+#### MySQL Docker Database Integration (2025-10-01)
+Complete migration from Supabase to local MySQL database with Docker containerization:
+- **Database Layer**: MySQL 8.0 in Docker with persistent volumes
+- **Connection Pool**: mysql2/promise for efficient query management
+- **Data Access Layer**: Type-safe TypeScript DAL (users, settings, conversations, templates)
+- **API Routes**: RESTful endpoints for all data operations
+- **State Management**: Zustand stores with API synchronization (replacing localStorage)
+- **Authentication**: Simple JWT-based auth for demo purposes
+- **Initialization Script**: Automated database setup via `./scripts/init-db.sh`
+- **Docker Compose**: One-command database startup and management
 
 #### Previous Updates
-- **Supabase Backend Integration** (2025-09-30): Full Supabase database setup with authentication, conversations, settings, MCP server configs, and file storage
 - **MCP Integration**: Added full Model Context Protocol support with MCP-UI for interactive components
 - **Dynamic Tool Discovery**: Automatically discovers and integrates tools from connected MCP servers
 - **Interactive UI Components**: Support for MCP-UI resources rendered securely in sandboxed iframes
@@ -603,3 +650,4 @@ Complete dashboard and settings system for MCP-UI workflow:
 - **Configuration Fixes**: Updated environment variables to use correct API endpoints
 - **Fixed Provider Context Issues**: Resolved `ThreadListItem is only available inside <AssistantProvider />` error
 - **Simplified Integration**: Using `useChatRuntime({ api: "/api/chat" })` pattern for reliable AI SDK integration
+- no sensative info in any claude.md

@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: loopcraft-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: loopcraft
+      MYSQL_USER: loopcraft
+      MYSQL_PASSWORD: loopcraft_secure_password_2025
+    ports:
+      - "3306:3306"
+    volumes:
+      - loopcraft_mysql_data:/var/lib/mysql
+      - ./src/lib/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "loopcraft", "-ploopcraft_secure_password_2025"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  loopcraft_mysql_data:
+    driver: local

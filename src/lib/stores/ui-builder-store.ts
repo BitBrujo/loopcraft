@@ -148,10 +148,12 @@ interface UIBuilderState {
 
   // Templates
   savedTemplates: SavedTemplate[];
-  saveTemplate: (name: string, category: string, description?: string) => void;
-  loadTemplate: (id: string) => void;
-  deleteTemplate: (id: string) => void;
-  updateTemplate: (id: string, updates: Partial<SavedTemplate>) => void;
+  isLoadingTemplates: boolean;
+  loadTemplates: () => Promise<void>;
+  saveTemplate: (name: string, category: string, description?: string) => Promise<void>;
+  loadTemplate: (id: string) => Promise<void>;
+  deleteTemplate: (id: string) => Promise<void>;
+  updateTemplate: (id: string, updates: Partial<SavedTemplate>) => Promise<void>;
 
   // Preview state
   previewKey: number;
@@ -180,9 +182,7 @@ const defaultResource: UIResourceDraft = {
   },
 };
 
-export const useUIBuilderStore = create<UIBuilderState>()(
-  persist(
-    (set, get) => ({
+export const useUIBuilderStore = create<UIBuilderState>()((set, get) => ({
       // Current resource
       currentResource: defaultResource,
       setCurrentResource: (resource) => set({ currentResource: resource }),
@@ -327,42 +327,73 @@ export const useUIBuilderStore = create<UIBuilderState>()(
 
       // Templates
       savedTemplates: [],
-      saveTemplate: (name, category, description) =>
-        set((state) => {
-          const existingIndex = state.savedTemplates.findIndex(
-            (t) => t.name === name && t.category === category
-          );
+      isLoadingTemplates: false,
 
-          const template: SavedTemplate = {
-            id: existingIndex >= 0
-              ? state.savedTemplates[existingIndex].id
-              : `template-${Date.now()}-${Math.random()}`,
-            name,
-            category,
-            description,
-            resource: { ...state.currentResource },
-            actionMappings: [...state.actionMappings],
-            createdAt: existingIndex >= 0
-              ? state.savedTemplates[existingIndex].createdAt
-              : new Date(),
-            updatedAt: new Date(),
-          };
-
-          if (existingIndex >= 0) {
-            // Update existing
-            return {
-              savedTemplates: state.savedTemplates.map((t, i) =>
-                i === existingIndex ? template : t
-              ),
-            };
+      // Load templates from API
+      loadTemplates: async () => {
+        set({ isLoadingTemplates: true });
+        try {
+          const response = await fetch('/api/templates');
+          if (response.ok) {
+            const templates = await response.json();
+            set({
+              savedTemplates: templates.map((t: any) => ({
+                ...t,
+                createdAt: new Date(t.created_at),
+                updatedAt: new Date(t.updated_at),
+              })),
+              isLoadingTemplates: false,
+            });
           } else {
-            // Add new
-            return {
-              savedTemplates: [...state.savedTemplates, template],
-            };
+            console.error('Failed to load templates');
+            set({ isLoadingTemplates: false });
           }
-        }),
-      loadTemplate: (id) => {
+        } catch (error) {
+          console.error('Error loading templates:', error);
+          set({ isLoadingTemplates: false });
+        }
+      },
+
+      // Save template (create or update)
+      saveTemplate: async (name, category, description) => {
+        const state = get();
+        try {
+          const response = await fetch('/api/templates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name,
+              category,
+              description,
+              resource: state.currentResource,
+              action_mappings: state.actionMappings,
+            }),
+          });
+
+          if (response.ok) {
+            const template = await response.json();
+            set((state) => ({
+              savedTemplates: [
+                ...state.savedTemplates.filter(
+                  (t) => !(t.name === name && t.category === category)
+                ),
+                {
+                  ...template,
+                  createdAt: new Date(template.created_at),
+                  updatedAt: new Date(template.updated_at),
+                },
+              ],
+            }));
+          } else {
+            console.error('Failed to save template');
+          }
+        } catch (error) {
+          console.error('Error saving template:', error);
+        }
+      },
+
+      // Load template (into current workspace)
+      loadTemplate: async (id) => {
         const template = get().savedTemplates.find((t) => t.id === id);
         if (template) {
           set({
@@ -371,18 +402,55 @@ export const useUIBuilderStore = create<UIBuilderState>()(
           });
         }
       },
-      deleteTemplate: (id) =>
-        set((state) => ({
-          savedTemplates: state.savedTemplates.filter((t) => t.id !== id),
-        })),
-      updateTemplate: (id, updates) =>
-        set((state) => ({
-          savedTemplates: state.savedTemplates.map((template) =>
-            template.id === id
-              ? { ...template, ...updates, updatedAt: new Date() }
-              : template
-          ),
-        })),
+
+      // Delete template
+      deleteTemplate: async (id) => {
+        try {
+          const response = await fetch(`/api/templates?id=${id}`, {
+            method: 'DELETE',
+          });
+
+          if (response.ok) {
+            set((state) => ({
+              savedTemplates: state.savedTemplates.filter((t) => t.id !== id),
+            }));
+          } else {
+            console.error('Failed to delete template');
+          }
+        } catch (error) {
+          console.error('Error deleting template:', error);
+        }
+      },
+
+      // Update template
+      updateTemplate: async (id, updates) => {
+        try {
+          const response = await fetch(`/api/templates?id=${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updates),
+          });
+
+          if (response.ok) {
+            const template = await response.json();
+            set((state) => ({
+              savedTemplates: state.savedTemplates.map((t) =>
+                t.id === id
+                  ? {
+                      ...template,
+                      createdAt: new Date(template.created_at),
+                      updatedAt: new Date(template.updated_at),
+                    }
+                  : t
+              ),
+            }));
+          } else {
+            console.error('Failed to update template');
+          }
+        } catch (error) {
+          console.error('Error updating template:', error);
+        }
+      },
 
       // Preview state
       previewKey: 0,
@@ -399,13 +467,4 @@ export const useUIBuilderStore = create<UIBuilderState>()(
       setShowExportDialog: (show) => set({ showExportDialog: show }),
       sidebarCollapsed: false,
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
-    }),
-    {
-      name: 'ui-builder-storage',
-      // Only persist templates, not current working state
-      partialize: (state) => ({
-        savedTemplates: state.savedTemplates,
-      }),
-    }
-  )
-);
+    }));
