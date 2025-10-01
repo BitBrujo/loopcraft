@@ -59,14 +59,24 @@ src/
 │   │       ├── ContextSidebar.tsx     # Integration status sidebar
 │   │       ├── ContextTabContent.tsx  # Tool discovery & selection
 │   │       ├── DesignTabContent.tsx   # UI creation (wraps existing)
-│   │       ├── ActionsTabContent.tsx  # Action mapping (placeholder)
-│   │       ├── FlowTabContent.tsx     # Flow visualization (placeholder)
-│   │       ├── TestTabContent.tsx     # Integration testing (placeholder)
+│   │       ├── ActionsTabContent.tsx  # Action mapping (3-panel layout)
+│   │       ├── FlowTabContent.tsx     # Flow visualization (React Flow)
+│   │       ├── TestTabContent.tsx     # Integration testing (2-panel layout)
 │   │       ├── ContentTypeSelector.tsx # HTML/URL/RemoteDom selector
 │   │       ├── ConfigurationPanel.tsx  # Metadata configuration
 │   │       ├── PreviewPanel.tsx        # Live preview with logging
 │   │       ├── ExportDialog.tsx        # Code export dialog
-│   │       └── TemplateGallery.tsx     # Template browser
+│   │       ├── TemplateGallery.tsx     # Template browser
+│   │       ├── actions/               # Actions tab components
+│   │       │   ├── InteractiveElementDetector.tsx  # HTML element parser
+│   │       │   ├── ActionMappingEditor.tsx         # Parameter binding UI
+│   │       │   └── ActionMappingList.tsx           # Mappings management
+│   │       ├── flow/                  # Flow tab components
+│   │       │   ├── FlowDiagram.tsx    # React Flow visualization
+│   │       │   └── FlowControls.tsx   # Diagram controls & export
+│   │       └── test/                  # Test tab components
+│   │           ├── TestRunner.tsx     # Execute real MCP tool calls
+│   │           └── TestResultsViewer.tsx  # Test history & results
 │   ├── chat/             # Chat-specific components (header, layout, mobile sidebar, theme toggle)
 │   ├── providers/        # React context providers (theme provider)
 │   └── ui/              # shadcn/ui components (button, dialog, sheet, etc.)
@@ -467,23 +477,35 @@ See `src/lib/mcp-ui-helpers.ts` for complete examples:
 
 ### Recent Updates
 
-#### MCP-UI Function Builder Phase 1: Tab-Based Navigation (2025-10-01)
-Transformed the Function Builder from a simple UI designer into a comprehensive MCP Integration Composer that represents the bidirectional server-client relationship:
+#### MCP-UI Function Builder Phases 2, 3, 4: Complete Integration Composer (2025-10-01)
+Completed the core functionality of the MCP Integration Composer with three fully-functional tabs: Actions, Flow, and Test.
 
-**New 5-Tab Architecture:**
-- **Context Tab**: Discover MCP servers and select tools for integration (fully implemented)
+**Complete 5-Tab Architecture:**
+- **Context Tab**: Discover MCP servers and select tools for integration ✅
   - Purpose definition textarea for documenting component goals
   - Real-time tool browser with search/filter capabilities
   - Tool selection interface with server attribution
   - Fetches available tools from `/api/mcp/tools`
-- **Design Tab**: Create UI layout (existing functionality wrapped in new container)
+- **Design Tab**: Create UI layout ✅
   - Content type selector (rawHtml, externalUrl, remoteDom)
   - Monaco code editor for HTML/JavaScript/Remote DOM
   - Configuration panel for metadata (URI, title, size, initialData)
   - Live preview with action logging
-- **Actions Tab**: Wire UI interactions to MCP tools (placeholder for Phase 2)
-- **Flow Tab**: Visualize complete interaction lifecycle (placeholder for Phase 2)
-- **Test Tab**: Validate integration with mock/real data (placeholder for Phase 2)
+- **Actions Tab**: Wire UI interactions to MCP tools ✅ **NEW**
+  - InteractiveElementDetector: Auto-detect buttons, forms, links via DOMParser
+  - ActionMappingEditor: Parameter binding UI with static/field values
+  - ActionMappingList: Manage mappings with validation status
+  - Full 3-panel layout with real-time updates
+- **Flow Tab**: Visualize complete interaction lifecycle ✅ **NEW**
+  - React Flow-based diagram with custom nodes (UI Element → Tool → Handler)
+  - Color-coded nodes (blue/purple/green) and animated edges
+  - Export diagram as PNG, mini-map, zoom/pan controls
+  - Error highlighting with red edges
+- **Test Tab**: Validate integration with real API ✅ **NEW**
+  - TestRunner: Execute actual MCP tool calls with parameter input
+  - TestResultsViewer: Test history with success/error tracking
+  - Statistics dashboard, search/filter, export results
+  - No mocks - real API integration only
 
 **Enhanced State Management** (`ui-builder-store.ts`):
 - **MCP Context**: Track selected servers, tools, and component purpose
@@ -515,18 +537,27 @@ Transformed the Function Builder from a simple UI designer into a comprehensive 
 - **Relationship Representation**: Clear mapping of MCP server vocabulary to client UI composition
 
 **Technical Details:**
-- 964 lines added across 8 files (6 new components, 2 refactored)
+- **Phase 1**: 964 lines across 8 files (Context tab + sidebar)
+- **Phases 2-4**: +1979 lines across 12 files (Actions, Flow, Test tabs)
+- **New Dependencies**: `@xyflow/react@^12.8.6`, `html-to-image@^1.11.13`
 - Full TypeScript with strict type safety
 - Client-side components using "use client" directive
-- Responsive layout with react-resizable-panels
-- Build verified successful
+- Responsive layouts with react-resizable-panels
+- All builds successful, production-ready
 
-**Next Steps (Phase 2+):**
-- Implement Actions tab with HTML parser and action mapper UI
-- Add Flow tab with React Flow visualization library
-- Create Test tab with mock/real API integration testing
-- Enhance export to generate action handler code
-- Build validation engine for parameter type checking
+**Key Implementation Decisions:**
+- Browser-native DOMParser (no HTML parsing library)
+- Real API testing only (no mocks for simplicity)
+- Monaco for code editors (consistency)
+- React Flow for diagrams (industry standard)
+- Type-safe throughout with strict mode
+
+**Remaining Phases (Optional):**
+- **Phase 5**: Enhanced export with complete MCP server templates
+- **Phase 6**: Real-time validation engine + ContextSidebar validation UI
+
+**Current Status:** Core MCP Integration Composer is **fully functional** with complete workflow:
+Discover tools → Design UI → Map actions → Visualize flow → Test integration
 
 #### MCP-UI Full Implementation (2025-10-01)
 Complete MCP-UI integration with action handlers and metadata support:
