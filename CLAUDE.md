@@ -53,7 +53,20 @@ src/
 │   │   ├── ConfigEditor.tsx     # JSON config editor
 │   │   ├── MetricsDashboard.tsx # Performance metrics
 │   │   ├── DebuggerPanel.tsx    # Request/response inspector
-│   │   └── ConsolePanel.tsx     # Log viewer
+│   │   ├── ConsolePanel.tsx     # Log viewer
+│   │   ├── UIBuilderPanel.tsx   # MCP-UI Function Builder main panel
+│   │   └── ui-builder/          # Function Builder tab components
+│   │       ├── ContextSidebar.tsx     # Integration status sidebar
+│   │       ├── ContextTabContent.tsx  # Tool discovery & selection
+│   │       ├── DesignTabContent.tsx   # UI creation (wraps existing)
+│   │       ├── ActionsTabContent.tsx  # Action mapping (placeholder)
+│   │       ├── FlowTabContent.tsx     # Flow visualization (placeholder)
+│   │       ├── TestTabContent.tsx     # Integration testing (placeholder)
+│   │       ├── ContentTypeSelector.tsx # HTML/URL/RemoteDom selector
+│   │       ├── ConfigurationPanel.tsx  # Metadata configuration
+│   │       ├── PreviewPanel.tsx        # Live preview with logging
+│   │       ├── ExportDialog.tsx        # Code export dialog
+│   │       └── TemplateGallery.tsx     # Template browser
 │   ├── chat/             # Chat-specific components (header, layout, mobile sidebar, theme toggle)
 │   ├── providers/        # React context providers (theme provider)
 │   └── ui/              # shadcn/ui components (button, dialog, sheet, etc.)
@@ -63,9 +76,10 @@ src/
     ├── mcp-ui-helpers.ts # MCP-UI resource creation helpers (HTML, external URLs, Remote DOM)
     ├── supabase-client.ts # Supabase client setup
     ├── stores/           # Zustand state management
-    │   ├── dashboard-store.ts # Dashboard state (logs, metrics, debug)
-    │   ├── mcp-store.ts      # MCP state (servers, resources, tools)
-    │   └── settings-store.ts # User settings (persisted)
+    │   ├── dashboard-store.ts  # Dashboard state (logs, metrics, debug)
+    │   ├── mcp-store.ts        # MCP state (servers, resources, tools)
+    │   ├── settings-store.ts   # User settings (persisted)
+    │   └── ui-builder-store.ts # Function Builder state (context, mappings, validation)
     ├── utils.ts          # Utility functions (cn, etc.)
     └── CLAUDE.md         # Documentation for src/lib directory
 components/                 # Legacy components directory
@@ -452,6 +466,67 @@ See `src/lib/mcp-ui-helpers.ts` for complete examples:
 5. **Validate tool names** - Prefix with `mcp_{serverName}_` for consistency
 
 ### Recent Updates
+
+#### MCP-UI Function Builder Phase 1: Tab-Based Navigation (2025-10-01)
+Transformed the Function Builder from a simple UI designer into a comprehensive MCP Integration Composer that represents the bidirectional server-client relationship:
+
+**New 5-Tab Architecture:**
+- **Context Tab**: Discover MCP servers and select tools for integration (fully implemented)
+  - Purpose definition textarea for documenting component goals
+  - Real-time tool browser with search/filter capabilities
+  - Tool selection interface with server attribution
+  - Fetches available tools from `/api/mcp/tools`
+- **Design Tab**: Create UI layout (existing functionality wrapped in new container)
+  - Content type selector (rawHtml, externalUrl, remoteDom)
+  - Monaco code editor for HTML/JavaScript/Remote DOM
+  - Configuration panel for metadata (URI, title, size, initialData)
+  - Live preview with action logging
+- **Actions Tab**: Wire UI interactions to MCP tools (placeholder for Phase 2)
+- **Flow Tab**: Visualize complete interaction lifecycle (placeholder for Phase 2)
+- **Test Tab**: Validate integration with mock/real data (placeholder for Phase 2)
+
+**Enhanced State Management** (`ui-builder-store.ts`):
+- **MCP Context**: Track selected servers, tools, and component purpose
+- **Action Mappings**: Map UI elements to MCP tool calls with parameter bindings
+- **Validation**: Track errors, warnings, and validation status across the workflow
+- **Test Configuration**: Mock responses and test history for integration testing
+- **New Types**: `MCPTool`, `MCPServer`, `ActionMapping`, `ValidationIssue`, `TestResult`, `BuilderTab`
+- Templates now save action mappings alongside UI resources
+
+**ContextSidebar Component** (persistent across all tabs):
+- MCP server connection status with tool counts (✓ connected / ✗ disconnected)
+- Selected tools display showing chosen integrations
+- Action mappings count showing wired interactions
+- Validation status with error/warning/success indicators
+- Component purpose display
+- Collapsible via toggle button
+
+**Progress Tracking System:**
+- Tab completion indicators (● complete / ● partial / ○ incomplete)
+- Smart status calculation based on state (selected tools, mappings, validation)
+- Overall progress display: "X / 5 complete"
+- Color-coded progress dots in navigation bar
+
+**Key Benefits:**
+- **Visibility**: Users see available MCP tools and server capabilities before designing
+- **Guided Flow**: Step-by-step workflow ensures proper integration planning
+- **Progress Tracking**: Visual feedback prevents users from missing critical steps
+- **Context Awareness**: Sidebar keeps integration status visible across all tabs
+- **Relationship Representation**: Clear mapping of MCP server vocabulary to client UI composition
+
+**Technical Details:**
+- 964 lines added across 8 files (6 new components, 2 refactored)
+- Full TypeScript with strict type safety
+- Client-side components using "use client" directive
+- Responsive layout with react-resizable-panels
+- Build verified successful
+
+**Next Steps (Phase 2+):**
+- Implement Actions tab with HTML parser and action mapper UI
+- Add Flow tab with React Flow visualization library
+- Create Test tab with mock/real API integration testing
+- Enhance export to generate action handler code
+- Build validation engine for parameter type checking
 
 #### MCP-UI Full Implementation (2025-10-01)
 Complete MCP-UI integration with action handlers and metadata support:
