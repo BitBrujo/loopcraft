@@ -1,7 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
-import { CallToolRequest, ListResourcesRequest, ListToolsRequest } from "@modelcontextprotocol/sdk/types.js";
 
 export interface MCPServer {
   name: string;
@@ -31,7 +30,7 @@ export class MCPClientManager {
       }
 
       const client = new Client({
-        name: "hyperface-mcp-client",
+        name: "loopcraft-mcp-client",
         version: "1.0.0",
       }, {
         capabilities: {
@@ -73,12 +72,7 @@ export class MCPClientManager {
 
     for (const [serverName, client] of this.clients) {
       try {
-        const request: ListToolsRequest = {
-          method: "tools/list",
-          params: {},
-        };
-
-        const response = await client.request(request);
+        const response = await client.listTools();
         if (response.tools) {
           for (const tool of response.tools) {
             allTools.push({
@@ -100,12 +94,7 @@ export class MCPClientManager {
 
     for (const [serverName, client] of this.clients) {
       try {
-        const request: ListResourcesRequest = {
-          method: "resources/list",
-          params: {},
-        };
-
-        const response = await client.request(request);
+        const response = await client.listResources();
         if (response.resources) {
           for (const resource of response.resources) {
             allResources.push({
@@ -129,15 +118,10 @@ export class MCPClientManager {
     }
 
     try {
-      const request: CallToolRequest = {
-        method: "tools/call",
-        params: {
-          name: toolName,
-          arguments: args,
-        },
-      };
-
-      const response = await client.request(request);
+      const response = await client.callTool({
+        name: toolName,
+        arguments: args,
+      });
       return response;
     } catch (error) {
       console.error(`Failed to call tool ${toolName} on ${serverName}:`, error);
@@ -152,12 +136,7 @@ export class MCPClientManager {
     }
 
     try {
-      const response = await client.request({
-        method: "resources/read",
-        params: {
-          uri,
-        },
-      });
+      const response = await client.readResource({ uri });
       return response;
     } catch (error) {
       console.error(`Failed to get resource ${uri} from ${serverName}:`, error);

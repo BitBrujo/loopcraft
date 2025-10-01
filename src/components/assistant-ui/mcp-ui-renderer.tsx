@@ -72,8 +72,8 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content }) => {
         </div>
         <div className="mcp-ui-content">
           <UIResourceRenderer
-            mcpData={mcpResponse}
-            onResourceAction={handleResourceAction}
+            resource={mcpResponse.content[0].resource}
+            onUIAction={handleResourceAction}
           />
         </div>
       </div>
@@ -97,5 +97,5 @@ export const MCPUITool = ({ result }: { result: unknown }) => {
     return null;
   }
 
-  return <MCPUIRenderer content={result} />;
+  return <MCPUIRenderer content={result as MCPUIRendererProps['content']} />;
 };

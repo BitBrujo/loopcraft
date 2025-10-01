@@ -80,11 +80,12 @@ export async function POST(req: Request) {
 
     // Get MCP tools and convert them to AI SDK format
     const mcpTools = await mcpClientManager.getAllTools();
-    const mcpToolsForAI = {} as Record<string, { description?: string; execute: (args: Record<string, unknown>) => Promise<unknown> }>;
+    const mcpToolsForAI = {} as Record<string, { description?: string; inputSchema?: object; execute: (args: Record<string, unknown>) => Promise<unknown> }>;
 
     for (const tool of mcpTools) {
       mcpToolsForAI[`mcp_${tool.serverName}_${tool.name}`] = {
         description: tool.description,
+        inputSchema: tool.inputSchema || { type: 'object', properties: {} },
         execute: async (args: Record<string, unknown>) => {
           try {
             const result = await mcpClientManager.callTool(tool.serverName, tool.name, args);
@@ -118,7 +119,8 @@ export async function POST(req: Request) {
       model: ollama(modelName),
       // @ts-expect-error - Type conversion is correct, TS inference issue
       messages: convertedMessages,
-      system: system || "You are HyperFace, an advanced AI assistant with access to Model Context Protocol (MCP) tools and resources. You can interact with various external services, file systems, and data sources through MCP. You can also render interactive UI components. You are knowledgeable, helpful, and provide clear, detailed responses.",
+      system: system || "You are LoopCraft, an advanced AI assistant with access to Model Context Protocol (MCP) tools and resources. You can interact with various external services, file systems, and data sources through MCP. You can also render interactive UI components. You are knowledgeable, helpful, and provide clear, detailed responses.",
+      // @ts-expect-error - Tool type compatibility with MCP tools
       tools: {
         ...frontendTools(tools || {}),
         ...mcpToolsForAI,

@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "HyperFace - AI Assistant",
-  description: "Advanced AI chat interface powered by modern technologies",
+  title: "LoopCraft - AI Assistant",
+  description: "Build AI workflows with Model Context Protocol and local AI models",
 };
 
 export default function RootLayout({

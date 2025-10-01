@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-HyperFace is a Next.js 15 AI chat application that provides a modern interface for interacting with AI models and Model Context Protocol (MCP) servers. The application uses React 19, TypeScript, Tailwind CSS, the Assistant UI framework, and MCP-UI for interactive components. It combines the power of local AI models via Ollama with the extensibility of the Model Context Protocol ecosystem.
+LoopCraft is a Next.js 15 AI chat application that provides a modern interface for interacting with AI models and Model Context Protocol (MCP) servers. The application uses React 19, TypeScript, Tailwind CSS, the Assistant UI framework, and MCP-UI for interactive components. It combines the power of local AI models via Ollama with the extensibility of the Model Context Protocol ecosystem.
 
 ## Common Development Commands
 
@@ -338,6 +338,9 @@ Access `/settings` to configure:
 - Dashboard behavior (auto-connect, debug mode)
 
 ### Recent Updates
+
+#### LoopCraft Rebrand & MCP Client Refactoring (2025-09-30)
+Rebranded application from HyperFace to LoopCraft to better reflect the iterative workflow nature of MCP development. Refactored MCP client to use official SDK convenience methods (listTools(), callTool(), listResources(), readResource()).
 
 #### MCP-UI Lab Dashboard & Settings (2025-09-30)
 Complete dashboard and settings system for MCP-UI workflow:

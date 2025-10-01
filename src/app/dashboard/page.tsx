@@ -38,7 +38,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex h-14 items-center justify-between border-b border-border bg-card/30 px-4">
         <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold">MCP-UI Lab Dashboard</h1>
+          <h1 className="text-lg font-semibold">LoopCraft Dashboard</h1>
         </div>
         <div className="flex items-center gap-2">
           <Button
