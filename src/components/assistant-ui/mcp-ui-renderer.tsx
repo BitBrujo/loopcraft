@@ -40,8 +40,14 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content }) => {
     return { status: 'handled' };
   }, []);
 
+  // Type guard to ensure content has required properties
+  if (!content || !content.type || !content.resource) {
+    return null;
+  }
+
   // Check if this content is a UI resource using the official utility
-  if (!isUIResource(content)) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (!isUIResource(content as any)) {
     return null;
   }
 
@@ -71,7 +77,8 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content }) => {
 // Tool component that specifically handles MCP UI resources
 export const MCPUITool = ({ result }: { result: unknown }) => {
   // Use the official isUIResource utility to check if this is a UI resource
-  if (!isUIResource(result)) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (!isUIResource(result as any)) {
     return null;
   }
 

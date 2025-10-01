@@ -94,3 +94,29 @@ export interface AuthResponse {
   token: string;
   user: UserResponse;
 }
+
+export interface UITemplate {
+  id: number;
+  user_id: number;
+  name: string;
+  category: string;
+  resource_data: string; // JSON string
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface UITemplateWithParsed extends Omit<UITemplate, 'resource_data'> {
+  resource_data: Record<string, unknown>;
+}
+
+export interface UITemplateCreate {
+  name: string;
+  category: string;
+  resource_data: Record<string, unknown>;
+}
+
+export interface UITemplateUpdate {
+  name?: string;
+  category?: string;
+  resource_data?: Record<string, unknown>;
+}

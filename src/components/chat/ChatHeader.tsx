@@ -1,11 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "./ThemeToggle";
 import { MobileSidebar } from "./MobileSidebar";
-import { MessageSquare, Settings } from "lucide-react";
+import { MessageSquare, Settings, PencilRuler } from "lucide-react";
 
 export function ChatHeader() {
   return (
@@ -26,6 +27,12 @@ export function ChatHeader() {
         </div>
 
         <div className="flex items-center space-x-2">
+          <Link href="/mcp-ui-builder">
+            <Button variant="ghost" size="sm" className="h-8">
+              <PencilRuler className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">MCP-UI Builder</span>
+            </Button>
+          </Link>
           <ThemeToggle />
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <Settings className="h-4 w-4" />
