@@ -133,7 +133,7 @@ const ThreadWelcome: FC = () => {
         <div className="aui-thread-welcome-center flex w-full flex-grow flex-col items-center justify-center">
           <div className="aui-thread-welcome-message flex size-full flex-col justify-center px-8 text-center">
             <div className="welcome-message-1 text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Welcome to HyperFace
+              Welcome to LoopCraft
             </div>
             <div className="welcome-message-2 text-lg text-muted-foreground mt-2">
               MCP-UI Lab

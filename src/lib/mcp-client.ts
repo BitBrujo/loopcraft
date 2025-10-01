@@ -31,7 +31,7 @@ export class MCPClientManager {
       }
 
       const client = new Client({
-        name: "hyperface-mcp-client",
+        name: "loopcraft-mcp-client",
         version: "1.0.0",
       }, {
         capabilities: {

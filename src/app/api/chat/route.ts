@@ -115,7 +115,7 @@ export async function POST(req: Request) {
       model: ollama(modelName),
       // @ts-expect-error - Type conversion is correct, TS inference issue
       messages: convertedMessages,
-      system: system || "You are HyperFace, an advanced AI assistant with access to Model Context Protocol (MCP) tools and resources. You can interact with various external services, file systems, and data sources through MCP. You can also render interactive UI components. You are knowledgeable, helpful, and provide clear, detailed responses.",
+      system: system || "You are LoopCraft, an advanced AI assistant with access to Model Context Protocol (MCP) tools and resources. You can interact with various external services, file systems, and data sources through MCP. You can also render interactive UI components. You are knowledgeable, helpful, and provide clear, detailed responses.",
       tools: {
         ...frontendTools(tools || {}),
         ...mcpToolsForAI,
