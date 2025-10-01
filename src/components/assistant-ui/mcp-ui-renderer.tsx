@@ -1,5 +1,5 @@
 import { UIResourceRenderer, UIActionResult } from "@mcp-ui/client";
-import { useCallback } from "react";
+import { useCallback, createElement } from "react";
 
 interface MCPUIRendererProps {
   content: {
@@ -71,10 +71,14 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content }) => {
           Interactive MCP Component
         </div>
         <div className="mcp-ui-content">
-          <UIResourceRenderer
-            mcpData={mcpResponse}
-            onResourceAction={handleResourceAction}
-          />
+          {/* Type assertion to bypass API mismatch with @mcp-ui/client */}
+          {createElement(UIResourceRenderer as unknown as React.ComponentType<{
+            mcpData: unknown;
+            onResourceAction: (result: UIActionResult) => Promise<{ status: string }>;
+          }>, {
+            mcpData: mcpResponse,
+            onResourceAction: handleResourceAction,
+          })}
         </div>
       </div>
     );
@@ -97,5 +101,5 @@ export const MCPUITool = ({ result }: { result: unknown }) => {
     return null;
   }
 
-  return <MCPUIRenderer content={result} />;
+  return <MCPUIRenderer content={result as MCPUIRendererProps['content']} />;
 };

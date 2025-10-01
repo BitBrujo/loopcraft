@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import { JWTPayload } from '@/types/database';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+const JWT_EXPIRES_IN: string | number = process.env.JWT_EXPIRES_IN || '7d';
 const SALT_ROUNDS = 10;
 
 // Hash password
@@ -23,7 +23,7 @@ export async function verifyPassword(
 export function generateToken(payload: JWTPayload): string {
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn: JWT_EXPIRES_IN,
-  });
+  } as jwt.SignOptions);
 }
 
 // Verify JWT token

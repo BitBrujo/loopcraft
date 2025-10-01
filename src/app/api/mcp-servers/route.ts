@@ -1,7 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ResultSetHeader } from 'mysql2';
 import { query } from '@/lib/db';
 import { getUserFromRequest } from '@/lib/auth';
-import { MCPServer, MCPServerCreate } from '@/types/database';
+import { MCPServer, MCPServerCreate, MCPServerConfig } from '@/types/database';
+
+// Database row type where config is still a JSON string
+interface MCPServerRow {
+  id: number;
+  user_id: number;
+  name: string;
+  type: 'stdio' | 'sse';
+  config: string | MCPServerConfig;
+  enabled: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
 
 // GET /api/mcp-servers - List all MCP servers for authenticated user
 export async function GET(request: NextRequest) {
@@ -16,7 +29,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all MCP servers for user
-    const servers = await query<any[]>(
+    const servers = await query<MCPServerRow[]>(
       'SELECT id, user_id, name, type, config, enabled, created_at, updated_at FROM mcp_servers WHERE user_id = ? ORDER BY created_at DESC',
       [user.userId]
     );
@@ -84,7 +97,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if server with same name already exists for user
-    const existingServer = await query<any[]>(
+    const existingServer = await query<{ id: number }[]>(
       'SELECT id FROM mcp_servers WHERE user_id = ? AND name = ?',
       [user.userId, name]
     );
@@ -97,7 +110,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert MCP server
-    const result = await query<any>(
+    const result = await query<ResultSetHeader>(
       'INSERT INTO mcp_servers (user_id, name, type, config, enabled) VALUES (?, ?, ?, ?, ?)',
       [user.userId, name, type, JSON.stringify(config), enabled]
     );
@@ -105,7 +118,7 @@ export async function POST(request: NextRequest) {
     const serverId = result.insertId;
 
     // Get created server
-    const serverRows = await query<any[]>(
+    const serverRows = await query<MCPServerRow[]>(
       'SELECT id, user_id, name, type, config, enabled, created_at, updated_at FROM mcp_servers WHERE id = ?',
       [serverId]
     );

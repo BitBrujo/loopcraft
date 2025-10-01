@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne } from '@/lib/db';
 import { getUserFromRequest } from '@/lib/auth';
-import { MCPServer, MCPServerUpdate } from '@/types/database';
+import { MCPServer, MCPServerUpdate, MCPServerConfig } from '@/types/database';
+
+// Database row type where config is still a JSON string
+interface MCPServerRow {
+  id: number;
+  user_id: number;
+  name: string;
+  type: 'stdio' | 'sse';
+  config: string | MCPServerConfig;
+  enabled: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
 
 // GET /api/mcp-servers/[id] - Get specific MCP server
 export async function GET(
@@ -21,7 +33,7 @@ export async function GET(
     }
 
     // Get MCP server
-    const server = await queryOne<any>(
+    const server = await queryOne<MCPServerRow>(
       'SELECT id, user_id, name, type, config, enabled, created_at, updated_at FROM mcp_servers WHERE id = ? AND user_id = ?',
       [id, user.userId]
     );
@@ -86,7 +98,7 @@ export async function PUT(
     }
 
     // Check if MCP server exists and belongs to user
-    const existingServer = await queryOne<any>(
+    const existingServer = await queryOne<{ id: number; type: 'stdio' | 'sse' }>(
       'SELECT id, type FROM mcp_servers WHERE id = ? AND user_id = ?',
       [id, user.userId]
     );
@@ -118,7 +130,7 @@ export async function PUT(
 
     // If name is being updated, check for duplicates
     if (name) {
-      const duplicateServer = await queryOne<any>(
+      const duplicateServer = await queryOne<{ id: number }>(
         'SELECT id FROM mcp_servers WHERE user_id = ? AND name = ? AND id != ?',
         [user.userId, name, id]
       );
@@ -133,7 +145,7 @@ export async function PUT(
 
     // Build update query dynamically
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
 
     if (name !== undefined) {
       updates.push('name = ?');
@@ -163,10 +175,17 @@ export async function PUT(
     );
 
     // Get updated MCP server
-    const updatedServer = await queryOne<any>(
+    const updatedServer = await queryOne<MCPServerRow>(
       'SELECT id, user_id, name, type, config, enabled, created_at, updated_at FROM mcp_servers WHERE id = ?',
       [id]
     );
+
+    if (!updatedServer) {
+      return NextResponse.json(
+        { error: 'Failed to retrieve updated MCP server' },
+        { status: 500 }
+      );
+    }
 
     // Parse JSON config
     const parsedServer: MCPServer = {
@@ -202,7 +221,7 @@ export async function DELETE(
     }
 
     // Check if MCP server exists and belongs to user
-    const existingServer = await queryOne<any>(
+    const existingServer = await queryOne<{ id: number }>(
       'SELECT id FROM mcp_servers WHERE id = ? AND user_id = ?',
       [id, user.userId]
     );

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ResultSetHeader } from 'mysql2';
 import { query } from '@/lib/db';
 import { getUserFromRequest } from '@/lib/auth';
 import { Prompt, PromptCreate } from '@/types/database';
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert prompt
-    const result = await query<any>(
+    const result = await query<ResultSetHeader>(
       'INSERT INTO prompts (user_id, title, content) VALUES (?, ?, ?)',
       [user.userId, title, content]
     );

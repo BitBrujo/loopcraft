@@ -86,7 +86,7 @@ export async function PUT(
 
     // Build update query dynamically
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
 
     if (title !== undefined) {
       updates.push('title = ?');

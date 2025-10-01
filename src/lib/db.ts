@@ -25,9 +25,9 @@ export function getPool(): mysql.Pool {
 }
 
 // Helper function to execute queries
-export async function query<T = any>(
+export async function query<T>(
   sql: string,
-  params?: any[]
+  params?: unknown[]
 ): Promise<T> {
   const pool = getPool();
   const [rows] = await pool.execute(sql, params);
@@ -35,9 +35,9 @@ export async function query<T = any>(
 }
 
 // Helper function to execute queries and get first result
-export async function queryOne<T = any>(
+export async function queryOne<T>(
   sql: string,
-  params?: any[]
+  params?: unknown[]
 ): Promise<T | null> {
   const rows = await query<T[]>(sql, params);
   return rows.length > 0 ? rows[0] : null;

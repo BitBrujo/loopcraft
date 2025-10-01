@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ResultSetHeader } from 'mysql2';
 import { query, queryOne } from '@/lib/db';
 import { hashPassword, generateToken } from '@/lib/auth';
 import { User, UserCreate, AuthResponse } from '@/types/database';
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
     const passwordHash = await hashPassword(password);
 
     // Insert user
-    const result = await query<any>(
+    const result = await query<ResultSetHeader>(
       'INSERT INTO users (email, password_hash) VALUES (?, ?)',
       [email, passwordHash]
     );
