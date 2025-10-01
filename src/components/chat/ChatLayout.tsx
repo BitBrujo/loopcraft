@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { ChatHeader } from "./ChatHeader";
+import { AppHeader } from "./AppHeader";
 import { cn } from "@/lib/utils";
 
 interface ChatLayoutProps {
@@ -12,7 +12,7 @@ interface ChatLayoutProps {
 export function ChatLayout({ children, className }: ChatLayoutProps) {
   return (
     <div className={cn("flex h-screen flex-col bg-background", className)}>
-      <ChatHeader />
+      <AppHeader />
       <div className="flex flex-1 overflow-hidden">
         {children}
       </div>

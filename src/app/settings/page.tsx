@@ -1,31 +1,25 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Save, Plus, Trash2, Power, PowerOff, Home, LayoutDashboard, Settings } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Save, Plus, Power, PowerOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { AppHeader } from '@/components/chat/AppHeader';
 import { useSettingsStore } from '@/lib/stores/settings-store';
 import { useMCPStore } from '@/lib/stores/mcp-store';
 import { useDashboardStore } from '@/lib/stores/dashboard-store';
-import { cn } from '@/lib/utils';
 
 export default function SettingsPage() {
   const { settings, updateSettings, isSaving, setIsSaving } = useSettingsStore();
-  const { servers, setServers, toggleServer } = useMCPStore();
+  const { servers, setServers } = useMCPStore();
   const { addLog } = useDashboardStore();
   const [localSettings, setLocalSettings] = useState(settings);
 
-  useEffect(() => {
-    // Load MCP servers
-    loadServers();
-  }, []);
-
-  const loadServers = async () => {
+  const loadServers = useCallback(async () => {
     try {
       const response = await fetch('/api/mcp/servers');
       const data = await response.json();
@@ -39,7 +33,12 @@ export default function SettingsPage() {
         source: 'Settings',
       });
     }
-  };
+  }, [addLog, setServers]);
+
+  useEffect(() => {
+    // Load MCP servers
+    loadServers();
+  }, [loadServers]);
 
   const handleSaveSettings = () => {
     setIsSaving(true);
@@ -106,26 +105,10 @@ export default function SettingsPage() {
 
   return (
     <div className="flex h-screen flex-col bg-background">
-      {/* Header */}
-      <div className="flex h-14 items-center justify-between border-b border-border bg-card/30 px-4">
-        <div className="flex items-center gap-2">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <Home className="size-4" />
-              Home
-            </Button>
-          </Link>
-          <Link href="/dashboard">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <LayoutDashboard className="size-4" />
-              Dashboard
-            </Button>
-          </Link>
-          <Button variant="ghost" size="sm" className="gap-2 bg-accent">
-            <Settings className="size-4" />
-            Settings
-          </Button>
-        </div>
+      <AppHeader />
+
+      {/* Toolbar */}
+      <div className="flex h-12 items-center justify-end gap-2 border-b border-border bg-card/20 px-4">
         <Button onClick={handleSaveSettings} disabled={isSaving} className="gap-2">
           <Save className="size-4" />
           {isSaving ? 'Saving...' : 'Save Settings'}

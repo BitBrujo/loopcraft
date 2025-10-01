@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Activity, Clock, CheckCircle2, XCircle, Database } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -38,7 +38,7 @@ export function MetricsDashboard() {
   const [latencyData, setLatencyData] = useState<Array<{ time: string; latency: number }>>([]);
   const [callsData, setCallsData] = useState<Array<{ time: string; success: number; error: number }>>([]);
 
-  const fetchMetrics = async () => {
+  const fetchMetrics = useCallback(async () => {
     try {
       const response = await fetch('/api/metrics');
       const data = await response.json();
@@ -52,13 +52,13 @@ export function MetricsDashboard() {
     } catch (error) {
       console.error('Error fetching metrics:', error);
     }
-  };
+  }, [updateMetrics]);
 
   useEffect(() => {
     fetchMetrics();
     const interval = setInterval(fetchMetrics, 10000); // Update every 10 seconds
     return () => clearInterval(interval);
-  }, [refreshTrigger]);
+  }, [refreshTrigger, fetchMetrics]);
 
   useEffect(() => {
     // Process debug entries for charts
@@ -110,7 +110,7 @@ export function MetricsDashboard() {
       errorCount,
       toolCalls: debugEntries.length,
     });
-  }, [debugEntries]);
+  }, [debugEntries, updateMetrics]);
 
   return (
     <ScrollArea className="h-full">

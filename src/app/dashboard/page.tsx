@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import {
   DatabaseIcon,
@@ -10,10 +9,9 @@ import {
   BugIcon,
   TerminalIcon,
   RefreshCwIcon,
-  Home,
-  LayoutDashboard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AppHeader } from '@/components/chat/AppHeader';
 import { useDashboardStore } from '@/lib/stores/dashboard-store';
 import { ResourceExplorer } from '@/components/dashboard/ResourceExplorer';
 import { ConfigEditor } from '@/components/dashboard/ConfigEditor';
@@ -38,46 +36,26 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen flex-col bg-background">
-      {/* Header */}
-      <div className="flex h-14 items-center justify-between border-b border-border bg-card/30 px-4">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <Home className="size-4" />
-                Home
-              </Button>
-            </Link>
-            <Button variant="ghost" size="sm" className="gap-2 bg-accent">
-              <LayoutDashboard className="size-4" />
-              Dashboard
-            </Button>
-            <Link href="/settings">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <SettingsIcon className="size-4" />
-                Settings
-              </Button>
-            </Link>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={triggerRefresh}
-            className="gap-2"
-          >
-            <RefreshCwIcon className="size-4" />
-            Reload
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setLayout(layout === 'horizontal' ? 'vertical' : 'horizontal')}
-          >
-            {layout === 'horizontal' ? 'Vertical' : 'Horizontal'} Layout
-          </Button>
-        </div>
+      <AppHeader />
+
+      {/* Toolbar */}
+      <div className="flex h-12 items-center justify-end gap-2 border-b border-border bg-card/20 px-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={triggerRefresh}
+          className="gap-2"
+        >
+          <RefreshCwIcon className="size-4" />
+          Reload
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setLayout(layout === 'horizontal' ? 'vertical' : 'horizontal')}
+        >
+          {layout === 'horizontal' ? 'Vertical' : 'Horizontal'} Layout
+        </Button>
       </div>
 
       {/* Main Content */}

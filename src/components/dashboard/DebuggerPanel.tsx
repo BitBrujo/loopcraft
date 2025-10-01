@@ -30,7 +30,6 @@ export function DebuggerPanel() {
       status: 'pending' as const,
     };
 
-    const entryId = `debug-${Date.now()}-${Math.random()}`;
     addDebugEntry(testEntry);
     addLog({
       level: 'info',
@@ -121,7 +120,7 @@ export function DebuggerPanel() {
         </div>
         <ScrollArea className="flex-1">
           {selectedEntry ? (
-            <><div className="p-4 space-y-4">
+            <div className="p-4 space-y-4">
               {/* Entry metadata */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -151,20 +150,21 @@ export function DebuggerPanel() {
               </div>
 
               {/* Request */}
-              {/* @ts-ignore - Type inference issue with conditional rendering */}
-              <div>
-                <h4 className="text-sm font-semibold mb-2">Request</h4>
-                <pre className="text-xs bg-muted rounded-lg p-4 overflow-auto">
-                  <code>{JSON.stringify(selectedEntry.request, null, 2)}</code>
-                </pre>
-              </div>
+              {selectedEntry.request !== undefined && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Request</h4>
+                  <pre className="text-xs bg-muted rounded-lg p-4 overflow-auto">
+                    <code>{JSON.stringify(selectedEntry.request, null, 2)}</code>
+                  </pre>
+                </div>
+              )}
 
               {/* Response */}
-              {selectedEntry.response && (
+              {selectedEntry.response !== undefined && (
                 <div>
                   <h4 className="text-sm font-semibold mb-2">Response</h4>
                   <pre className="text-xs bg-muted rounded-lg p-4 overflow-auto">
-                    <code>{String(JSON.stringify(selectedEntry.response, null, 2))}</code>
+                    <code>{JSON.stringify(selectedEntry.response, null, 2)}</code>
                   </pre>
                 </div>
               )}
@@ -176,7 +176,7 @@ export function DebuggerPanel() {
                   <p className="text-sm">{selectedEntry.error}</p>
                 </div>
               )}
-            </div></>
+            </div>
           ) : (
             <div className="text-center text-sm text-muted-foreground py-8">
               Select a debug entry to inspect its details

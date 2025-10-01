@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { SaveIcon, DownloadIcon, UploadIcon, PlayIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMCPStore } from '@/lib/stores/mcp-store';
 import { useDashboardStore } from '@/lib/stores/dashboard-store';
 import Editor from '@monaco-editor/react';

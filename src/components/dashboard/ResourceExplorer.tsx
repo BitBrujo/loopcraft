@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { FileIcon, FolderIcon, RefreshCwIcon, SearchIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,7 @@ export function ResourceExplorer() {
   const [searchQuery, setSearchQuery] = useState('');
   const [resourceContent, setResourceContent] = useState<string | null>(null);
 
-  const loadResources = async () => {
+  const loadResources = useCallback(async () => {
     setLoadingResources(true);
     addLog({
       level: 'info',
@@ -55,7 +55,7 @@ export function ResourceExplorer() {
     } finally {
       setLoadingResources(false);
     }
-  };
+  }, [setResources, setLoadingResources, addLog]);
 
   const fetchResourceContent = async (uri: string, serverName: string) => {
     addLog({
@@ -98,7 +98,7 @@ export function ResourceExplorer() {
 
   useEffect(() => {
     loadResources();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, loadResources]);
 
   const filteredResources = resources.filter(resource =>
     resource.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
