@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 LoopCraft is a Next.js 15 AI chat application that provides a modern interface for interacting with AI models and Model Context Protocol (MCP) servers. The application uses React 19, TypeScript, Tailwind CSS, the Assistant UI framework, and MCP-UI for interactive components. It combines the power of local AI models via Ollama with the extensibility of the Model Context Protocol ecosystem.
 
+**Naming**: The name "LoopCraft" reflects the iterative, loop-based workflow nature of MCP development - where developers continuously iterate through the cycle of exploring resources, editing configurations, triggering runs, monitoring metrics, debugging issues, and refining until the system behaves as expected.
+
 ## Common Development Commands
 
 - `npm run dev` - Start development server with Turbopack
@@ -56,14 +58,15 @@ src/
 │   ├── providers/        # React context providers (theme provider)
 │   └── ui/              # shadcn/ui components (button, dialog, sheet, etc.)
 └── lib/
-    ├── mcp-client.ts     # MCP client management service
+    ├── mcp-client.ts     # MCP client management service (refactored with SDK convenience methods)
     ├── mcp-config.ts     # MCP server configuration
     ├── supabase-client.ts # Supabase client setup
     ├── stores/           # Zustand state management
     │   ├── dashboard-store.ts # Dashboard state (logs, metrics, debug)
     │   ├── mcp-store.ts      # MCP state (servers, resources, tools)
     │   └── settings-store.ts # User settings (persisted)
-    └── utils.ts          # Utility functions (cn, etc.)
+    ├── utils.ts          # Utility functions (cn, etc.)
+    └── CLAUDE.md         # Documentation for src/lib directory
 components/                 # Legacy components directory
 └── CustomMessageInput.tsx # Custom message input component
 ```
@@ -73,6 +76,11 @@ components/                 # Legacy components directory
 1. **Hybrid AI Integration**: Combines Ollama for AI model inference with MCP for extensible tool and resource access:
    - Uses Ollama provider v2 with environment-configured base URL (`OLLAMA_BASE_URL`) and model (`OLLAMA_MODEL`) from `.env.local`
    - Integrates MCP client to connect to various MCP servers for tools, resources, and prompts
+   - **Refactored MCP Client** (`src/lib/mcp-client.ts`) uses official SDK convenience methods:
+     - `client.listTools()` instead of manual request construction
+     - `client.callTool({name, arguments})` for tool execution
+     - `client.listResources()` for resource discovery
+     - `client.readResource({uri})` for resource retrieval
    - Automatic tool discovery from connected MCP servers
    - Support for both traditional tools and interactive UI components via MCP-UI
 
