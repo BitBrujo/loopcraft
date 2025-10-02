@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Save, Download, RotateCcw, ArrowLeft, RefreshCw, FolderOpen } from "lucide-react";
-import Link from "next/link";
+import { Save, Download, RotateCcw, RefreshCw, FolderOpen, File } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { TemplateGallery } from "./TemplateGallery";
 import { ConfigPanel } from "./ConfigPanel";
@@ -16,6 +15,21 @@ import { ActionsTab } from "./tabs/ActionsTab";
 import { FlowTab } from "./tabs/FlowTab";
 import { TestTab } from "./tabs/TestTab";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { TabId } from "@/types/ui-builder";
 
 const tabs: Array<{ id: TabId; label: string }> = [
@@ -30,6 +44,7 @@ export function BuilderLayout() {
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showLoadDialog, setShowLoadDialog] = useState(false);
+  const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showConfig, setShowConfig] = useState(true);
   const [showTemplates, setShowTemplates] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -42,6 +57,10 @@ export function BuilderLayout() {
     mcpContext,
     actionMappings,
     validationStatus,
+    setMCPContext,
+    clearActionMappings,
+    setTestConfig,
+    setValidationStatus,
   } = useUIBuilderStore();
 
   const handleRefresh = async () => {
@@ -68,6 +87,17 @@ export function BuilderLayout() {
     } finally {
       setIsRefreshing(false);
     }
+  };
+
+  const handleResetAll = () => {
+    // Clear all builder state
+    resetResource();
+    setMCPContext({ selectedServers: [], selectedTools: [], purpose: '' });
+    clearActionMappings();
+    setTestConfig({ mockResponses: [], testHistory: [], useMockData: true });
+    setValidationStatus({ missingMappings: [], typeMismatches: [], warnings: [] });
+    setActiveTab('context');
+    setShowResetConfirmation(false);
   };
 
   const handleExport = () => {
@@ -136,8 +166,8 @@ export function BuilderLayout() {
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-background">
-      {/* Left Sidebar - Template Gallery (collapsible) */}
-      {showTemplates && (
+      {/* Left Sidebar - Template Gallery (collapsible, Design tab only) */}
+      {activeTab === 'design' && showTemplates && (
         <div className="w-64 border-r bg-card overflow-y-auto">
           <div className="sticky top-0 bg-card border-b p-2 flex items-center justify-between">
             <h3 className="font-semibold text-sm">Templates</h3>
@@ -158,15 +188,8 @@ export function BuilderLayout() {
         {/* Header with actions */}
         <div className="h-14 border-b bg-card/50 backdrop-blur flex items-center justify-between px-4">
           <div className="flex items-center gap-4">
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="h-8">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Back to Chat</span>
-              </Button>
-            </Link>
-            <div className="h-6 w-px bg-border" />
             <h1 className="text-lg font-semibold">MCP-UI Function Builder</h1>
-            {!showTemplates && (
+            {activeTab === 'design' && !showTemplates && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -180,11 +203,11 @@ export function BuilderLayout() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={resetResource}
-              title="Reset to blank"
+              onClick={() => setShowResetConfirmation(true)}
+              title="Reset all builder state"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
-              Reset
+              Reset All
             </Button>
             <Button
               variant="ghost"
@@ -197,33 +220,29 @@ export function BuilderLayout() {
               Refresh
             </Button>
             <div className="h-6 w-px bg-border" />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLoad}
-              title="Load saved template"
-            >
-              <FolderOpen className="h-4 w-4 mr-2" />
-              Load
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSave}
-              title="Save current state"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Save
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleExport}
-              title="Export code"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="default" size="sm" title="File operations">
+                  <File className="h-4 w-4 mr-2" />
+                  File
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleLoad}>
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Load Template
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSave}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Template
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleExport}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Code
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -274,17 +293,9 @@ export function BuilderLayout() {
 
         {/* Tab Content */}
         <div className="flex-1 overflow-hidden flex">
-          {/* Active Tab Content */}
-          <div className="flex-1 overflow-hidden">
-            {renderTabContent()}
-          </div>
-
-          {/* Right Sidebar - Context Sidebar (persistent) */}
-          <ContextSidebar />
-
-          {/* Right Sidebar - Configuration (collapsible, only on design tab) */}
+          {/* Left Sidebar - Configuration (collapsible, only on design tab) */}
           {activeTab === 'design' && showConfig && (
-            <div className="w-80 border-l bg-card overflow-y-auto">
+            <div className="w-80 border-r bg-card overflow-y-auto">
               <div className="sticky top-0 bg-card border-b p-2 flex items-center justify-between">
                 <h3 className="font-semibold text-sm">Configuration</h3>
                 <Button
@@ -299,12 +310,20 @@ export function BuilderLayout() {
             </div>
           )}
 
+          {/* Active Tab Content */}
+          <div className="flex-1 overflow-hidden">
+            {renderTabContent()}
+          </div>
+
+          {/* Right Sidebar - Context Sidebar (persistent, hidden on Context tab) */}
+          {activeTab !== 'context' && <ContextSidebar />}
+
           {/* Toggle config panel if hidden */}
           {activeTab === 'design' && !showConfig && (
             <Button
               variant="ghost"
               size="sm"
-              className="absolute right-[17rem] top-20"
+              className="absolute left-4 top-20"
               onClick={() => setShowConfig(true)}
             >
               Show Config
@@ -342,6 +361,42 @@ export function BuilderLayout() {
           }}
         />
       )}
+
+      {/* Reset Confirmation Dialog */}
+      <Dialog open={showResetConfirmation} onOpenChange={setShowResetConfirmation}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset All Builder State?</DialogTitle>
+            <DialogDescription>
+              This will clear all your work including:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>UI resource content and configuration</li>
+                <li>Selected MCP servers and tools</li>
+                <li>Action mappings and parameter bindings</li>
+                <li>Test configuration and history</li>
+                <li>Validation status</li>
+              </ul>
+              <p className="mt-3 font-semibold text-destructive">
+                This action cannot be undone. Make sure to save your work first!
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setShowResetConfirmation(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleResetAll}
+            >
+              Reset All
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
