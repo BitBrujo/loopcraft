@@ -168,7 +168,13 @@ function generateMCPServer(resource: UIResource, actionMappings: ActionMapping[]
 
   code += `server.setRequestHandler('resources/read', async (request) => {\n`;
   code += `  if (request.params.uri === '${resource.uri}') {\n`;
-  code += `    const uiResource = createUIResource(${JSON.stringify({\n      uri: resource.uri,\n      contentType: resource.contentType,\n      content: resource.content,\n      preferredSize: resource.preferredSize,\n    }, null, 6).replace(/\n/g, '\n    ')});\n`;
+  const resourceDataStr = JSON.stringify({
+    uri: resource.uri,
+    contentType: resource.contentType,
+    content: resource.content,
+    preferredSize: resource.preferredSize,
+  }, null, 6).replace(/\n/g, '\n    ');
+  code += `    const uiResource = createUIResource(${resourceDataStr});\n`;
   code += `    return { contents: [{ uri: request.params.uri, ...uiResource }] };\n`;
   code += `  }\n`;
   code += `  throw new Error('Resource not found');\n`;
@@ -185,7 +191,8 @@ function generateMCPServer(resource: UIResource, actionMappings: ActionMapping[]
       code += `      description: 'Handle ${mapping.uiElementId} interaction',\n`;
       code += `      inputSchema: {\n`;
       code += `        type: 'object',\n`;
-      code += `        properties: ${JSON.stringify(mapping.parameterBindings, null, 8).replace(/\n/g, '\n        ')},\n`;
+      const bindingsStr = JSON.stringify(mapping.parameterBindings, null, 8).replace(/\n/g, '\n        ');
+      code += `        properties: ${bindingsStr},\n`;
       code += `      },\n`;
       code += `    }`;
       if (index < actionMappings.length - 1) code += ',';

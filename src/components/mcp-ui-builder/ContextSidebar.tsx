@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Server, Tool, AlertCircle, CheckCircle, ChevronDown, ChevronRight } from "lucide-react";
+import { Server, Wrench, AlertCircle, CheckCircle, ChevronDown, ChevronRight } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 
 interface ServerStatus {
@@ -104,7 +104,7 @@ export function ContextSidebar() {
             onClick={() => setShowTools(!showTools)}
           >
             <div className="flex items-center gap-2">
-              <Tool className="h-4 w-4" />
+              <Wrench className="h-4 w-4" />
               <span className="text-sm font-medium">Selected Tools</span>
             </div>
             <div className="flex items-center gap-2">

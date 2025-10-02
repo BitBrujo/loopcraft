@@ -105,7 +105,7 @@ export interface MCPContext {
 export interface ActionMapping {
   id: string;
   uiElementId: string;
-  uiElementType: 'button' | 'form' | 'link' | 'custom';
+  uiElementType: 'button' | 'form' | 'link' | 'input' | 'select' | 'textarea' | 'custom';
   toolName: string;
   serverName: string;
   parameterBindings: Record<string, string>;

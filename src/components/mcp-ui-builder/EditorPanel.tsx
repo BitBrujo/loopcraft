@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight, ChevronLeft, Tool } from "lucide-react";
+import { ChevronRight, ChevronLeft, Wrench } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { HTMLEditor } from "./editors/HTMLEditor";
 import { URLInput } from "./editors/URLInput";
@@ -75,7 +75,7 @@ export function EditorPanel() {
               onClick={() => setShowToolPalette(!showToolPalette)}
               className="h-7 gap-1"
             >
-              <Tool className="h-3 w-3" />
+              <Wrench className="h-3 w-3" />
               <span className="text-xs">
                 {showToolPalette ? 'Hide' : 'Show'} Tools
               </span>
@@ -116,7 +116,7 @@ export function EditorPanel() {
         <div className="w-64 border-l bg-card overflow-y-auto">
           <div className="sticky top-0 bg-card border-b p-3">
             <div className="flex items-center gap-2">
-              <Tool className="h-4 w-4" />
+              <Wrench className="h-4 w-4" />
               <h4 className="font-semibold text-sm">Tool Reference</h4>
             </div>
             <p className="text-xs text-muted-foreground mt-1">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Tool, ChevronDown, ChevronRight, Plus, X } from "lucide-react";
+import { Search, Wrench, ChevronDown, ChevronRight, Plus, X } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,7 +57,7 @@ export function ToolBrowser() {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <Tool className="h-4 w-4" />
+        <Wrench className="h-4 w-4" />
         <h3 className="font-semibold text-sm">Available Tools</h3>
       </div>
 

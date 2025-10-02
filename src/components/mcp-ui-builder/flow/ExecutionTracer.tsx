@@ -186,14 +186,14 @@ export function ExecutionTracer() {
         </div>
 
         {/* Step data */}
-        {currentStepData?.data && (
+        {currentStepData?.data ? (
           <div>
             <div className="text-xs font-semibold mb-1">Data:</div>
             <pre className="text-xs bg-muted p-2 rounded overflow-x-auto">
               {JSON.stringify(currentStepData.data, null, 2)}
             </pre>
           </div>
-        )}
+        ) : null}
 
         {/* Timeline */}
         <div>
