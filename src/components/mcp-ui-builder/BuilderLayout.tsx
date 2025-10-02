@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Save, Download, Play, RotateCcw } from "lucide-react";
+import { Save, Download, Play, RotateCcw, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { TemplateGallery } from "./TemplateGallery";
 import { ConfigPanel } from "./ConfigPanel";
@@ -128,6 +129,13 @@ export function BuilderLayout() {
         {/* Header with actions */}
         <div className="h-14 border-b bg-card/50 backdrop-blur flex items-center justify-between px-4">
           <div className="flex items-center gap-4">
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="h-8">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Back to Chat</span>
+              </Button>
+            </Link>
+            <div className="h-6 w-px bg-border" />
             <h1 className="text-lg font-semibold">MCP-UI Function Builder</h1>
             {!showTemplates && (
               <Button

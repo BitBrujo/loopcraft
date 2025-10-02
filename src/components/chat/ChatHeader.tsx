@@ -34,9 +34,11 @@ export function ChatHeader() {
             </Button>
           </Link>
           <ThemeToggle />
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Settings className="h-4 w-4" />
-          </Button>
+          <Link href="/settings">
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Settings className="h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </div>
     </header>
