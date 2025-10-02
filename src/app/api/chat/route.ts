@@ -40,7 +40,7 @@ async function loadUserMCPServers(request: Request) {
     const user = await getUserFromRequest(request);
     if (!user) return;
 
-    const dbServers = await query<DBMCPServer>(
+    const dbServers = await query<DBMCPServer[]>(
       'SELECT * FROM mcp_servers WHERE user_id = ? AND enabled = true',
       [user.userId]
     );

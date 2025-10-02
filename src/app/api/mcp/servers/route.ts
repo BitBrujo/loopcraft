@@ -8,9 +8,13 @@ export async function GET(request: Request) {
   // Get connected servers from mcpClientManager
   const connectedServers = mcpClientManager.getConnectedServers();
 
-  const servers = connectedServers.map((serverName) => ({
+  const servers: Array<{
+    name: string;
+    type: 'stdio' | 'sse' | 'http';
+    status: 'connected' | 'disconnected';
+  }> = connectedServers.map((serverName) => ({
     name: serverName,
-    type: 'stdio' as const,
+    type: 'stdio' as 'stdio' | 'sse' | 'http',
     status: mcpClientManager.isConnected(serverName) ? 'connected' as const : 'disconnected' as const,
   }));
 
@@ -19,7 +23,7 @@ export async function GET(request: Request) {
   if (user) {
     try {
       // Fetch user's enabled servers from database
-      const dbServers = await query<DBMCPServer>(
+      const dbServers = await query<DBMCPServer[]>(
         'SELECT * FROM mcp_servers WHERE user_id = ? AND enabled = true',
         [user.userId]
       );

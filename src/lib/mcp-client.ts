@@ -27,10 +27,20 @@ export class MCPClientManager {
 
       if (server.type === 'stdio' && server.command) {
         // Pass environment variables to stdio transport
+        // Filter out undefined values from process.env
+        const cleanEnv = server.env
+          ? Object.entries({ ...process.env, ...server.env }).reduce((acc, [key, value]) => {
+              if (value !== undefined) {
+                acc[key] = value;
+              }
+              return acc;
+            }, {} as Record<string, string>)
+          : undefined;
+
         transport = new StdioClientTransport({
           command: server.command[0],
           args: server.command.slice(1),
-          env: server.env ? { ...process.env, ...server.env } : undefined,
+          env: cleanEnv,
         });
       } else if ((server.type === 'sse' || server.type === 'http') && server.url) {
         // For SSE/HTTP, create URL with auth headers via EventSource init
@@ -56,7 +66,8 @@ export class MCPClientManager {
 
         // Note: SSEClientTransport in MCP SDK may not support headers directly
         // This is a best-effort approach - check SDK docs for proper implementation
-        transport = new SSEClientTransport(url, { headers } as any);
+        // @ts-expect-error - SSEClientTransport headers support may vary by SDK version
+        transport = new SSEClientTransport(url, { headers });
       } else {
         throw new Error(`Invalid server configuration for ${server.name}`);
       }
