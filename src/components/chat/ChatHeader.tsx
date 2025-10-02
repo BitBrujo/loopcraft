@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "./ThemeToggle";
 import { MobileSidebar } from "./MobileSidebar";
-import { MessageSquare, Settings, PencilRuler, User, LogOut } from "lucide-react";
+import { MessageSquare, Settings, PencilRuler, User, LogOut, MessageCircle } from "lucide-react";
 
 export function ChatHeader() {
   const router = useRouter();
@@ -67,24 +67,32 @@ export function ChatHeader() {
         </div>
 
         <div className="flex items-center space-x-2">
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="h-8">
+              <MessageCircle className="h-4 w-4 mr-2" />
+              <span>Chat</span>
+            </Button>
+          </Link>
           <Link href="/mcp-ui-builder">
             <Button variant="ghost" size="sm" className="h-8">
               <PencilRuler className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">MCP-UI Builder</span>
+              <span>UI Builder</span>
+            </Button>
+          </Link>
+          <Link href="/settings">
+            <Button variant="ghost" size="sm" className="h-8">
+              <Settings className="h-4 w-4 mr-2" />
+              <span>Settings</span>
             </Button>
           </Link>
           <ThemeToggle />
-          <Link href="/settings">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </Link>
 
           {isLoggedIn && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <User className="h-4 w-4" />
+                <Button variant="ghost" size="sm" className="h-8">
+                  <User className="h-4 w-4 mr-2" />
+                  <span>Account</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">

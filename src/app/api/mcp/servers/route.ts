@@ -13,11 +13,16 @@ export async function GET(request: Request) {
     name: string;
     type: 'stdio' | 'sse' | 'http';
     status: 'connected' | 'disconnected';
-  }> = connectedServers.map((serverName) => ({
-    name: serverName,
-    type: 'stdio' as 'stdio' | 'sse' | 'http',
-    status: mcpClientManager.isConnected(serverName) ? 'connected' as const : 'disconnected' as const,
-  }));
+    error?: string;
+  }> = connectedServers.map((serverName) => {
+    const error = mcpClientManager.getConnectionError(serverName);
+    return {
+      name: serverName,
+      type: 'stdio' as 'stdio' | 'sse' | 'http',
+      status: mcpClientManager.isConnected(serverName) ? 'connected' as const : 'disconnected' as const,
+      ...(error && { error }),
+    };
+  });
 
   return NextResponse.json({ servers });
 }

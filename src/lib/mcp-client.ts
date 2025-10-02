@@ -14,6 +14,8 @@ export interface MCPServer {
 export class MCPClientManager {
   private clients: Map<string, Client> = new Map();
   private transports: Map<string, StdioClientTransport | SSEClientTransport> = new Map();
+  private connectionErrors: Map<string, string> = new Map();
+  private userServers: Map<number, Set<string>> = new Map(); // Track which servers belong to which user
 
   async connectToServer(server: MCPServer): Promise<void> {
     // Skip if already connected (idempotent)
@@ -87,9 +89,12 @@ export class MCPClientManager {
 
       this.clients.set(server.name, client);
       this.transports.set(server.name, transport);
+      this.connectionErrors.delete(server.name); // Clear any previous errors
 
       console.log(`Connected to MCP server: ${server.name}`);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.connectionErrors.set(server.name, errorMessage);
       console.error(`Failed to connect to MCP server ${server.name}:`, error);
       throw error;
     }
@@ -108,6 +113,8 @@ export class MCPClientManager {
       await transport.close();
       this.transports.delete(serverName);
     }
+
+    this.connectionErrors.delete(serverName);
   }
 
   async getAllTools(): Promise<Array<{ name: string; description?: string; inputSchema?: object; serverName: string }>> {
@@ -193,6 +200,45 @@ export class MCPClientManager {
 
   isConnected(serverName: string): boolean {
     return this.clients.has(serverName);
+  }
+
+  getConnectionError(serverName: string): string | undefined {
+    return this.connectionErrors.get(serverName);
+  }
+
+  clearConnectionError(serverName: string): void {
+    this.connectionErrors.delete(serverName);
+  }
+
+  trackUserServer(userId: number, serverName: string): void {
+    if (!this.userServers.has(userId)) {
+      this.userServers.set(userId, new Set());
+    }
+    this.userServers.get(userId)!.add(serverName);
+  }
+
+  getUserServers(userId: number): Set<string> {
+    return this.userServers.get(userId) || new Set();
+  }
+
+  async cleanupUserServers(userId: number, currentServerNames: string[]): Promise<void> {
+    const trackedServers = this.getUserServers(userId);
+    const currentSet = new Set(currentServerNames);
+
+    // Disconnect any tracked servers that are no longer in the current list
+    for (const serverName of trackedServers) {
+      if (!currentSet.has(serverName)) {
+        try {
+          await this.disconnectFromServer(serverName);
+          console.log(`Disconnected removed user server: ${serverName}`);
+        } catch (error) {
+          console.error(`Failed to disconnect server ${serverName}:`, error);
+        }
+      }
+    }
+
+    // Update tracked servers to current list
+    this.userServers.set(userId, currentSet);
   }
 }
 

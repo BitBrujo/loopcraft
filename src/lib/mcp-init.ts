@@ -48,6 +48,9 @@ export async function loadUserMCPServers(request: Request): Promise<void> {
       [user.userId]
     );
 
+    // Track current server names for cleanup
+    const currentServerNames: string[] = [];
+
     for (const dbServer of dbServers) {
       try {
         const config = typeof dbServer.config === 'string'
@@ -64,11 +67,16 @@ export async function loadUserMCPServers(request: Request): Promise<void> {
 
         // connectToServer is idempotent - will skip if already connected
         await mcpClientManager.connectToServer(mcpServer);
+        mcpClientManager.trackUserServer(user.userId, dbServer.name);
+        currentServerNames.push(dbServer.name);
         console.log(`Successfully connected to user's MCP server: ${dbServer.name}`);
       } catch (error) {
         console.warn(`Failed to connect to user's MCP server ${dbServer.name}:`, error);
       }
     }
+
+    // Clean up any servers that were deleted from the database
+    await mcpClientManager.cleanupUserServers(user.userId, currentServerNames);
   } catch (error) {
     console.warn('Failed to load user database servers:', error);
   }
