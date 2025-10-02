@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Save, Download, Play, RotateCcw, ArrowLeft } from "lucide-react";
+import { Save, Download, RotateCcw, ArrowLeft, RefreshCw, FolderOpen } from "lucide-react";
 import Link from "next/link";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { TemplateGallery } from "./TemplateGallery";
 import { ConfigPanel } from "./ConfigPanel";
 import { ExportDialog } from "./ExportDialog";
+import { SaveDialog } from "./SaveDialog";
+import { LoadDialog } from "./LoadDialog";
 import { ContextSidebar } from "./ContextSidebar";
 import { ContextTab } from "./tabs/ContextTab";
 import { DesignTab } from "./tabs/DesignTab";
@@ -26,8 +28,11 @@ const tabs: Array<{ id: TabId; label: string }> = [
 
 export function BuilderLayout() {
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showLoadDialog, setShowLoadDialog] = useState(false);
   const [showConfig, setShowConfig] = useState(true);
   const [showTemplates, setShowTemplates] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const {
     currentResource,
     activeTab,
@@ -36,47 +41,71 @@ export function BuilderLayout() {
     setError,
     mcpContext,
     actionMappings,
+    validationStatus,
   } = useUIBuilderStore();
 
-  const handleSave = async () => {
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      // Re-fetch MCP servers to update connection status
+      const token = localStorage.getItem("token");
+      const headers: HeadersInit = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch("/api/mcp/servers", { headers });
+      if (response.ok) {
+        console.log("MCP servers refreshed");
+      }
+
+      // TODO: Could also re-validate action mappings here if needed
+
+      // Success message could be shown via a toast/notification
+      setError(null);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Failed to refresh");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleExport = () => {
+    if (!currentResource) {
+      setError("No resource to export");
+      return;
+    }
+
+    // Validate basic requirements
+    if (!currentResource.content || !currentResource.content.trim()) {
+      setError("Resource content is empty");
+      return;
+    }
+
+    if (!currentResource.uri.startsWith("ui://")) {
+      setError("Resource URI must start with 'ui://'");
+      return;
+    }
+
+    // Show warning if validation errors exist but allow export anyway
+    const hasErrors = validationStatus.missingMappings.length > 0 || validationStatus.typeMismatches.length > 0;
+    if (hasErrors) {
+      console.warn("Exporting with validation errors:", validationStatus);
+    }
+
+    setShowExportDialog(true);
+  };
+
+  const handleSave = () => {
     if (!currentResource) {
       setError("No resource to save");
       return;
     }
-
-    try {
-      // TODO: Implement save to database
-      // This would call the templates API endpoint
-      console.log("Saving template...", currentResource);
-      alert("Save functionality will be implemented with authentication");
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to save");
-    }
+    setShowSaveDialog(true);
   };
 
-  const handleTest = async () => {
-    if (!currentResource) {
-      setError("No resource to test");
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/ui-builder/test", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resource: currentResource }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to test resource");
-      }
-
-      const data = await response.json();
-      console.log("Test result:", data);
-      alert("UI resource tested successfully! Check the console for details.");
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to test");
-    }
+  const handleLoad = () => {
+    setShowLoadDialog(true);
   };
 
   const getTabProgress = (tabId: TabId): 'completed' | 'current' | 'pending' => {
@@ -160,29 +189,40 @@ export function BuilderLayout() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleTest}
-              title="Test in chat"
+              onClick={handleRefresh}
+              title="Refresh servers and validation"
+              disabled={isRefreshing}
             >
-              <Play className="h-4 w-4 mr-2" />
-              Test
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <div className="h-6 w-px bg-border" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLoad}
+              title="Load saved template"
+            >
+              <FolderOpen className="h-4 w-4 mr-2" />
+              Load
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowExportDialog(true)}
-              title="Export code"
+              onClick={handleSave}
+              title="Save current state"
             >
-              <Download className="h-4 w-4 mr-2" />
-              Export
+              <Save className="h-4 w-4 mr-2" />
+              Save
             </Button>
             <Button
               variant="default"
               size="sm"
-              onClick={handleSave}
-              title="Save template"
+              onClick={handleExport}
+              title="Export code"
             >
-              <Save className="h-4 w-4 mr-2" />
-              Save
+              <Download className="h-4 w-4 mr-2" />
+              Export
             </Button>
           </div>
         </div>
@@ -280,6 +320,26 @@ export function BuilderLayout() {
           resource={currentResource}
           actionMappings={actionMappings}
           mcpContext={mcpContext}
+        />
+      )}
+
+      {/* Save Dialog */}
+      {showSaveDialog && (
+        <SaveDialog
+          onClose={() => setShowSaveDialog(false)}
+          onSaved={() => {
+            console.log("Template saved successfully");
+          }}
+        />
+      )}
+
+      {/* Load Dialog */}
+      {showLoadDialog && (
+        <LoadDialog
+          onClose={() => setShowLoadDialog(false)}
+          onLoaded={() => {
+            console.log("Template loaded successfully");
+          }}
         />
       )}
     </div>

@@ -56,6 +56,12 @@ interface UIBuilderStore {
   setError: (error: string | null) => void;
 
   loadTemplate: (template: Template) => void;
+  loadCompleteState: (state: {
+    currentResource: UIResource;
+    mcpContext: MCPContext;
+    actionMappings: ActionMapping[];
+    testConfig?: TestConfig;
+  }) => void;
 
   // Actions - Tabs
   setActiveTab: (tab: TabId) => void;
@@ -165,6 +171,19 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
       loadTemplate: (template) =>
         set({
           currentResource: template.resource,
+          previewKey: Date.now(),
+        }),
+
+      loadCompleteState: (state) =>
+        set({
+          currentResource: state.currentResource,
+          mcpContext: state.mcpContext,
+          actionMappings: state.actionMappings,
+          testConfig: state.testConfig || {
+            mockResponses: [],
+            testHistory: [],
+            useMockData: true,
+          },
           previewKey: Date.now(),
         }),
 
