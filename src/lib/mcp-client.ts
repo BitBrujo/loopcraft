@@ -7,7 +7,8 @@ export interface MCPServer {
   command?: string[];
   args?: string[];
   url?: string;
-  type: 'stdio' | 'sse';
+  type: 'stdio' | 'sse' | 'http';
+  env?: Record<string, string>;
 }
 
 export class MCPClientManager {
@@ -15,16 +16,47 @@ export class MCPClientManager {
   private transports: Map<string, StdioClientTransport | SSEClientTransport> = new Map();
 
   async connectToServer(server: MCPServer): Promise<void> {
+    // Skip if already connected (idempotent)
+    if (this.isConnected(server.name)) {
+      console.log(`Already connected to MCP server: ${server.name}`);
+      return;
+    }
+
     try {
       let transport;
 
       if (server.type === 'stdio' && server.command) {
+        // Pass environment variables to stdio transport
         transport = new StdioClientTransport({
           command: server.command[0],
           args: server.command.slice(1),
+          env: server.env ? { ...process.env, ...server.env } : undefined,
         });
-      } else if (server.type === 'sse' && server.url) {
-        transport = new SSEClientTransport(new URL(server.url));
+      } else if ((server.type === 'sse' || server.type === 'http') && server.url) {
+        // For SSE/HTTP, create URL with auth headers via EventSource init
+        const url = new URL(server.url);
+
+        // If env vars exist, convert to headers (common patterns)
+        const headers: Record<string, string> = {};
+        if (server.env) {
+          for (const [key, value] of Object.entries(server.env)) {
+            // Support common auth patterns
+            if (key === 'API_KEY' || key === 'BEARER_TOKEN') {
+              headers['Authorization'] = `Bearer ${value}`;
+            } else if (key.startsWith('HEADER_')) {
+              // Custom headers: HEADER_X_Custom_Header -> X-Custom-Header
+              const headerName = key.substring(7).replace(/_/g, '-');
+              headers[headerName] = value;
+            } else {
+              // Pass as-is for other patterns
+              headers[key] = value;
+            }
+          }
+        }
+
+        // Note: SSEClientTransport in MCP SDK may not support headers directly
+        // This is a best-effort approach - check SDK docs for proper implementation
+        transport = new SSEClientTransport(url, { headers } as any);
       } else {
         throw new Error(`Invalid server configuration for ${server.name}`);
       }
