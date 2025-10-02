@@ -22,7 +22,15 @@ export function ToolBrowser() {
       }
 
       setIsLoading(true);
-      const response = await fetch('/api/mcp/tools');
+
+      // Include JWT token if available (for user-specific servers)
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch('/api/mcp/tools', { headers });
       if (response.ok) {
         const data = await response.json();
         const filteredTools = data.tools.filter((tool: MCPTool) =>

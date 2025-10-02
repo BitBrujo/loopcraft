@@ -15,7 +15,15 @@ export function MCPServerExplorer() {
   const fetchServers = async () => {
     setIsLoading(true);
     setError(null);
-    const response = await fetch('/api/mcp/servers');
+
+    // Include JWT token if available (for user-specific servers)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const headers: HeadersInit = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch('/api/mcp/servers', { headers });
     if (response.ok) {
       const data = await response.json();
       setServers(data.servers);
