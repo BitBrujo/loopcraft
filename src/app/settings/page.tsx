@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ChatLayout } from "@/components/chat/ChatLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -27,6 +27,7 @@ import { User, Cpu, Server, Plus, Pencil, Trash2, Power, PowerOff, X } from "luc
 import type { MCPServer } from "@/types/database";
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -47,11 +48,27 @@ export default function SettingsPage() {
   const [serverEnabled, setServerEnabled] = useState(true);
   const [configError, setConfigError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
 
-  // Fetch MCP servers on mount
+  // Check authentication on mount
   useEffect(() => {
-    fetchMCPServers();
-  }, []);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+    } else {
+      setIsAuthenticating(false);
+      fetchMCPServers();
+    }
+  }, [router]);
+
+  // Don't render anything while checking auth
+  if (isAuthenticating) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
 
   const fetchMCPServers = async () => {
     try {
