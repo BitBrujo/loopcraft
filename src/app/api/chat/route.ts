@@ -2,81 +2,14 @@ import { createOllama } from "ollama-ai-provider-v2";
 import { frontendTools } from "@assistant-ui/react-ai-sdk";
 import { streamText } from "ai";
 import { mcpClientManager } from "@/lib/mcp-client";
-import { loadMCPConfig } from "@/lib/mcp-config";
-import { getUserFromRequest } from "@/lib/auth";
-import { query } from "@/lib/db";
-import type { MCPServer as DBMCPServer } from "@/types/database";
+import { initializeAllMCPServers } from "@/lib/mcp-init";
 // import { createUIResource } from "@mcp-ui/server"; // For future use
 
 export const maxDuration = 30;
 
-// Initialize global MCP connections on server start
-let globalMCPInitialized = false;
-
-async function initializeGlobalMCP() {
-  if (globalMCPInitialized) return;
-
-  try {
-    const config = loadMCPConfig();
-
-    // Connect to configured MCP servers from config file
-    for (const server of config.servers) {
-      try {
-        await mcpClientManager.connectToServer(server);
-        console.log(`Successfully connected to global MCP server: ${server.name}`);
-      } catch (error) {
-        console.warn(`Failed to connect to global MCP server ${server.name}:`, error);
-      }
-    }
-
-    globalMCPInitialized = true;
-  } catch (error) {
-    console.error("Failed to initialize global MCP:", error);
-  }
-}
-
-async function loadUserMCPServers(request: Request) {
-  try {
-    const user = await getUserFromRequest(request);
-    if (!user) return;
-
-    const dbServers = await query<DBMCPServer[]>(
-      'SELECT * FROM mcp_servers WHERE user_id = ? AND enabled = true',
-      [user.userId]
-    );
-
-    for (const dbServer of dbServers) {
-      try {
-        const config = typeof dbServer.config === 'string'
-          ? JSON.parse(dbServer.config)
-          : dbServer.config;
-
-        const mcpServer = {
-          name: dbServer.name,
-          type: dbServer.type as 'stdio' | 'sse' | 'http',
-          command: config.command,
-          url: config.url,
-          env: config.env,
-        };
-
-        // connectToServer is idempotent - will skip if already connected
-        await mcpClientManager.connectToServer(mcpServer);
-        console.log(`Successfully connected to user's MCP server: ${dbServer.name}`);
-      } catch (error) {
-        console.warn(`Failed to connect to user's MCP server ${dbServer.name}:`, error);
-      }
-    }
-  } catch (error) {
-    console.warn('Failed to load user database servers:', error);
-  }
-}
-
 export async function POST(req: Request) {
-  // Initialize global MCP servers (once)
-  await initializeGlobalMCP();
-
-  // Load user-specific MCP servers (every request, idempotent)
-  await loadUserMCPServers(req);
+  // Initialize all MCP servers (global + user-specific)
+  await initializeAllMCPServers(req);
 
   const body = await req.json();
   console.log("Received body:", JSON.stringify(body, null, 2));
