@@ -50,6 +50,23 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
 
+  const fetchMCPServers = async () => {
+    try {
+      const response = await fetch("/api/mcp-servers", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.ok) {
+        const servers = await response.json();
+        setMcpServers(servers);
+      }
+    } catch (error) {
+      console.error("Failed to fetch MCP servers:", error);
+    }
+  };
+
   // Check authentication on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -69,23 +86,6 @@ export default function SettingsPage() {
       </div>
     );
   }
-
-  const fetchMCPServers = async () => {
-    try {
-      const response = await fetch("/api/mcp-servers", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-
-      if (response.ok) {
-        const servers = await response.json();
-        setMcpServers(servers);
-      }
-    } catch (error) {
-      console.error("Failed to fetch MCP servers:", error);
-    }
-  };
 
   const handleProfileUpdate = async () => {
     // TODO: Implement profile update
