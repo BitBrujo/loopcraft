@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { User, Cpu, Server, Plus, Pencil, Trash2, Power, PowerOff } from "lucide-react";
+import { User, Cpu, Server, Plus, Pencil, Trash2, Power, PowerOff, X } from "lucide-react";
 import type { MCPServer } from "@/types/database";
 
 export default function SettingsPage() {
@@ -39,8 +39,11 @@ export default function SettingsPage() {
   const [showServerDialog, setShowServerDialog] = useState(false);
   const [editingServer, setEditingServer] = useState<MCPServer | null>(null);
   const [serverName, setServerName] = useState("");
-  const [serverType, setServerType] = useState<"stdio" | "sse">("stdio");
-  const [serverConfig, setServerConfig] = useState("");
+  const [serverType, setServerType] = useState<"stdio" | "sse" | "http">("stdio");
+  const [serverCommand, setServerCommand] = useState("");
+  const [serverArgs, setServerArgs] = useState<string[]>([]);
+  const [serverUrl, setServerUrl] = useState("");
+  const [serverEnv, setServerEnv] = useState<Array<{ key: string; value: string }>>([]);
   const [serverEnabled, setServerEnabled] = useState(true);
   const [configError, setConfigError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -90,7 +93,10 @@ export default function SettingsPage() {
     setEditingServer(null);
     setServerName("");
     setServerType("stdio");
-    setServerConfig('{\n  "command": ["npx", "-y", "@package/name"]\n}');
+    setServerCommand("npx");
+    setServerArgs(["-y", "@modelcontextprotocol/server-filesystem"]);
+    setServerUrl("");
+    setServerEnv([]);
     setServerEnabled(true);
     setConfigError("");
     setShowServerDialog(true);
@@ -100,49 +106,69 @@ export default function SettingsPage() {
     setEditingServer(server);
     setServerName(server.name);
     setServerType(server.type);
-    setServerConfig(JSON.stringify(server.config, null, 2));
+
+    // Parse config into individual fields
+    const commandArray = server.config.command || [];
+    setServerCommand(commandArray[0] || "");
+    setServerArgs(commandArray.slice(1));
+    setServerUrl(server.config.url || "");
+
+    // Convert env object to array
+    const envArray = Object.entries(server.config.env || {}).map(([key, value]) => ({
+      key,
+      value,
+    }));
+    setServerEnv(envArray);
+
     setServerEnabled(server.enabled);
     setConfigError("");
     setShowServerDialog(true);
   };
 
-  const validateConfig = (configStr: string): boolean => {
+  const handleSaveServer = async () => {
+    // Validation
+    if (!serverName.trim()) {
+      setConfigError("Server name is required");
+      return;
+    }
+
+    if (serverType === "stdio" && !serverCommand.trim()) {
+      setConfigError("Command is required for stdio servers");
+      return;
+    }
+
+    if ((serverType === "sse" || serverType === "http") && !serverUrl.trim()) {
+      setConfigError("URL is required for sse/http servers");
+      return;
+    }
+
+    setConfigError("");
+    setIsLoading(true);
+
     try {
-      const config = JSON.parse(configStr);
+      // Build config object from form fields
+      const config: MCPServer["config"] = {};
 
       if (serverType === "stdio") {
-        if (!config.command || !Array.isArray(config.command)) {
-          setConfigError("stdio type requires 'command' array in config");
-          return false;
-        }
-      } else if (serverType === "sse") {
-        if (!config.url || typeof config.url !== "string") {
-          setConfigError("sse type requires 'url' string in config");
-          return false;
-        }
+        // Combine command and args into command array
+        config.command = [serverCommand, ...serverArgs.filter((arg) => arg.trim())];
+      } else {
+        config.url = serverUrl;
       }
 
-      setConfigError("");
-      return true;
-    } catch {
-      setConfigError("Invalid JSON format");
-      return false;
-    }
-  };
+      // Add env vars if any
+      if (serverEnv.length > 0) {
+        config.env = serverEnv.reduce(
+          (acc, { key, value }) => {
+            if (key.trim()) {
+              acc[key.trim()] = value;
+            }
+            return acc;
+          },
+          {} as Record<string, string>
+        );
+      }
 
-  const handleSaveServer = async () => {
-    if (!serverName.trim()) {
-      alert("Server name is required");
-      return;
-    }
-
-    if (!validateConfig(serverConfig)) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const config = JSON.parse(serverConfig);
       const method = editingServer ? "PUT" : "POST";
       const url = editingServer
         ? `/api/mcp-servers/${editingServer.id}`
@@ -167,11 +193,11 @@ export default function SettingsPage() {
         setShowServerDialog(false);
       } else {
         const error = await response.json();
-        alert(error.error || "Failed to save server");
+        setConfigError(error.error || "Failed to save server");
       }
     } catch (error) {
       console.error("Failed to save server:", error);
-      alert("Failed to save server");
+      setConfigError("Failed to save server");
     } finally {
       setIsLoading(false);
     }
@@ -227,20 +253,6 @@ export default function SettingsPage() {
     }
   };
 
-  const getConfigExample = () => {
-    if (serverType === "stdio") {
-      return '{\n  "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/path"],\n  "env": {}\n}';
-    } else {
-      return '{\n  "url": "http://localhost:8080/sse"\n}';
-    }
-  };
-
-  useEffect(() => {
-    if (showServerDialog && !editingServer) {
-      setServerConfig(getConfigExample());
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serverType]);
 
   return (
     <ChatLayout>
@@ -481,42 +493,159 @@ export default function SettingsPage() {
               <Label htmlFor="serverType">Server Type</Label>
               <Select
                 value={serverType}
-                onValueChange={(value: "stdio" | "sse") => setServerType(value)}
+                onValueChange={(value: "stdio" | "sse" | "http") => setServerType(value)}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="stdio">stdio (Local process)</SelectItem>
-                  <SelectItem value="sse">sse (Remote HTTP/SSE)</SelectItem>
+                  <SelectItem value="stdio">
+                    <div className="flex flex-col">
+                      <span>STDIO</span>
+                      <span className="text-xs text-muted-foreground">Local process-based server</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="sse">
+                    <div className="flex flex-col">
+                      <span>SSE</span>
+                      <span className="text-xs text-muted-foreground">Server-Sent Events over HTTP</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="http">
+                    <div className="flex flex-col">
+                      <span>Streamable HTTP</span>
+                      <span className="text-xs text-muted-foreground">HTTP streaming transport</span>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                {serverType === "stdio"
-                  ? "Local process-based server (e.g., npx command)"
-                  : "Remote server using Server-Sent Events"}
-              </p>
             </div>
 
+            {serverType === "stdio" ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="serverCommand">Command</Label>
+                  <Input
+                    id="serverCommand"
+                    value={serverCommand}
+                    onChange={(e) => setServerCommand(e.target.value)}
+                    placeholder="npx"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Arguments</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setServerArgs([...serverArgs, ""])}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Examples: -y, arg1, arg2
+                  </p>
+                  <div className="space-y-2">
+                    {serverArgs.map((arg, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Input
+                          value={arg}
+                          onChange={(e) => {
+                            const newArgs = [...serverArgs];
+                            newArgs[index] = e.target.value;
+                            setServerArgs(newArgs);
+                          }}
+                          placeholder={`Argument ${index + 1}`}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const newArgs = serverArgs.filter((_, i) => i !== index);
+                            setServerArgs(newArgs);
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="serverUrl">URL</Label>
+                <Input
+                  id="serverUrl"
+                  value={serverUrl}
+                  onChange={(e) => setServerUrl(e.target.value)}
+                  placeholder="http://localhost:8080/sse"
+                />
+              </div>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="serverConfig">Configuration (JSON)</Label>
-              <Textarea
-                id="serverConfig"
-                value={serverConfig}
-                onChange={(e) => {
-                  setServerConfig(e.target.value);
-                  setConfigError("");
-                }}
-                placeholder={getConfigExample()}
-                className="font-mono text-sm min-h-[120px]"
-              />
-              {configError && (
-                <p className="text-xs text-red-500">{configError}</p>
+              <div className="flex items-center justify-between">
+                <Label>Environment Variables</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setServerEnv([...serverEnv, { key: "", value: "" }])}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add
+                </Button>
+              </div>
+              {serverEnv.length > 0 && (
+                <div className="space-y-2">
+                  {serverEnv.map((env, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={env.key}
+                        onChange={(e) => {
+                          const newEnv = [...serverEnv];
+                          newEnv[index].key = e.target.value;
+                          setServerEnv(newEnv);
+                        }}
+                        placeholder="KEY"
+                        className="flex-1"
+                      />
+                      <Input
+                        value={env.value}
+                        onChange={(e) => {
+                          const newEnv = [...serverEnv];
+                          newEnv[index].value = e.target.value;
+                          setServerEnv(newEnv);
+                        }}
+                        placeholder="value"
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const newEnv = serverEnv.filter((_, i) => i !== index);
+                          setServerEnv(newEnv);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               )}
-              <p className="text-xs text-muted-foreground">
-                Example {serverType} config: {getConfigExample()}
-              </p>
             </div>
+
+            {configError && (
+              <p className="text-sm text-red-500">{configError}</p>
+            )}
 
             <div className="flex items-center space-x-2">
               <input

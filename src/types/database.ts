@@ -57,7 +57,7 @@ export interface MCPServer {
   id: number;
   user_id: number;
   name: string;
-  type: 'stdio' | 'sse';
+  type: 'stdio' | 'sse' | 'http';
   config: MCPServerConfig;
   enabled: boolean;
   created_at: Date;
@@ -73,14 +73,14 @@ export interface MCPServerConfig {
 
 export interface MCPServerCreate {
   name: string;
-  type: 'stdio' | 'sse';
+  type: 'stdio' | 'sse' | 'http';
   config: MCPServerConfig;
   enabled?: boolean;
 }
 
 export interface MCPServerUpdate {
   name?: string;
-  type?: 'stdio' | 'sse';
+  type?: 'stdio' | 'sse' | 'http';
   config?: MCPServerConfig;
   enabled?: boolean;
 }
