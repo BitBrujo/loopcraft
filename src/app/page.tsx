@@ -1,10 +1,5 @@
-import { ChatLayout } from "@/components/chat/ChatLayout";
-import { Assistant } from "./assistant";
+import { LandingPage } from "@/components/LandingPage";
 
 export default function Home() {
-  return (
-    <ChatLayout>
-      <Assistant />
-    </ChatLayout>
-  );
+  return <LandingPage />;
 }

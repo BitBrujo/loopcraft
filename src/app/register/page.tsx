@@ -50,8 +50,8 @@ export default function RegisterPage() {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
 
-        // Redirect to settings or home
-        router.push("/settings");
+        // Redirect to builder
+        router.push("/mcp-ui-builder");
       } else {
         setError(data.error || "Registration failed");
       }

@@ -75,7 +75,7 @@ export function ChatHeader() {
               <span>Builder</span>
             </Button>
           </Link>
-          <Link href="/">
+          <Link href="/chat">
             <Button variant="ghost" size="sm" className="h-8">
               <MessageCircle className="h-4 w-4 mr-2" />
               <span>Chat</span>
