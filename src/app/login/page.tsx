@@ -37,8 +37,8 @@ export default function LoginPage() {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
 
-        // Redirect to settings or home
-        router.push("/settings");
+        // Redirect to builder
+        router.push("/mcp-ui-builder");
       } else {
         setError(data.error || "Login failed");
       }
@@ -57,9 +57,9 @@ export default function LoginPage() {
           <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <LogIn className="h-6 w-6 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold">Welcome Back</h1>
+          <h1 className="text-2xl font-bold">Welcome to LoopCraft</h1>
           <p className="text-sm text-muted-foreground mt-2">
-            Sign in to your LoopCraft account
+            MCP-UI Lab
           </p>
         </div>
 

@@ -52,7 +52,8 @@ export function ChatHeader() {
   return (
     <header className="border-b border-border bg-card/50 backdrop-blur-sm">
       <div className="flex h-14 items-center justify-between px-4">
-        <div className="flex items-center space-x-3">
+        {/* Left: Branding */}
+        <div className="flex items-center space-x-3 flex-1">
           <MobileSidebar />
           <div className="flex items-center space-x-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
@@ -66,17 +67,18 @@ export function ChatHeader() {
           </Badge>
         </div>
 
+        {/* Center: Navigation */}
         <div className="flex items-center space-x-2">
+          <Link href="/mcp-ui-builder">
+            <Button variant="ghost" size="sm" className="h-8">
+              <PencilRuler className="h-4 w-4 mr-2" />
+              <span>Builder</span>
+            </Button>
+          </Link>
           <Link href="/">
             <Button variant="ghost" size="sm" className="h-8">
               <MessageCircle className="h-4 w-4 mr-2" />
               <span>Chat</span>
-            </Button>
-          </Link>
-          <Link href="/mcp-ui-builder">
-            <Button variant="ghost" size="sm" className="h-8">
-              <PencilRuler className="h-4 w-4 mr-2" />
-              <span>UI Builder</span>
             </Button>
           </Link>
           <Link href="/settings">
@@ -85,6 +87,10 @@ export function ChatHeader() {
               <span>Settings</span>
             </Button>
           </Link>
+        </div>
+
+        {/* Right: Theme & Account */}
+        <div className="flex items-center space-x-2 flex-1 justify-end">
           <ThemeToggle />
 
           {isLoggedIn && user ? (

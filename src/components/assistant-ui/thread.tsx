@@ -133,12 +133,9 @@ const ThreadWelcome: FC = () => {
         <div className="aui-thread-welcome-center flex w-full flex-grow flex-col items-center justify-center">
           <div className="aui-thread-welcome-message flex size-full flex-col justify-center px-8 text-center">
             <div className="welcome-message-1 text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Welcome to LoopCraft
+              LoopCraft Chat Playground
             </div>
-            <div className="welcome-message-2 text-lg text-muted-foreground mt-2">
-              MCP-UI Lab
-            </div>
-            <div className="welcome-message-3 text-sm text-muted-foreground/75 mt-4">
+            <div className="welcome-message-2 text-sm text-muted-foreground/75 mt-4">
               Pick a test below or start your own conversation
             </div>
           </div>
