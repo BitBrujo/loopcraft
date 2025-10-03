@@ -220,43 +220,38 @@ export function BuilderLayout() {
 
         {/* Tab Navigation */}
         <div className="border-b bg-muted/30">
-          <div className="flex items-center justify-between px-4 py-2">
-            <div className="flex items-center gap-1">
+          <div className="flex items-center justify-center px-4 py-3">
+            {/* Centered Tab Container with Brand Outline */}
+            <div className="inline-flex items-center gap-1 p-1 rounded-lg ring-2 ring-primary/60 bg-background/50">
               {tabs.map((tab) => {
                 const progress = getTabProgress(tab.id);
                 return (
                   <button
                     key={tab.id}
-                    className={`px-4 py-2 text-sm rounded transition-colors ${
+                    className={`px-4 py-2 text-sm rounded-md transition-all ${
                       activeTab === tab.id
-                        ? 'bg-background shadow-sm font-medium'
+                        ? 'bg-primary text-primary-foreground shadow-sm font-medium'
                         : progress === 'completed'
-                        ? 'hover:bg-background/50 text-muted-foreground'
-                        : 'hover:bg-background/30 text-muted-foreground'
+                        ? 'hover:bg-primary/10 text-muted-foreground'
+                        : 'hover:bg-muted/50 text-muted-foreground'
                     }`}
                     onClick={() => setActiveTab(tab.id)}
                   >
-                    {tab.label}
+                    <div className="flex items-center gap-2">
+                      <span>{tab.label}</span>
+                      {/* Progress indicator dot */}
+                      <div
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          progress === 'completed'
+                            ? 'bg-green-500'
+                            : progress === 'current'
+                            ? 'bg-blue-500'
+                            : 'bg-gray-300'
+                        }`}
+                        title={`${tab.label}: ${progress}`}
+                      />
+                    </div>
                   </button>
-                );
-              })}
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground mr-2">Progress:</span>
-              {tabs.map((tab) => {
-                const progress = getTabProgress(tab.id);
-                return (
-                  <div
-                    key={tab.id}
-                    className={`w-2 h-2 rounded-full ${
-                      progress === 'completed'
-                        ? 'bg-green-500'
-                        : progress === 'current'
-                        ? 'bg-blue-500'
-                        : 'bg-gray-300'
-                    }`}
-                    title={tab.label}
-                  />
                 );
               })}
             </div>
