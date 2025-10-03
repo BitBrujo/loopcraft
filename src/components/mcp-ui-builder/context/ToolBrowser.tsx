@@ -103,7 +103,7 @@ export function ToolBrowser() {
               <div
                 key={toolKey}
                 className={`border rounded-lg overflow-hidden transition-all ${
-                  isSelected ? 'border-blue-500 bg-blue-50' : 'border-border'
+                  isSelected ? 'border-primary bg-primary/10' : 'border-border'
                 }`}
               >
                 <div className="p-3">

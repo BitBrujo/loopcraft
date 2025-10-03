@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import { MessageSquare, Settings, PencilRuler, User, LogOut, MessageCircle } fro
 
 export function ChatHeader() {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<{ id: number; email: string } | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [modelName, setModelName] = useState<string>("Ollama");
@@ -82,24 +83,30 @@ export function ChatHeader() {
         </div>
 
         {/* Center: Navigation */}
-        <div className="flex items-center space-x-2">
+        <div className="inline-flex items-center gap-1 p-1 rounded-lg ring-2 ring-border bg-background/50">
           <Link href="/mcp-ui-builder">
-            <Button variant="ghost" size="sm" className="h-8">
+            <button
+              className={`px-4 py-2 text-sm rounded-md transition-all flex items-center ${
+                pathname === "/mcp-ui-builder"
+                  ? "bg-foreground/10 font-medium shadow-sm"
+                  : "hover:bg-muted/50 text-muted-foreground"
+              }`}
+            >
               <PencilRuler className="h-4 w-4 mr-2" />
-              <span>Builder</span>
-            </Button>
+              Builder
+            </button>
           </Link>
           <Link href="/chat">
-            <Button variant="ghost" size="sm" className="h-8">
+            <button
+              className={`px-4 py-2 text-sm rounded-md transition-all flex items-center ${
+                pathname === "/chat"
+                  ? "bg-foreground/10 font-medium shadow-sm"
+                  : "hover:bg-muted/50 text-muted-foreground"
+              }`}
+            >
               <MessageCircle className="h-4 w-4 mr-2" />
-              <span>Chat</span>
-            </Button>
-          </Link>
-          <Link href="/settings">
-            <Button variant="ghost" size="sm" className="h-8">
-              <Settings className="h-4 w-4 mr-2" />
-              <span>Settings</span>
-            </Button>
+              Chat
+            </button>
           </Link>
         </div>
 
@@ -123,6 +130,12 @@ export function ChatHeader() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link href="/settings" className="flex items-center">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                   <LogOut className="h-4 w-4 mr-2" />
                   Log out

@@ -97,8 +97,8 @@ export function MCPServerExplorer() {
                 <button
                   className={`w-full text-left p-3 border rounded-lg transition-all ${
                     isSelected
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-border hover:border-blue-300'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-primary/50'
                   }`}
                   onClick={() => toggleServer(server.name)}
                 >

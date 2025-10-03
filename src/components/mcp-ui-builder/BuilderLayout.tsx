@@ -167,11 +167,11 @@ export function BuilderLayout() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header with actions */}
-        <div className="h-14 border-b bg-card/50 backdrop-blur flex items-center justify-between px-4">
-          <div className="flex items-center gap-4">
-            <h1 className="text-lg font-semibold">MCP-UI Function Builder</h1>
-          </div>
-          <div className="flex items-center gap-2">
+        <div className="h-14 border-b bg-card/50 backdrop-blur flex items-center justify-center px-4 relative">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            MCP-UI Function Builder
+          </h1>
+          <div className="absolute right-4 flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
