@@ -237,20 +237,7 @@ export function BuilderLayout() {
                     }`}
                     onClick={() => setActiveTab(tab.id)}
                   >
-                    <div className="flex items-center gap-2">
-                      <span>{tab.label}</span>
-                      {/* Progress indicator dot */}
-                      <div
-                        className={`w-1.5 h-1.5 rounded-full ${
-                          progress === 'completed'
-                            ? 'bg-green-500'
-                            : progress === 'current'
-                            ? 'bg-blue-500'
-                            : 'bg-gray-300'
-                        }`}
-                        title={`${tab.label}: ${progress}`}
-                      />
-                    </div>
+                    {tab.label}
                   </button>
                 );
               })}
