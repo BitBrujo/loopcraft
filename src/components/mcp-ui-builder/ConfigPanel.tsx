@@ -1,21 +1,17 @@
 "use client";
 
-import { useState } from "react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
-import { builtInTemplates, getAllCategories } from "@/lib/ui-builder-templates";
+import { builtInTemplates } from "@/lib/ui-builder-templates";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronDown, ChevronRight } from "lucide-react";
 
 const frameSizePresets = [
   { name: "Small", width: 400, height: 300 },
@@ -24,17 +20,7 @@ const frameSizePresets = [
   { name: "Full", width: 1920, height: 1080 },
 ];
 
-const categoryLabels: Record<string, string> = {
-  custom: "Custom",
-  forms: "Forms",
-  dashboards: "Dashboards",
-  interactive: "Interactive",
-  "data-display": "Data Display",
-  media: "Media",
-};
-
 export function ConfigPanel() {
-  const [showTemplates, setShowTemplates] = useState(false);
   const { currentResource, updateResource, loadTemplate } = useUIBuilderStore();
 
   if (!currentResource) {
@@ -71,50 +57,28 @@ export function ConfigPanel() {
     }
   };
 
-  const categories = getAllCategories();
-
   return (
     <div className="p-4 space-y-6">
       {/* Template Selector */}
       <div>
-        <button
-          className="flex items-center gap-2 text-sm font-semibold mb-3 w-full hover:text-primary transition-colors"
-          onClick={() => setShowTemplates(!showTemplates)}
-        >
-          {showTemplates ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
-          Templates
-        </button>
-
-        {showTemplates && (
-          <div className="space-y-3">
-            <Select onValueChange={handleTemplateSelect}>
-              <SelectTrigger className="h-8 text-sm">
-                <SelectValue placeholder="Select a template..." />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectGroup key={category}>
-                    <SelectLabel>{categoryLabels[category] || category}</SelectLabel>
-                    {builtInTemplates
-                      .filter((t) => t.category === category)
-                      .map((template) => (
-                        <SelectItem key={template.id} value={template.id}>
-                          {template.name}
-                        </SelectItem>
-                      ))}
-                  </SelectGroup>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Select a template to quickly start building your UI
-            </p>
-          </div>
-        )}
+        <h4 className="text-sm font-semibold mb-3">Templates</h4>
+        <div className="space-y-3">
+          <Select onValueChange={handleTemplateSelect}>
+            <SelectTrigger className="h-8 text-sm">
+              <SelectValue placeholder="Select a template..." />
+            </SelectTrigger>
+            <SelectContent>
+              {builtInTemplates.map((template) => (
+                <SelectItem key={template.id} value={template.id}>
+                  {template.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Select a template to quickly start building your UI
+          </p>
+        </div>
       </div>
 
       <Separator />
@@ -138,31 +102,6 @@ export function ConfigPanel() {
             <p className="text-xs text-muted-foreground mt-1">
               Format: ui://[server]/[resource-name]
             </p>
-          </div>
-
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">
-              Title (optional)
-            </label>
-            <Input
-              type="text"
-              value={currentResource.title || ""}
-              onChange={(e) => handleFieldChange("title", e.target.value)}
-              placeholder="My UI Resource"
-              className="h-8 text-sm"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">
-              Description (optional)
-            </label>
-            <textarea
-              value={currentResource.description || ""}
-              onChange={(e) => handleFieldChange("description", e.target.value)}
-              placeholder="Describe what this UI does..."
-              className="w-full px-3 py-2 text-sm border rounded-md resize-none h-20"
-            />
           </div>
         </div>
       </div>
@@ -249,16 +188,6 @@ export function ConfigPanel() {
           placeholder={'{\n  "theme": "dark",\n  "userId": "123"\n}'}
           className="w-full px-3 py-2 text-sm border rounded-md resize-none h-32 font-mono"
         />
-      </div>
-
-      <Separator />
-
-      {/* Metadata */}
-      <div>
-        <h4 className="text-sm font-semibold mb-2">Metadata</h4>
-        <p className="text-xs text-muted-foreground">
-          Additional metadata can be added via the export dialog.
-        </p>
       </div>
     </div>
   );
