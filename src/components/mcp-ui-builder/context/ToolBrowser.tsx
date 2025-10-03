@@ -93,7 +93,7 @@ export function ToolBrowser() {
           No tools found
         </div>
       ) : (
-        <div className="space-y-2 max-h-96 overflow-y-auto">
+        <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto">
           {filteredTools.map((tool) => {
             const isSelected = isToolSelected(tool.name, tool.serverName);
             const isExpanded = expandedTool === `${tool.serverName}-${tool.name}`;

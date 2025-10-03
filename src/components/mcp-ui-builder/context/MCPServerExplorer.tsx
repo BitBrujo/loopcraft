@@ -86,7 +86,7 @@ export function MCPServerExplorer() {
           No MCP servers connected. Configure servers in your environment to get started.
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2">
           {servers.map((server) => {
             const isSelected = mcpContext.selectedServers.includes(server.name);
             const hasError = server.status === 'disconnected' && server.error;
