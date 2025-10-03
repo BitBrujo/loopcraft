@@ -78,7 +78,6 @@ Rules:
       model: ollama(modelName),
       system: systemPrompt,
       prompt: userPrompt,
-      maxTokens: 4000,
     });
 
     // Clean up the response (remove markdown code blocks if present)
