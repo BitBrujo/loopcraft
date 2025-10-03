@@ -32,8 +32,10 @@ export default function SettingsPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [apiUrl, setApiUrl] = useState("http://localhost:11434/api");
-  const [modelName, setModelName] = useState("llama3.2:latest");
+  const [apiUrl, setApiUrl] = useState("");
+  const [modelName, setModelName] = useState("");
+  const [isLoadingAIConfig, setIsLoadingAIConfig] = useState(false);
+  const [isSavingAIConfig, setIsSavingAIConfig] = useState(false);
 
   // MCP Server state
   const [mcpServers, setMcpServers] = useState<MCPServer[]>([]);
@@ -67,6 +69,27 @@ export default function SettingsPage() {
     }
   };
 
+  const fetchAIConfig = async () => {
+    setIsLoadingAIConfig(true);
+    try {
+      const response = await fetch("/api/ai-config", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.ok) {
+        const config = await response.json();
+        setApiUrl(config.apiUrl || "");
+        setModelName(config.modelName || "");
+      }
+    } catch (error) {
+      console.error("Failed to fetch AI config:", error);
+    } finally {
+      setIsLoadingAIConfig(false);
+    }
+  };
+
   // Check authentication on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -75,6 +98,7 @@ export default function SettingsPage() {
     } else {
       setIsAuthenticating(false);
       fetchMCPServers();
+      fetchAIConfig();
     }
   }, [router]);
 
@@ -102,8 +126,39 @@ export default function SettingsPage() {
   };
 
   const handleAISettingsUpdate = async () => {
-    // TODO: Implement AI settings update
-    alert("AI settings update will be implemented with authentication");
+    if (!apiUrl.trim() && !modelName.trim()) {
+      alert("Please provide at least one setting (API URL or Model Name)");
+      return;
+    }
+
+    setIsSavingAIConfig(true);
+    try {
+      const response = await fetch("/api/ai-config", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          apiUrl: apiUrl.trim() || undefined,
+          modelName: modelName.trim() || undefined,
+        }),
+      });
+
+      if (response.ok) {
+        alert("AI settings updated successfully!");
+        // Refresh the config to get the latest values
+        await fetchAIConfig();
+      } else {
+        const error = await response.json();
+        alert(error.error || "Failed to update AI settings");
+      }
+    } catch (error) {
+      console.error("Failed to update AI settings:", error);
+      alert("Failed to update AI settings");
+    } finally {
+      setIsSavingAIConfig(false);
+    }
   };
 
   const openAddServerDialog = () => {
@@ -357,35 +412,45 @@ export default function SettingsPage() {
                 <h2 className="text-xl font-semibold mb-4">AI/Model Preferences</h2>
 
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="apiUrl">Model Provider API URL</Label>
-                    <Input
-                      id="apiUrl"
-                      type="url"
-                      value={apiUrl}
-                      onChange={(e) => setApiUrl(e.target.value)}
-                      placeholder="http://localhost:11434/api"
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      API endpoint for your model provider (Ollama, OpenAI-compatible, etc.)
-                    </p>
-                  </div>
+                  {isLoadingAIConfig ? (
+                    <p className="text-sm text-muted-foreground">Loading AI configuration...</p>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="apiUrl">Model Provider API URL</Label>
+                        <Input
+                          id="apiUrl"
+                          type="url"
+                          value={apiUrl}
+                          onChange={(e) => setApiUrl(e.target.value)}
+                          placeholder="http://localhost:11434/api"
+                          disabled={isSavingAIConfig}
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          API endpoint for your model provider (Ollama, OpenAI-compatible, etc.)
+                        </p>
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="modelName">Model Name</Label>
-                    <Input
-                      id="modelName"
-                      type="text"
-                      value={modelName}
-                      onChange={(e) => setModelName(e.target.value)}
-                      placeholder="llama3.2:latest"
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      The model identifier to use (e.g., llama3.2:latest, gpt-4, claude-3-5-sonnet-20241022)
-                    </p>
-                  </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="modelName">Model Name</Label>
+                        <Input
+                          id="modelName"
+                          type="text"
+                          value={modelName}
+                          onChange={(e) => setModelName(e.target.value)}
+                          placeholder="llama3.2:latest"
+                          disabled={isSavingAIConfig}
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          The model identifier to use (e.g., llama3.2:latest, gpt-4, claude-3-5-sonnet-20241022)
+                        </p>
+                      </div>
+                    </>
+                  )}
 
-                  <Button onClick={handleAISettingsUpdate}>Save AI Settings</Button>
+                  <Button onClick={handleAISettingsUpdate} disabled={isSavingAIConfig || isLoadingAIConfig}>
+                    {isSavingAIConfig ? "Saving..." : "Save AI Settings"}
+                  </Button>
                 </div>
               </Card>
             </TabsContent>

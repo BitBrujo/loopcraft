@@ -3,6 +3,9 @@ import { frontendTools } from "@assistant-ui/react-ai-sdk";
 import { streamText } from "ai";
 import { mcpClientManager } from "@/lib/mcp-client";
 import { initializeAllMCPServers } from "@/lib/mcp-init";
+import { getUserFromRequest } from "@/lib/auth";
+import { queryOne } from "@/lib/db";
+import { Setting } from "@/types/database";
 // import { createUIResource } from "@mcp-ui/server"; // For future use
 
 export const maxDuration = 30;
@@ -41,12 +44,41 @@ export async function POST(req: Request) {
     return message;
   });
 
+  // Get AI configuration (user settings or environment variables)
+  let baseURL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434/api';
+  let modelName = process.env.OLLAMA_MODEL || 'llama3.2:latest';
+
+  // Check for user-specific AI settings
+  const user = getUserFromRequest(req);
+  if (user) {
+    try {
+      const userApiUrl = await queryOne<Setting>(
+        'SELECT * FROM settings WHERE user_id = ? AND `key` = ?',
+        [user.userId, 'ollama_base_url']
+      );
+
+      const userModelName = await queryOne<Setting>(
+        'SELECT * FROM settings WHERE user_id = ? AND `key` = ?',
+        [user.userId, 'ollama_model']
+      );
+
+      // Use user settings if they exist
+      if (userApiUrl && userApiUrl.value) {
+        baseURL = userApiUrl.value;
+      }
+      if (userModelName && userModelName.value) {
+        modelName = userModelName.value;
+      }
+    } catch (error) {
+      console.error('Error fetching user AI settings:', error);
+      // Continue with environment variable defaults
+    }
+  }
+
   // Configure Ollama provider
   const ollama = createOllama({
-    baseURL: process.env.OLLAMA_BASE_URL,
+    baseURL,
   });
-
-  const modelName = process.env.OLLAMA_MODEL || 'llama3.2:latest';
 
   try {
     console.log("Model name:", modelName);
@@ -119,7 +151,7 @@ export async function POST(req: Request) {
     let statusCode = 500;
 
     if ((error as Error).message?.includes("connect") || (error as Error).message?.includes("ECONNREFUSED")) {
-      errorMessage = `Unable to connect to Ollama server at ${process.env.OLLAMA_BASE_URL || "http://localhost:11434"}. Please ensure Ollama is running.`;
+      errorMessage = `Unable to connect to Ollama server at ${baseURL}. Please ensure Ollama is running.`;
       statusCode = 503;
     } else if ((error as Error).message?.includes("model") || (error as Error).message?.includes("not found")) {
       errorMessage = `Model "${modelName}" not found. Please ensure the model is available in Ollama. Try running: ollama pull ${modelName}`;
@@ -131,7 +163,7 @@ export async function POST(req: Request) {
     return new Response(JSON.stringify({
       error: errorMessage,
       model: modelName,
-      baseURL: process.env.OLLAMA_BASE_URL || "http://localhost:11434"
+      baseURL
     }), {
       status: statusCode,
       headers: { "Content-Type": "application/json" }
