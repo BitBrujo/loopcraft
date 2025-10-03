@@ -22,6 +22,7 @@ export function ChatHeader() {
   const router = useRouter();
   const [user, setUser] = useState<{ id: number; email: string } | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [modelName, setModelName] = useState<string>("Ollama");
 
   useEffect(() => {
     // Check if user is logged in
@@ -39,6 +40,19 @@ export function ChatHeader() {
         localStorage.removeItem("user");
       }
     }
+
+    // Fetch AI config to get model name
+    fetch("/api/ai-config")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.modelName) {
+          setModelName(data.modelName);
+        }
+      })
+      .catch(() => {
+        // Fallback to default
+        setModelName("Ollama");
+      });
   }, []);
 
   const handleLogout = () => {
@@ -63,7 +77,7 @@ export function ChatHeader() {
           </div>
           <Separator orientation="vertical" className="h-6 hidden sm:block" />
           <Badge variant="secondary" className="text-xs hidden sm:block">
-            Local AI • Ollama
+            {modelName}
           </Badge>
         </div>
 
