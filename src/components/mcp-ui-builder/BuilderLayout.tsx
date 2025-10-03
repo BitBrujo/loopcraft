@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Save, Download, RotateCcw, RefreshCw, FolderOpen, File } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
-import { TemplateGallery } from "./TemplateGallery";
 import { ConfigPanel } from "./ConfigPanel";
 import { ExportDialog } from "./ExportDialog";
 import { SaveDialog } from "./SaveDialog";
@@ -46,7 +45,6 @@ export function BuilderLayout() {
   const [showLoadDialog, setShowLoadDialog] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showConfig, setShowConfig] = useState(true);
-  const [showTemplates, setShowTemplates] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const {
     currentResource,
@@ -166,38 +164,12 @@ export function BuilderLayout() {
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-background">
-      {/* Left Sidebar - Template Gallery (collapsible, Design tab only) */}
-      {activeTab === 'design' && showTemplates && (
-        <div className="w-64 border-r bg-card overflow-y-auto">
-          <div className="sticky top-0 bg-card border-b p-2 flex items-center justify-between">
-            <h3 className="font-semibold text-sm">Templates</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowTemplates(false)}
-            >
-              &times;
-            </Button>
-          </div>
-          <TemplateGallery />
-        </div>
-      )}
-
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header with actions */}
         <div className="h-14 border-b bg-card/50 backdrop-blur flex items-center justify-between px-4">
           <div className="flex items-center gap-4">
             <h1 className="text-lg font-semibold">MCP-UI Function Builder</h1>
-            {activeTab === 'design' && !showTemplates && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowTemplates(true)}
-              >
-                Show Templates
-              </Button>
-            )}
           </div>
           <div className="flex items-center gap-2">
             <Button

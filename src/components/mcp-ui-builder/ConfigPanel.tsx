@@ -1,9 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
+import { builtInTemplates, getAllCategories } from "@/lib/ui-builder-templates";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 const frameSizePresets = [
   { name: "Small", width: 400, height: 300 },
@@ -12,8 +24,18 @@ const frameSizePresets = [
   { name: "Full", width: 1920, height: 1080 },
 ];
 
+const categoryLabels: Record<string, string> = {
+  custom: "Custom",
+  forms: "Forms",
+  dashboards: "Dashboards",
+  interactive: "Interactive",
+  "data-display": "Data Display",
+  media: "Media",
+};
+
 export function ConfigPanel() {
-  const { currentResource, updateResource } = useUIBuilderStore();
+  const [showTemplates, setShowTemplates] = useState(false);
+  const { currentResource, updateResource, loadTemplate } = useUIBuilderStore();
 
   if (!currentResource) {
     return (
@@ -42,8 +64,61 @@ export function ConfigPanel() {
     });
   };
 
+  const handleTemplateSelect = (templateId: string) => {
+    const template = builtInTemplates.find((t) => t.id === templateId);
+    if (template) {
+      loadTemplate(template);
+    }
+  };
+
+  const categories = getAllCategories();
+
   return (
     <div className="p-4 space-y-6">
+      {/* Template Selector */}
+      <div>
+        <button
+          className="flex items-center gap-2 text-sm font-semibold mb-3 w-full hover:text-primary transition-colors"
+          onClick={() => setShowTemplates(!showTemplates)}
+        >
+          {showTemplates ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+          Templates
+        </button>
+
+        {showTemplates && (
+          <div className="space-y-3">
+            <Select onValueChange={handleTemplateSelect}>
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder="Select a template..." />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectGroup key={category}>
+                    <SelectLabel>{categoryLabels[category] || category}</SelectLabel>
+                    {builtInTemplates
+                      .filter((t) => t.category === category)
+                      .map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.name}
+                        </SelectItem>
+                      ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Select a template to quickly start building your UI
+            </p>
+          </div>
+        )}
+      </div>
+
+      <Separator />
+
       {/* Basic Settings */}
       <div>
         <h4 className="text-sm font-semibold mb-3">Basic Settings</h4>
