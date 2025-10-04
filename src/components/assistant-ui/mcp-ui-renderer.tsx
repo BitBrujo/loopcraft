@@ -1,5 +1,5 @@
 import { UIResourceRenderer, UIActionResult, isUIResource } from "@mcp-ui/client";
-import { useCallback } from "react";
+import { useCallback, useRef, useEffect } from "react";
 
 interface MCPUIRendererProps {
   content: {
@@ -12,16 +12,96 @@ interface MCPUIRendererProps {
       _meta?: Record<string, unknown>;
     };
   };
+  serverName?: string; // Server name for tool calls
 }
 
-export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content }) => {
+export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content, serverName }) => {
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  // Find iframe element after render
+  useEffect(() => {
+    const iframe = document.querySelector('iframe[data-mcp-ui-resource]') as HTMLIFrameElement;
+    if (iframe) {
+      iframeRef.current = iframe;
+    }
+  }, [content]);
+
   const handleUIAction = useCallback(async (result: UIActionResult) => {
-    console.log("MCP UI Action:", result);
+    console.log("🔔 MCP UI Action received:", result);
+    console.log("🔔 Action type:", result.type);
+    console.log("🔔 Payload:", result.payload);
 
     if (result.type === 'tool') {
-      console.log(`Tool call from UI: ${result.payload.toolName}`, result.payload.params);
-      // TODO: Handle tool calls from UI components
-      // This could trigger new API calls or update the conversation
+      console.log(`🔧 Tool call from UI: ${result.payload.toolName}`, result.payload.params);
+
+      // Execute tool call via API
+      if (!serverName) {
+        console.error('No server name provided for tool call');
+        return { status: 'error', error: 'Server name not available' };
+      }
+
+      try {
+        // Get JWT token from localStorage
+        const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+        };
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        // Call the tool via API
+        const response = await fetch('/api/mcp/call-tool', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            serverName,
+            toolName: result.payload.toolName,
+            arguments: result.payload.params || {}
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Tool call failed:', errorData);
+
+          // Post error back to iframe
+          if (iframeRef.current?.contentWindow) {
+            iframeRef.current.contentWindow.postMessage({
+              type: 'mcp-ui-tool-response',
+              error: errorData.error || 'Tool call failed'
+            }, '*');
+          }
+
+          return { status: 'error', error: errorData.error };
+        }
+
+        const toolResult = await response.json();
+        console.log('Tool call result:', toolResult);
+
+        // Post result back to iframe
+        if (iframeRef.current?.contentWindow) {
+          iframeRef.current.contentWindow.postMessage({
+            type: 'mcp-ui-tool-response',
+            result: toolResult
+          }, '*');
+        }
+
+        // Return the result so @mcp-ui/client can also handle it
+        return toolResult;
+      } catch (error) {
+        console.error('Error calling tool:', error);
+
+        // Post error back to iframe
+        if (iframeRef.current?.contentWindow) {
+          iframeRef.current.contentWindow.postMessage({
+            type: 'mcp-ui-tool-response',
+            error: error instanceof Error ? error.message : 'Unknown error'
+          }, '*');
+        }
+
+        return { status: 'error', error: error instanceof Error ? error.message : 'Unknown error' };
+      }
     } else if (result.type === 'prompt') {
       console.log(`Prompt from UI:`, result.payload.prompt);
       // TODO: Handle prompts from UI components
@@ -38,7 +118,7 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content }) => {
     }
 
     return { status: 'handled' };
-  }, []);
+  }, [serverName]);
 
   // Type guard to ensure content has required properties
   if (!content || !content.type || !content.resource) {
@@ -67,6 +147,10 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content }) => {
           onUIAction={handleUIAction}
           htmlProps={{
             autoResizeIframe: true,
+            sandboxPermissions: 'allow-forms allow-scripts allow-same-origin',
+            iframeProps: {
+              'data-mcp-ui-resource': 'true',
+            },
           }}
         />
       </div>

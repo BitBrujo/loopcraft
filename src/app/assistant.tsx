@@ -10,6 +10,11 @@ export const Assistant = () => {
   const runtime = useChatRuntime({
     // @ts-expect-error - API property for direct integration
     api: "/api/chat",
+    // Add authentication header with JWT token from localStorage
+    headers: () => {
+      const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    },
   });
 
   return (

@@ -9,7 +9,7 @@
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamable.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createUIResource } from '@mcp-ui/server';
 import express from 'express';
 import cors from 'cors';

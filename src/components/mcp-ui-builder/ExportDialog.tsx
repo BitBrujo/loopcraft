@@ -12,7 +12,7 @@ interface ExportDialogProps {
   mcpContext: MCPContext;
 }
 
-type ExportFormat = "typescript" | "json" | "curl" | "handlers" | "server" | "guide";
+type ExportFormat = "typescript" | "json" | "curl" | "handlers" | "server" | "ui-tool" | "guide";
 
 function generateTypeScriptCode(resource: UIResource): string {
   const contentParam =
@@ -61,8 +61,86 @@ function generateCurl(resource: UIResource): string {
   return `# Example curl command to return this UI resource from an MCP tool
 
 curl -X POST http://localhost:3000/api/your-tool \\
-  -H "Content-Type: application/json" \\
+  -H "Content-Type": "application/json" \\
   -d '${JSON.stringify(resource, null, 2)}'`;
+}
+
+function generateUIToolCode(resource: UIResource): string {
+  const contentParam =
+    resource.contentType === "rawHtml"
+      ? `content: { type: 'rawHtml', htmlString: \`${resource.content}\` }`
+      : resource.contentType === "externalUrl"
+      ? `content: { type: 'externalUrl', iframeUrl: "${resource.content}" }`
+      : `content: {
+    type: 'remoteDom',
+    script: \`${resource.content}\`,
+    framework: 'react'
+  }`;
+
+  const hasMetadata = resource.title || resource.description;
+  const metadataParam = hasMetadata
+    ? `metadata: {
+    ${resource.title ? `title: "${resource.title}",` : ""}
+    ${resource.description ? `description: "${resource.description}"` : ""}
+  },`
+    : "";
+
+  const hasUiMetadata = resource.preferredSize || resource.initialData;
+  const uiMetadataParam = hasUiMetadata
+    ? `uiMetadata: {
+    ${resource.preferredSize ? `'preferred-frame-size': ['${resource.preferredSize.width}px', '${resource.preferredSize.height}px'],` : ""}
+    ${resource.initialData ? `'initial-render-data': ${JSON.stringify(resource.initialData)}` : ""}
+  }`
+    : "";
+
+  const toolName = resource.uri ? resource.uri.split('/').pop() || 'get_ui' : 'get_ui';
+
+  return `// MCP Tool that returns a UI Resource
+// This tool can be added to your MCP server's tool list
+
+import { createUIResource } from '@mcp-ui/server';
+
+// Tool Definition
+const uiTool = {
+  name: "${toolName}",
+  description: "${resource.description || `Get an interactive UI for ${toolName}`}",
+  inputSchema: {
+    type: "object",
+    properties: {}
+  }
+};
+
+// Tool Handler
+async function handle_${toolName.replace(/[^a-zA-Z0-9]/g, '_')}() {
+  const uiResource = createUIResource({
+    uri: "${resource.uri}",
+    ${contentParam},
+    encoding: 'text',${hasMetadata ? `\n    ${metadataParam}` : ""}${hasUiMetadata ? `\n    ${uiMetadataParam}` : ""}
+  });
+
+  // Return with special prefix for MCP protocol
+  return {
+    content: [{
+      type: "text",
+      text: "__MCP_UI_RESOURCE__:" + JSON.stringify(uiResource)
+    }]
+  };
+}
+
+// Usage in CallToolRequestSchema handler:
+/*
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+
+  if (name === "${toolName}") {
+    return await handle_${toolName.replace(/[^a-zA-Z0-9]/g, '_')}();
+  }
+
+  // ... other tools
+});
+*/
+
+export { uiTool, handle_${toolName.replace(/[^a-zA-Z0-9]/g, '_')} };`;
 }
 
 function generateActionHandlers(actionMappings: ActionMapping[], mcpContext: MCPContext): string {
@@ -326,6 +404,8 @@ export function ExportDialog({ onClose, resource, actionMappings, mcpContext }: 
       ? generateActionHandlers(actionMappings, mcpContext)
       : format === "server"
       ? generateMCPServer(resource, actionMappings, mcpContext)
+      : format === "ui-tool"
+      ? generateUIToolCode(resource)
       : generateIntegrationGuide(resource, actionMappings, mcpContext);
 
   const handleCopy = async () => {
@@ -400,6 +480,16 @@ export function ExportDialog({ onClose, resource, actionMappings, mcpContext }: 
             onClick={() => setFormat("server")}
           >
             Server
+          </button>
+          <button
+            className={`px-4 py-2 text-sm rounded whitespace-nowrap ${
+              format === "ui-tool"
+                ? "bg-background shadow-sm font-medium"
+                : "hover:bg-background/50"
+            }`}
+            onClick={() => setFormat("ui-tool")}
+          >
+            UI Tool
           </button>
           <button
             className={`px-4 py-2 text-sm rounded whitespace-nowrap ${

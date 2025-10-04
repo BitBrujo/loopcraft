@@ -95,8 +95,29 @@ export async function POST(req: Request) {
         execute: async (args: Record<string, unknown>) => {
           try {
             const result = await mcpClientManager.callTool(tool.serverName, tool.name, args);
-            // Return the MCP tool result as-is in standard MCP format
-            return result;
+
+            // Check if result contains content
+            // MCP format: { content: [{ type: "text" | "resource", ...}] }
+            if (result && typeof result === 'object' && 'content' in result) {
+              const content = (result as { content: unknown }).content;
+              if (Array.isArray(content) && content.length > 0) {
+                const firstContent = content[0] as { type?: string; resource?: unknown; text?: string };
+
+                // If it's text content, check for UI resource marker or return as-is
+                if (firstContent.type === "text" && firstContent.text) {
+                  // Already has the marker from hypermemory server, return as-is
+                  return firstContent.text;
+                }
+
+                // Legacy: If it's a resource type (shouldn't happen anymore)
+                if (firstContent.type === "resource" && firstContent.resource) {
+                  return "__MCP_UI_RESOURCE__:" + JSON.stringify(result);
+                }
+              }
+            }
+
+            // For other formats, stringify to ensure it passes validation
+            return JSON.stringify(result);
           } catch (error) {
             console.error(`Error calling MCP tool ${tool.name}:`, error);
             return { error: `Failed to call tool: ${error}` };

@@ -30,15 +30,19 @@ export function ActiveMCPServers() {
       try {
         setIsLoading(true);
 
+        // Get authentication token from localStorage
+        const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
         // Fetch servers
-        const serversResponse = await fetch("/api/mcp/servers");
+        const serversResponse = await fetch("/api/mcp/servers", { headers });
         if (serversResponse.ok) {
           const serversData = await serversResponse.json();
           setServers(serversData.servers || []);
         }
 
         // Fetch resources to detect UI resources
-        const resourcesResponse = await fetch("/api/mcp/resources");
+        const resourcesResponse = await fetch("/api/mcp/resources", { headers });
         if (resourcesResponse.ok) {
           const resourcesData = await resourcesResponse.json();
           setResources(resourcesData.resources || []);

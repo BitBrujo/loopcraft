@@ -7,7 +7,8 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "mcp:demo": "tsx src/mcp-servers/demo-server.ts"
+    "mcp:demo": "tsx src/mcp-servers/demo-server.ts",
+    "mcp:hypermemory": "tsx src/mcp-servers/hypermemory-server.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.38",

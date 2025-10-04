@@ -39,23 +39,37 @@ export async function initializeGlobalMCP(): Promise<void> {
  * Returns silently if user is not authenticated.
  */
 export async function loadUserMCPServers(request: Request): Promise<void> {
+  console.log('[MCP-INIT] loadUserMCPServers called');
+
   try {
     const user = await getUserFromRequest(request);
-    if (!user) return;
+
+    if (!user) {
+      console.log('[MCP-INIT] No authenticated user found, skipping server initialization');
+      return;
+    }
+
+    console.log(`[MCP-INIT] User authenticated: userId=${user.userId}, email=${user.email}`);
 
     const dbServers = await query<DBMCPServer[]>(
       'SELECT * FROM mcp_servers WHERE user_id = ? AND enabled = true',
       [user.userId]
     );
 
+    console.log(`[MCP-INIT] Found ${dbServers.length} enabled servers for user ${user.userId}`);
+
     // Track current server names for cleanup
     const currentServerNames: string[] = [];
 
     for (const dbServer of dbServers) {
+      console.log(`[MCP-INIT] Processing server: ${dbServer.name} (type: ${dbServer.type})`);
+
       try {
         const config = typeof dbServer.config === 'string'
           ? JSON.parse(dbServer.config)
           : dbServer.config;
+
+        console.log(`[MCP-INIT] Config for ${dbServer.name}:`, JSON.stringify(config));
 
         const mcpServer = {
           name: dbServer.name,
@@ -65,20 +79,24 @@ export async function loadUserMCPServers(request: Request): Promise<void> {
           env: config.env,
         };
 
+        console.log(`[MCP-INIT] Attempting to connect to ${dbServer.name}...`);
+
         // connectToServer is idempotent - will skip if already connected
         await mcpClientManager.connectToServer(mcpServer);
         mcpClientManager.trackUserServer(user.userId, dbServer.name);
         currentServerNames.push(dbServer.name);
-        console.log(`Successfully connected to user's MCP server: ${dbServer.name}`);
+        console.log(`[MCP-INIT] ✓ Successfully connected to user's MCP server: ${dbServer.name}`);
       } catch (error) {
-        console.warn(`Failed to connect to user's MCP server ${dbServer.name}:`, error);
+        console.error(`[MCP-INIT] ✗ Failed to connect to user's MCP server ${dbServer.name}:`, error);
       }
     }
 
     // Clean up any servers that were deleted from the database
+    console.log(`[MCP-INIT] Cleaning up deleted servers for user ${user.userId}`);
     await mcpClientManager.cleanupUserServers(user.userId, currentServerNames);
+    console.log('[MCP-INIT] Server initialization complete');
   } catch (error) {
-    console.warn('Failed to load user database servers:', error);
+    console.error('[MCP-INIT] Failed to load user database servers:', error);
   }
 }
 
