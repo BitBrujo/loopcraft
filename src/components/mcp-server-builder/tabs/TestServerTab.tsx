@@ -39,8 +39,7 @@ export function TestServerTab() {
 
   const generateServerCode = () => {
     // Generate MCP server code
-    const code = `#!/usr/bin/env node
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+    const code = `import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 

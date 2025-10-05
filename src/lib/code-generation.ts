@@ -57,9 +57,7 @@ export function generateServerCode(
     ? '// Read-only UI - Display-only content with no user interactions'
     : `// Interactive UI - Includes ${customTools.length} custom tool${customTools.length !== 1 ? 's' : ''} for user interactions`;
 
-  let code = `#!/usr/bin/env node
-
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+  let code = `import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { createUIResource } from '@mcp-ui/server';
