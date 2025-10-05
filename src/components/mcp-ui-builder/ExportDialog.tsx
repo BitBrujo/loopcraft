@@ -218,6 +218,7 @@ function generateMCPServer(resource: UIResource, actionMappings: ActionMapping[]
   let code = `#!/usr/bin/env node\n\n`;
   code += `import { Server } from '@modelcontextprotocol/sdk/server/index.js';\n`;
   code += `import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';\n`;
+  code += `import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';\n`;
   code += `import { createUIResource } from '@mcp-ui/server';\n\n`;
 
   code += `// MCP Server for ${resource.uri}\n\n`;
@@ -252,7 +253,7 @@ function generateMCPServer(resource: UIResource, actionMappings: ActionMapping[]
 
   // Add tools
   code += `// Tools\n`;
-  code += `server.setRequestHandler('tools/list', async () => ({\n`;
+  code += `server.setRequestHandler(ListToolsRequestSchema, async () => ({\n`;
   code += `  tools: [\n`;
 
   // Add get_ui tool with agent parameters
@@ -307,7 +308,7 @@ function generateMCPServer(resource: UIResource, actionMappings: ActionMapping[]
 
   // Add tool call handler
   code += `// Tool call handler\n`;
-  code += `server.setRequestHandler('tools/call', async (request) => {\n`;
+  code += `server.setRequestHandler(CallToolRequestSchema, async (request) => {\n`;
   code += `  const { name, arguments: args } = request.params;\n\n`;
 
   // Handle get_ui tool
