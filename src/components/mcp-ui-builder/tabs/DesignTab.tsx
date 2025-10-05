@@ -132,15 +132,15 @@ export function DesignTab() {
             Select an existing MCP server to wrap with a UI, or leave empty to create standalone UI
           </p>
           <Select
-            value={connectedServerName || ''}
-            onValueChange={(value) => setConnectedServerName(value || null)}
+            value={connectedServerName || '__none__'}
+            onValueChange={(value) => setConnectedServerName(value === '__none__' ? null : value)}
             disabled={isLoadingServers}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder={isLoadingServers ? "Loading servers..." : "None (standalone UI)"} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">None (standalone UI)</SelectItem>
+              <SelectItem value="__none__">None (standalone UI)</SelectItem>
               {servers.filter(s => s.enabled).map((server) => (
                 <SelectItem key={server.id} value={server.name}>
                   {server.name} ({server.type})

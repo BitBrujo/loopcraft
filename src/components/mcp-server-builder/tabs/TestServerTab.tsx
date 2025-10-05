@@ -136,6 +136,8 @@ main().catch(console.error);
         throw new Error('Authentication required');
       }
 
+      const fileName = `mcp-${serverConfig.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.mjs`;
+
       const response = await fetch('/api/ui-builder/test', {
         method: 'POST',
         headers: {
@@ -144,8 +146,8 @@ main().catch(console.error);
         },
         body: JSON.stringify({
           serverCode: code,
+          fileName,
           serverName: serverConfig.name,
-          serverDescription: serverConfig.description,
         }),
       });
 
@@ -157,7 +159,7 @@ main().catch(console.error);
       const data = await response.json();
 
       // Update store with test server info
-      startTestServer(data.serverName, data.serverId, data.serverFile);
+      startTestServer(data.serverName, data.serverId, data.filePath);
 
       // Navigate to chat for testing
       setTimeout(() => {
