@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Plus, Trash2, Edit2, Check, X, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowRight, Plus, Trash2, Edit2, Check, X, ChevronDown, ChevronUp, Info } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import { generateId } from "@/lib/utils";
 import type { CustomTool, ToolParameter } from "@/types/ui-builder";
 
 export function DefineToolsTab() {
-  const { customTools, addCustomTool, updateCustomTool, removeCustomTool, setActiveTab } = useUIBuilderStore();
+  const { customTools, addCustomTool, updateCustomTool, removeCustomTool, setActiveTab, uiMode } = useUIBuilderStore();
   const [editingToolId, setEditingToolId] = useState<string | null>(null);
   const [isAddingTool, setIsAddingTool] = useState(false);
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
@@ -113,10 +113,29 @@ export function DefineToolsTab() {
     setExpandedTools(newExpanded);
   };
 
-  const canProceed = customTools.length > 0;
+  // In readonly mode, tools are optional; in interactive mode, at least one tool is required
+  const canProceed = uiMode === 'readonly' || customTools.length > 0;
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      {/* Read-Only Mode Info Banner */}
+      {uiMode === 'readonly' && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800 p-3">
+          <div className="flex items-start gap-2">
+            <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm text-blue-900 dark:text-blue-100 font-medium">
+                Read-only mode: Custom tools are optional
+              </p>
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                Your UI will only include the default <code className="bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded">get_ui</code> tool.
+                Switch to Interactive mode if you need user actions like form submissions.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 overflow-auto p-4 space-y-4">
         {/* Add Tool Button */}
         {!isAddingTool && !editingToolId && (
@@ -354,7 +373,13 @@ export function DefineToolsTab() {
       <div className="border-t bg-card p-4">
         <div className="flex items-center justify-between">
           <div className="text-sm">
-            {canProceed ? (
+            {uiMode === 'readonly' ? (
+              <span className="text-green-600">
+                {customTools.length > 0
+                  ? `${customTools.length} tool${customTools.length !== 1 ? 's' : ''} defined (optional)`
+                  : 'Tools optional in read-only mode'}
+              </span>
+            ) : canProceed ? (
               <span className="text-green-600">
                 {customTools.length} tool{customTools.length !== 1 ? 's' : ''} ready
               </span>

@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import type { TabId } from "@/types/ui-builder";
 
-const tabs: Array<{ id: TabId; label: string }> = [
+const allTabs: Array<{ id: TabId; label: string }> = [
   { id: 'design', label: 'Design' },
   { id: 'tools', label: 'Define Tools' },
   { id: 'actions', label: 'Actions' },
@@ -60,6 +60,7 @@ export function BuilderLayout() {
     clearActionMappings,
     setTestConfig,
     setValidationStatus,
+    uiMode,
   } = useUIBuilderStore();
 
   // Migration: Fix duplicate mapping IDs on component mount
@@ -158,6 +159,11 @@ export function BuilderLayout() {
   const handleLoad = () => {
     setShowLoadDialog(true);
   };
+
+  // Filter tabs based on UI mode
+  const tabs = uiMode === 'readonly'
+    ? allTabs.filter((tab) => tab.id !== 'tools' && tab.id !== 'actions')
+    : allTabs;
 
   const getTabProgress = (tabId: TabId): 'completed' | 'current' | 'pending' => {
     const tabIndex = tabs.findIndex((t) => t.id === tabId);

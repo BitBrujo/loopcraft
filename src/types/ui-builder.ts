@@ -4,6 +4,8 @@ export type ContentType = 'rawHtml' | 'externalUrl' | 'remoteDom';
 
 export type ActionType = 'tool' | 'prompt' | 'link' | 'intent' | 'notify';
 
+export type UIMode = 'readonly' | 'interactive';
+
 export interface FrameSize {
   width: number;
   height: number;
@@ -61,6 +63,7 @@ export interface Template {
   description: string;
   resource: UIResource;
   thumbnail?: string;
+  uiMode?: UIMode; // Optional for backward compatibility
 }
 
 export interface UIBuilderState {

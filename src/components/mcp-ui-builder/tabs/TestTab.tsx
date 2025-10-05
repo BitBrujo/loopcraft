@@ -18,6 +18,7 @@ export function TestTab() {
     testServerId,
     startTestServer,
     stopTestServer,
+    uiMode,
   } = useUIBuilderStore();
 
   const [isExporting, setIsExporting] = useState(false);
@@ -46,7 +47,7 @@ export function TestTab() {
 
     try {
       // Generate server code using shared function
-      const serverCode = generateServerCode(currentResource, customTools, actionMappings);
+      const serverCode = generateServerCode(currentResource, customTools, actionMappings, uiMode);
       const timestamp = Date.now();
       const serverName = `__test_${timestamp}`;
       const fileName = `mcp-ui-test-${timestamp}.js`;

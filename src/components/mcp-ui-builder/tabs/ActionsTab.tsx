@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ArrowRight, AlertCircle, CheckCircle2, Info } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { Button } from "@/components/ui/button";
 import { ActionMapper } from "../actions/ActionMapper";
@@ -16,6 +16,7 @@ export function ActionsTab() {
     validationStatus,
     setValidationStatus,
     setActiveTab,
+    uiMode,
   } = useUIBuilderStore();
 
   const [selectedMappingId, setSelectedMappingId] = useState<string | null>(null);
@@ -51,10 +52,11 @@ export function ActionsTab() {
           setValidationStatus(status);
         },
         300,
-        currentResource.templatePlaceholders
+        currentResource.templatePlaceholders,
+        uiMode
       );
     }
-  }, [actionMappings, currentResource, customTools, setValidationStatus]);
+  }, [actionMappings, currentResource, customTools, setValidationStatus, uiMode]);
 
   // Auto-select first mapping when mappings change
   useEffect(() => {
@@ -68,11 +70,31 @@ export function ActionsTab() {
     }
   }, [actionMappings, selectedMappingId]);
 
-  const canProceed = isValidationValid(validationStatus) && actionMappings.length > 0;
+  // In readonly mode, action mappings are optional; in interactive mode, validation must pass
+  const canProceed = uiMode === 'readonly'
+    ? true // Always allow proceeding in readonly mode
+    : isValidationValid(validationStatus) && actionMappings.length > 0;
   const validationSummary = getValidationSummary(validationStatus);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      {/* Read-Only Mode Info Banner */}
+      {uiMode === 'readonly' && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800 p-3">
+          <div className="flex items-start gap-2">
+            <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm text-blue-900 dark:text-blue-100 font-medium">
+                Read-only mode: No user interactions configured
+              </p>
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                Your UI is display-only. Switch to Interactive mode to map UI elements like buttons and forms to MCP tools.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main content area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Action Mapper (70% height) */}
@@ -163,7 +185,14 @@ export function ActionsTab() {
       <div className="border-t bg-card p-4">
         <div className="flex items-center justify-between">
           <div className="text-sm">
-            {canProceed ? (
+            {uiMode === 'readonly' ? (
+              <span className="text-green-600 flex items-center gap-1">
+                <CheckCircle2 className="h-4 w-4" />
+                {actionMappings.length > 0
+                  ? `${actionMappings.length} mapping${actionMappings.length !== 1 ? 's' : ''} defined (optional)`
+                  : 'Mappings optional in read-only mode'}
+              </span>
+            ) : canProceed ? (
               <span className="text-green-600 flex items-center gap-1">
                 <CheckCircle2 className="h-4 w-4" />
                 All validations passed
