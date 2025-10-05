@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateId } from "@/lib/utils";
 import type { CustomTool, ToolParameter } from "@/types/ui-builder";
@@ -208,14 +207,16 @@ export function DefineToolsTab() {
                           onChange={(e) => updateParameter(index, { description: e.target.value })}
                         />
                         <div className="flex items-center space-x-2">
-                          <Checkbox
+                          <input
+                            type="checkbox"
                             id={`required-${index}`}
                             checked={param.required}
-                            onCheckedChange={(checked) => updateParameter(index, { required: checked as boolean })}
+                            onChange={(e) => updateParameter(index, { required: e.target.checked })}
+                            className="h-4 w-4 rounded border-gray-300"
                           />
                           <label
                             htmlFor={`required-${index}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            className="text-sm font-medium leading-none cursor-pointer"
                           >
                             Required
                           </label>
