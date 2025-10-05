@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { generateId } from '@/lib/utils';
 import type {
   UIResource,
   Template,
@@ -349,6 +350,21 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
           testHistory: [],
         },
       }),
+      onRehydrateStorage: () => (state) => {
+        // Migration: Fix duplicate mapping IDs from old Date.now() format
+        if (state?.actionMappings) {
+          const seenIds = new Set<string>();
+          const migratedMappings = state.actionMappings.map((mapping) => {
+            // Check for duplicate or old Date.now() format (mapping-[timestamp])
+            if (seenIds.has(mapping.id) || /^mapping-\d+$/.test(mapping.id)) {
+              return { ...mapping, id: generateId() };
+            }
+            seenIds.add(mapping.id);
+            return mapping;
+          });
+          state.actionMappings = migratedMappings;
+        }
+      },
     }
   )
 );

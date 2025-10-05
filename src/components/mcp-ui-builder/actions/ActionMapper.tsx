@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Plus, Trash2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { parseHTMLForInteractiveElements } from "@/lib/html-parser";
+import { generateId } from "@/lib/utils";
 import type { InteractiveElement } from "@/lib/html-parser";
 import type { ActionMapping } from "@/types/ui-builder";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,7 @@ export function ActionMapper() {
     if (!firstTool) return;
 
     const newMapping: ActionMapping = {
-      id: `mapping-${Date.now()}`,
+      id: generateId(),
       uiElementId: elementId,
       uiElementType: element.type,
       toolName: firstTool.name,

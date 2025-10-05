@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Save, Download, RotateCcw, RefreshCw, FolderOpen, File } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
+import { generateId } from "@/lib/utils";
 import { ConfigPanel } from "./ConfigPanel";
 import { ExportDialog } from "./ExportDialog";
 import { SaveDialog } from "./SaveDialog";
@@ -58,6 +59,28 @@ export function BuilderLayout() {
     setTestConfig,
     setValidationStatus,
   } = useUIBuilderStore();
+
+  // Migration: Fix duplicate mapping IDs on component mount
+  useEffect(() => {
+    const seenIds = new Set<string>();
+    let needsMigration = false;
+
+    const migratedMappings = actionMappings.map((mapping) => {
+      // Check for duplicate or old Date.now() format (mapping-[timestamp])
+      if (seenIds.has(mapping.id) || /^mapping-\d+$/.test(mapping.id)) {
+        needsMigration = true;
+        return { ...mapping, id: generateId() };
+      }
+      seenIds.add(mapping.id);
+      return mapping;
+    });
+
+    if (needsMigration) {
+      // Update all mappings at once using setState
+      useUIBuilderStore.setState({ actionMappings: migratedMappings });
+      console.log('[MCP-UI Builder] Migrated duplicate mapping IDs');
+    }
+  }, []); // Only run once on mount
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
