@@ -20,6 +20,7 @@ export function TestServerTab() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string>("");
   const [showCode, setShowCode] = useState(false);
+  const [serverName, setServerName] = useState(serverConfig.name || "my-mcp-server");
 
   if (!activeTool || !serverConfig) {
     return (
@@ -136,7 +137,7 @@ main().catch(console.error);
         throw new Error('Authentication required');
       }
 
-      const fileName = `mcp-${serverConfig.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.ts`;
+      const fileName = `mcp-${serverName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.ts`;
 
       const response = await fetch('/api/ui-builder/test', {
         method: 'POST',
@@ -147,7 +148,7 @@ main().catch(console.error);
         body: JSON.stringify({
           serverCode: code,
           fileName,
-          serverName: serverConfig.name,
+          serverName: serverName,
         }),
       });
 
@@ -246,6 +247,26 @@ main().catch(console.error);
           </div>
         </div>
 
+        {/* Server Name Input */}
+        <div className="bg-card rounded-lg border p-6 mb-6">
+          <h3 className="font-semibold text-lg mb-4">Server Configuration</h3>
+          <div>
+            <label className="text-sm text-muted-foreground mb-2 block">
+              Server Name (must be unique)
+            </label>
+            <input
+              type="text"
+              value={serverName}
+              onChange={(e) => setServerName(e.target.value)}
+              className="w-full px-3 py-2 bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="my-mcp-server"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              This name will be used to identify your server in the chat
+            </p>
+          </div>
+        </div>
+
         {/* Test Status */}
         {isTestServerActive && testServerName && (
           <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 mb-6 flex items-center gap-3">
@@ -263,7 +284,7 @@ main().catch(console.error);
         <div className="space-y-4">
           <Button
             onClick={handleGenerateAndTest}
-            disabled={isGenerating}
+            disabled={isGenerating || !serverName.trim()}
             size="lg"
             className="w-full gap-2"
           >
