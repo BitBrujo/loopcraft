@@ -12,7 +12,7 @@ interface ExportDialogProps {
   mcpContext: MCPContext;
 }
 
-type ExportFormat = "typescript" | "json" | "curl" | "handlers" | "server" | "ui-tool" | "guide";
+type ExportFormat = "typescript" | "json" | "curl" | "handlers" | "server" | "ui-tool" | "quickstart" | "guide";
 
 function generateTypeScriptCode(resource: UIResource): string {
   const contentParam =
@@ -304,6 +304,96 @@ function generateMCPServer(resource: UIResource, actionMappings: ActionMapping[]
   return code;
 }
 
+function generateQuickStart(resource: UIResource, actionMappings: ActionMapping[], _mcpContext: MCPContext): string {
+  const serverName = resource.uri.split('/')[2] || 'my-ui-server';
+  const toolName = resource.uri ? resource.uri.split('/').pop() || 'get_ui' : 'get_ui';
+
+  let quickStart = `# Quick Start Guide\n\n`;
+  quickStart += `Get your MCP-UI server running in 5 minutes.\n\n`;
+
+  quickStart += `## 1. Create package.json\n\n`;
+  quickStart += `\`\`\`bash\n`;
+  quickStart += `cat > package.json << 'EOF'\n`;
+  quickStart += `{\n`;
+  quickStart += `  "name": "${serverName}",\n`;
+  quickStart += `  "version": "1.0.0",\n`;
+  quickStart += `  "type": "module",\n`;
+  quickStart += `  "bin": { "${serverName}": "./server.js" },\n`;
+  quickStart += `  "dependencies": {\n`;
+  quickStart += `    "@modelcontextprotocol/sdk": "^1.0.4",\n`;
+  quickStart += `    "@mcp-ui/server": "^0.1.0"\n`;
+  quickStart += `  }\n`;
+  quickStart += `}\n`;
+  quickStart += `EOF\n`;
+  quickStart += `\`\`\`\n\n`;
+
+  quickStart += `## 2. Copy Server Code\n\n`;
+  quickStart += `Go to the "Server" tab above and copy the complete server code to \`server.js\`.\n\n`;
+
+  quickStart += `## 3. Install Dependencies\n\n`;
+  quickStart += `\`\`\`bash\n`;
+  quickStart += `npm install\n`;
+  quickStart += `\`\`\`\n\n`;
+
+  quickStart += `## 4. Test Locally\n\n`;
+  quickStart += `\`\`\`bash\n`;
+  quickStart += `# Start server (keep this terminal open)\n`;
+  quickStart += `npx tsx server.js\n`;
+  quickStart += `# Or if compiled: node server.js\n`;
+  quickStart += `\`\`\`\n\n`;
+
+  quickStart += `## 5. Add to LoopCraft\n\n`;
+  quickStart += `Navigate to **LoopCraft Settings → MCP Servers → Add Server**:\n\n`;
+  quickStart += `\`\`\`json\n`;
+  quickStart += `{\n`;
+  quickStart += `  "name": "${serverName}",\n`;
+  quickStart += `  "type": "stdio",\n`;
+  quickStart += `  "command": ["npx", "tsx", "/absolute/path/to/server.js"],\n`;
+  quickStart += `  "enabled": true\n`;
+  quickStart += `}\n`;
+  quickStart += `\`\`\`\n\n`;
+
+  quickStart += `**Important:** Replace \`/absolute/path/to/server.js\` with the actual file path.\n\n`;
+
+  quickStart += `## 6. Test in Chat\n\n`;
+  quickStart += `Open LoopCraft chat and send:\n\n`;
+  quickStart += `\`\`\`\n`;
+  quickStart += `"${resource.description || `Show me the ${toolName} UI`}"\n`;
+  quickStart += `\`\`\`\n\n`;
+
+  if (actionMappings.length > 0) {
+    quickStart += `The UI should appear with interactive elements:\n`;
+    actionMappings.forEach((mapping, index) => {
+      quickStart += `${index + 1}. **${mapping.uiElementId}** (${mapping.uiElementType}) → calls \`${mapping.toolName}\`\n`;
+    });
+    quickStart += `\n`;
+  }
+
+  quickStart += `## Troubleshooting\n\n`;
+  quickStart += `**Server not showing in Settings:**\n`;
+  quickStart += `- Check server is running (terminal shows "MCP Server running on stdio")\n`;
+  quickStart += `- Verify absolute path to server.js is correct\n`;
+  quickStart += `- Try restarting LoopCraft\n\n`;
+
+  quickStart += `**UI not rendering:**\n`;
+  quickStart += `- Check browser console for errors (F12)\n`;
+  quickStart += `- Verify HTML content is valid (see "Design" tab)\n`;
+  quickStart += `- Try refreshing the chat\n\n`;
+
+  quickStart += `**Actions not working:**\n`;
+  quickStart += `- Open browser console (F12) and check for postMessage errors\n`;
+  quickStart += `- Verify tool handlers are implemented in server.js\n`;
+  quickStart += `- Check \`tools/call\` handler returns proper format\n\n`;
+
+  quickStart += `---\n\n`;
+  quickStart += `🚀 **Next Steps:**\n`;
+  quickStart += `- Implement tool logic in server.js\n`;
+  quickStart += `- Add authentication if needed (see "Guide" tab)\n`;
+  quickStart += `- Deploy to npm: \`npm publish\` (optional)\n`;
+
+  return quickStart;
+}
+
 function generateIntegrationGuide(resource: UIResource, actionMappings: ActionMapping[], mcpContext: MCPContext): string {
   let guide = `# Integration Guide: ${resource.title || resource.uri}\n\n`;
 
@@ -343,24 +433,129 @@ function generateIntegrationGuide(resource: UIResource, actionMappings: ActionMa
     guide += `No action mappings configured.\n\n`;
   }
 
-  guide += `## Setup Instructions\n\n`;
-  guide += `1. **Install Dependencies**\n`;
-  guide += `   \`\`\`bash\n`;
-  guide += `   npm install @modelcontextprotocol/sdk @mcp-ui/server\n`;
-  guide += `   \`\`\`\n\n`;
+  guide += `## Adding to Existing Server\n\n`;
+  guide += `If you already have an MCP server, you can add this UI tool to your existing \`CallToolRequestSchema\` handler:\n\n`;
+  guide += `\`\`\`typescript\n`;
+  guide += `import { createUIResource } from '@mcp-ui/server';\n\n`;
+  guide += `server.setRequestHandler(CallToolRequestSchema, async (request) => {\n`;
+  guide += `  const { name, arguments: args } = request.params;\n\n`;
+  guide += `  // Your existing tools\n`;
+  guide += `  if (name === "existing_tool") {\n`;
+  guide += `    // ... existing tool logic\n`;
+  guide += `  }\n\n`;
+  guide += `  // Add new UI tool\n`;
+  const toolName = resource.uri ? resource.uri.split('/').pop() || 'get_ui' : 'get_ui';
+  guide += `  if (name === "${toolName}") {\n`;
+  guide += `    const uiResource = createUIResource({\n`;
+  guide += `      uri: "${resource.uri}",\n`;
+  guide += `      content: { type: "${resource.contentType}", ... },\n`;
+  guide += `      encoding: 'text'\n`;
+  guide += `    });\n`;
+  guide += `    return {\n`;
+  guide += `      content: [{\n`;
+  guide += `        type: "text",\n`;
+  guide += `        text: "__MCP_UI_RESOURCE__:" + JSON.stringify(uiResource)\n`;
+  guide += `      }]\n`;
+  guide += `    };\n`;
+  guide += `  }\n\n`;
+  guide += `  throw new Error(\`Unknown tool: \${name}\`);\n`;
+  guide += `});\n`;
+  guide += `\`\`\`\n\n`;
 
-  guide += `2. **Create MCP Server** (see "Server" tab)\n`;
-  guide += `   - Copy the generated server code to \`server.js\`\n`;
-  guide += `   - Implement tool logic for each action\n\n`;
+  guide += `## Creating New Server from Scratch\n\n`;
+  guide += `If you're creating a new MCP server, follow these steps:\n\n`;
+  guide += `### 1. Create package.json\n\n`;
+  guide += `\`\`\`json\n`;
+  guide += `{\n`;
+  guide += `  "name": "${resource.uri.split('/')[2] || 'my-ui-server'}",\n`;
+  guide += `  "version": "1.0.0",\n`;
+  guide += `  "type": "module",\n`;
+  guide += `  "bin": {\n`;
+  guide += `    "${resource.uri.split('/')[2] || 'my-ui-server'}": "./server.js"\n`;
+  guide += `  },\n`;
+  guide += `  "dependencies": {\n`;
+  guide += `    "@modelcontextprotocol/sdk": "^1.0.4",\n`;
+  guide += `    "@mcp-ui/server": "^0.1.0"\n`;
+  guide += `  }\n`;
+  guide += `}\n`;
+  guide += `\`\`\`\n\n`;
 
-  guide += `3. **Create Action Handlers** (see "Handlers" tab)\n`;
-  guide += `   - Copy the generated handlers to your frontend\n`;
-  guide += `   - Wire up handlers to UI events\n\n`;
+  guide += `### 2. Copy Server Code (see "Server" tab)\n\n`;
+  guide += `Copy the generated server code from the "Server" export tab to \`server.js\`.\n\n`;
 
-  guide += `4. **Test the Integration**\n`;
-  guide += `   - Start your MCP server: \`node server.js\`\n`;
-  guide += `   - Load the UI resource in your MCP client\n`;
-  guide += `   - Test each action mapping\n\n`;
+  guide += `### 3. Install Dependencies\n\n`;
+  guide += `\`\`\`bash\n`;
+  guide += `npm install\n`;
+  guide += `\`\`\`\n\n`;
+
+  guide += `### 4. Make Executable (optional for npx distribution)\n\n`;
+  guide += `\`\`\`bash\n`;
+  guide += `chmod +x server.js\n`;
+  guide += `\`\`\`\n\n`;
+
+  guide += `Add shebang to top of server.js: \`#!/usr/bin/env node\`\n\n`;
+
+  guide += `## Testing in LoopCraft Chat\n\n`;
+  guide += `### 1. Start Your Server Locally\n\n`;
+  guide += `\`\`\`bash\n`;
+  guide += `# For stdio servers:\n`;
+  guide += `npx tsx server.ts  # Or: node server.js\n`;
+  guide += `\`\`\`\n\n`;
+
+  guide += `### 2. Add Server to LoopCraft Settings\n\n`;
+  guide += `Navigate to LoopCraft Settings → MCP Servers tab → "Add Server":\n\n`;
+  guide += `**For stdio (local) servers:**\n`;
+  guide += `- Name: \`${resource.uri.split('/')[2] || 'my-ui-server'}\`\n`;
+  guide += `- Type: \`stdio\`\n`;
+  guide += `- Command: \`["npx", "tsx", "/path/to/server.ts"]\`\n`;
+  guide += `- Enable the server\n\n`;
+
+  guide += `**For SSE (remote) servers:**\n`;
+  guide += `- Name: \`${resource.uri.split('/')[2] || 'my-ui-server'}\`\n`;
+  guide += `- Type: \`sse\`\n`;
+  guide += `- URL: \`http://localhost:3001/mcp\`\n`;
+  guide += `- Enable the server\n\n`;
+
+  guide += `### 3. Test in Chat\n\n`;
+  guide += `Open the chat and try prompts like:\n\n`;
+  guide += `- "${resource.description || `Show me the ${toolName} UI`}"\n`;
+  guide += `- "Use ${toolName} from ${resource.uri.split('/')[2] || 'my-ui-server'}"\n\n`;
+
+  guide += `### 4. Verify UI Appears\n\n`;
+  guide += `- The UI should render in an iframe in the chat\n`;
+  guide += `- Interactive elements (buttons, forms) should be clickable\n`;
+  if (actionMappings.length > 0) {
+    guide += `- Actions should trigger MCP tool calls: ${actionMappings.map(m => `\`${m.toolName}\``).join(', ')}\n`;
+  }
+  guide += `\n`;
+
+  guide += `## Bidirectional Communication\n\n`;
+  guide += `If your UI has interactive elements that call MCP tools, implement bidirectional communication:\n\n`;
+  guide += `### In Your HTML (UI Component)\n\n`;
+  guide += `\`\`\`javascript\n`;
+  guide += `// Send tool call request to parent\n`;
+  guide += `function callMCPTool(toolName, params) {\n`;
+  guide += `  window.parent.postMessage({\n`;
+  guide += `    type: 'tool',\n`;
+  guide += `    payload: { toolName, params }\n`;
+  guide += `  }, '*');\n`;
+  guide += `}\n\n`;
+  guide += `// Listen for tool response\n`;
+  guide += `window.addEventListener('message', (event) => {\n`;
+  guide += `  if (event.data.type === 'mcp-ui-tool-response') {\n`;
+  guide += `    console.log('Tool result:', event.data.result);\n`;
+  guide += `    // Update UI with result\n`;
+  guide += `  }\n`;
+  guide += `});\n\n`;
+  guide += `// Example button click\n`;
+  guide += `document.getElementById('submit-btn').addEventListener('click', () => {\n`;
+  guide += `  const data = { name: 'John', email: 'john@example.com' };\n`;
+  guide += `  callMCPTool('submit_form', data);\n`;
+  guide += `});\n`;
+  guide += `\`\`\`\n\n`;
+
+  guide += `### Authentication\n\n`;
+  guide += `Tool calls from UI include the user's JWT token automatically. Your MCP server receives authenticated requests.\n\n`;
 
   guide += `## Deployment\n\n`;
   guide += `### Server Deployment\n`;
@@ -374,10 +569,30 @@ function generateIntegrationGuide(resource: UIResource, actionMappings: ActionMa
   guide += `- Use \`UIResourceRenderer\` from \`@mcp-ui/client\` to render the UI\n\n`;
 
   guide += `## Troubleshooting\n\n`;
-  guide += `- **Server not connecting**: Check stdio transport configuration\n`;
+  guide += `### Server Connection Issues\n`;
+  guide += `- **Server not connecting**: Check stdio transport configuration and command path\n`;
   guide += `- **Tools not appearing**: Verify \`tools/list\` handler implementation\n`;
-  guide += `- **UI not rendering**: Check resource URI and content type\n`;
-  guide += `- **Actions not working**: Verify parameter bindings match tool schema\n\n`;
+  guide += `- **Server crashes on startup**: Check Node.js version (18+ required)\n\n`;
+
+  guide += `### UI Rendering Issues\n`;
+  guide += `- **UI not rendering**: Check resource URI format (\`ui://server/resource\`)\n`;
+  guide += `- **Blank iframe**: Verify HTML content is valid and not empty\n`;
+  guide += `- **Styling broken**: Check if external CSS/JS URLs are accessible\n\n`;
+
+  guide += `### Bidirectional Communication Issues\n`;
+  guide += `- **postMessage not working**: Ensure using \`window.parent.postMessage\`, not \`window.postMessage\`\n`;
+  guide += `- **Tool calls failing**: Check message format matches: \`{ type: 'tool', payload: { toolName, params } }\`\n`;
+  guide += `- **No response received**: Verify tool handler returns proper MCP response format\n\n`;
+
+  guide += `### Authentication Issues\n`;
+  guide += `- **Unauthorized errors**: Ensure JWT token is included in API requests\n`;
+  guide += `- **Token expired**: User needs to re-login to LoopCraft\n`;
+  guide += `- **Missing user context**: Check \`getUserFromRequest()\` implementation in server\n\n`;
+
+  guide += `### iframe Sandbox Issues\n`;
+  guide += `- **Forms not submitting**: Verify \`allow-forms\` sandbox permission is set\n`;
+  guide += `- **Scripts not running**: Verify \`allow-scripts\` sandbox permission is set\n`;
+  guide += `- **Storage not accessible**: Verify \`allow-same-origin\` if needed (use cautiously)\n\n`;
 
   guide += `---\n\n`;
   guide += `🤖 Generated with MCP-UI Function Builder\n`;
@@ -406,6 +621,8 @@ export function ExportDialog({ onClose, resource, actionMappings, mcpContext }: 
       ? generateMCPServer(resource, actionMappings, mcpContext)
       : format === "ui-tool"
       ? generateUIToolCode(resource)
+      : format === "quickstart"
+      ? generateQuickStart(resource, actionMappings, mcpContext)
       : generateIntegrationGuide(resource, actionMappings, mcpContext);
 
   const handleCopy = async () => {
@@ -490,6 +707,16 @@ export function ExportDialog({ onClose, resource, actionMappings, mcpContext }: 
             onClick={() => setFormat("ui-tool")}
           >
             UI Tool
+          </button>
+          <button
+            className={`px-4 py-2 text-sm rounded whitespace-nowrap ${
+              format === "quickstart"
+                ? "bg-background shadow-sm font-medium"
+                : "hover:bg-background/50"
+            }`}
+            onClick={() => setFormat("quickstart")}
+          >
+            Quick Start
           </button>
           <button
             className={`px-4 py-2 text-sm rounded whitespace-nowrap ${

@@ -1,93 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createUIResource } from '@mcp-ui/server';
-import type { UIResource } from '@/types/ui-builder';
+import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
+import { tmpdir } from 'os';
+import { getUserFromRequest } from '@/lib/auth';
+import { query } from '@/lib/db';
 
-// POST /api/ui-builder/test - Test UI resource by converting it to MCP format
-export async function POST(request: NextRequest) {
+// POST /api/ui-builder/test - Create temporary test MCP server
+export async function POST(req: NextRequest) {
   try {
-    // Parse request body
-    const body = (await request.json()) as { resource: UIResource };
-    const { resource } = body;
+    // Verify user authentication
+    const user = await getUserFromRequest(req);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    if (!resource) {
+    const { serverCode, fileName, serverName } = await req.json();
+
+    if (!serverCode || !fileName || !serverName) {
       return NextResponse.json(
-        { error: 'Missing resource in request body' },
+        { error: 'Missing required fields: serverCode, fileName, serverName' },
         { status: 400 }
       );
     }
 
-    // Convert UI resource to MCP UI resource format
-    let mcpResource;
+    // Create temp directory if it doesn't exist
+    const tempDir = join(tmpdir(), 'mcp-ui-builder');
+    await mkdir(tempDir, { recursive: true }).catch(() => {
+      // Directory might already exist, ignore error
+    });
 
-    // Prepare metadata
-    const metadata: Record<string, unknown> = {};
-    if (resource.title) metadata.title = resource.title;
-    if (resource.description) metadata.description = resource.description;
+    // Write server code to temp file
+    const filePath = join(tempDir, fileName);
+    await writeFile(filePath, serverCode, 'utf-8');
 
-    // Prepare UI metadata
-    const uiMetadata: Record<string, unknown> = {};
-    if (resource.preferredSize) {
-      uiMetadata['preferred-frame-size'] = [
-        `${resource.preferredSize.width}px`,
-        `${resource.preferredSize.height}px`
-      ];
-    }
-    if (resource.initialData) {
-      uiMetadata['initial-render-data'] = resource.initialData;
-    }
+    // Create server config
+    const config = {
+      type: 'stdio',
+      command: ['node', filePath],
+    };
 
-    switch (resource.contentType) {
-      case 'rawHtml':
-        mcpResource = createUIResource({
-          uri: resource.uri as `ui://${string}`,
-          content: { type: 'rawHtml', htmlString: resource.content },
-          encoding: 'text',
-          metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
-          uiMetadata: Object.keys(uiMetadata).length > 0 ? uiMetadata : undefined,
-        });
-        break;
+    // Insert into database
+    const result = await query<{ insertId: number }>(
+      `INSERT INTO mcp_servers (user_id, name, type, config, enabled)
+       VALUES (?, ?, ?, ?, ?)`,
+      [user.userId, serverName, 'stdio', JSON.stringify(config), 1]
+    );
 
-      case 'externalUrl':
-        mcpResource = createUIResource({
-          uri: resource.uri as `ui://${string}`,
-          content: { type: 'externalUrl', iframeUrl: resource.content },
-          encoding: 'text',
-          metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
-          uiMetadata: Object.keys(uiMetadata).length > 0 ? uiMetadata : undefined,
-        });
-        break;
+    const serverId = (result as { insertId: number }).insertId;
 
-      case 'remoteDom':
-        mcpResource = createUIResource({
-          uri: resource.uri as `ui://${string}`,
-          content: {
-            type: 'remoteDom',
-            script: resource.content,
-            framework: 'react',
-          },
-          encoding: 'text',
-          metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
-          uiMetadata: Object.keys(uiMetadata).length > 0 ? uiMetadata : undefined,
-        });
-        break;
-
-      default:
-        return NextResponse.json(
-          { error: `Unknown content type: ${resource.contentType}` },
-          { status: 400 }
-        );
-    }
-
-    // Return the MCP resource that can be used in chat
     return NextResponse.json({
       success: true,
-      mcpResource,
-      message: 'UI resource generated successfully. You can now test it in chat.',
+      serverId,
+      filePath,
+      serverName,
     });
   } catch (error) {
-    console.error('Failed to test UI resource:', error);
+    console.error('Error creating test server:', error);
     return NextResponse.json(
-      { error: 'Failed to test UI resource', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     );
   }

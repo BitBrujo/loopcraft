@@ -40,6 +40,12 @@ interface UIBuilderStore {
   // Validation status
   validationStatus: ValidationStatus;
 
+  // Test server state
+  isTestServerActive: boolean;
+  testServerName: string | null;
+  testServerId: number | null;
+  testServerFile: string | null;
+
   // Actions - Basic
   setCurrentResource: (resource: UIResource | null) => void;
   updateResource: (updates: Partial<UIResource>) => void;
@@ -90,6 +96,10 @@ interface UIBuilderStore {
   setValidationStatus: (status: Partial<ValidationStatus>) => void;
   addValidationWarning: (warning: string) => void;
   clearValidationWarnings: () => void;
+
+  // Actions - Test Server
+  startTestServer: (name: string, id: number, file: string) => void;
+  stopTestServer: () => void;
 }
 
 const defaultResource: UIResource = {
@@ -129,6 +139,10 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         typeMismatches: [],
         warnings: [],
       },
+      isTestServerActive: false,
+      testServerName: null,
+      testServerId: null,
+      testServerFile: null,
 
       setCurrentResource: (resource) =>
         set({ currentResource: resource }),
@@ -304,6 +318,22 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         set((state) => ({
           validationStatus: { ...state.validationStatus, warnings: [] },
         })),
+
+      startTestServer: (name, id, file) =>
+        set({
+          isTestServerActive: true,
+          testServerName: name,
+          testServerId: id,
+          testServerFile: file,
+        }),
+
+      stopTestServer: () =>
+        set({
+          isTestServerActive: false,
+          testServerName: null,
+          testServerId: null,
+          testServerFile: null,
+        }),
     }),
     {
       name: 'ui-builder-storage',

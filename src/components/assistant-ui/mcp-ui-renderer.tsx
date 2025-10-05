@@ -148,9 +148,6 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content, serverNam
           htmlProps={{
             autoResizeIframe: true,
             sandboxPermissions: 'allow-forms allow-scripts allow-same-origin',
-            iframeProps: {
-              'data-mcp-ui-resource': 'true',
-            },
           }}
         />
       </div>

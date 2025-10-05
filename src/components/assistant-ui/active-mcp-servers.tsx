@@ -32,7 +32,7 @@ export function ActiveMCPServers() {
 
         // Get authentication token from localStorage
         const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
 
         // Fetch servers
         const serversResponse = await fetch("/api/mcp/servers", { headers });

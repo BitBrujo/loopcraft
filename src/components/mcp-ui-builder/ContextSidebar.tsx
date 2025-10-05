@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Server, Wrench, AlertCircle, CheckCircle, ChevronDown, ChevronRight } from "lucide-react";
+import { Server, Wrench, AlertCircle, CheckCircle, ChevronDown, ChevronRight, TestTube } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
+import { Button } from "@/components/ui/button";
 
 interface ServerStatus {
   name: string;
@@ -15,6 +16,9 @@ export function ContextSidebar() {
     mcpContext,
     actionMappings,
     validationStatus,
+    isTestServerActive,
+    testServerName,
+    stopTestServer,
     setActiveTab,
   } = useUIBuilderStore();
 
@@ -23,6 +27,8 @@ export function ContextSidebar() {
   const [showTools, setShowTools] = useState(true);
   const [showActions, setShowActions] = useState(true);
   const [showStatus, setShowStatus] = useState(true);
+  const [showTestServer, setShowTestServer] = useState(true);
+  const [isStopping, setIsStopping] = useState(false);
 
   useEffect(() => {
     const fetchServers = async () => {
@@ -40,6 +46,27 @@ export function ContextSidebar() {
   const actionMappingsCount = actionMappings.length;
   const warningsCount = validationStatus.warnings.length;
   const errorsCount = validationStatus.missingMappings.length + validationStatus.typeMismatches.length;
+
+  const handleStopTestServer = async () => {
+    setIsStopping(true);
+    try {
+      // Call API to delete test server
+      const testServerId = useUIBuilderStore.getState().testServerId;
+      if (testServerId) {
+        await fetch(`/api/mcp-servers/${testServerId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+      }
+      stopTestServer();
+    } catch (error) {
+      console.error('Failed to stop test server:', error);
+    } finally {
+      setIsStopping(false);
+    }
+  };
 
   return (
     <div className="w-64 border-r bg-card overflow-y-auto flex flex-col h-full">
@@ -266,6 +293,52 @@ export function ContextSidebar() {
             </div>
           )}
         </div>
+
+        {/* Test Server Section */}
+        {isTestServerActive && (
+          <div className="border-b">
+            <button
+              className="w-full flex items-center justify-between p-3 hover:bg-muted/30 text-left"
+              onClick={() => setShowTestServer(!showTestServer)}
+            >
+              <div className="flex items-center gap-2">
+                <TestTube className="h-4 w-4 text-green-500" />
+                <span className="text-sm font-medium">Test Server</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-700 dark:text-green-300 rounded-full">
+                  Active
+                </span>
+                {showTestServer ? (
+                  <ChevronDown className="h-3 w-3" />
+                ) : (
+                  <ChevronRight className="h-3 w-3" />
+                )}
+              </div>
+            </button>
+            {showTestServer && (
+              <div className="p-3 pt-0 space-y-3">
+                <div className="text-xs p-2 bg-green-500/10 rounded border border-green-500/20">
+                  <div className="font-medium text-green-700 dark:text-green-300">
+                    {testServerName}
+                  </div>
+                  <div className="text-green-600 dark:text-green-400 text-[10px] mt-1">
+                    Test server is running
+                  </div>
+                </div>
+                <Button
+                  onClick={handleStopTestServer}
+                  disabled={isStopping}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                >
+                  {isStopping ? 'Stopping...' : 'Stop Test Server'}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Purpose Section */}
         {mcpContext.purpose && (
