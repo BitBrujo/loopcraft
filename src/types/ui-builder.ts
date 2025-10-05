@@ -82,13 +82,28 @@ export interface ValidationError {
   message: string;
 }
 
-export type TabId = 'design' | 'actions' | 'generate' | 'test';
+export type TabId = 'design' | 'tools' | 'actions' | 'generate' | 'test';
 
 export interface MCPTool {
   name: string;
   description?: string;
   inputSchema?: object;
   serverName: string;
+}
+
+export interface ToolParameter {
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'array' | 'object';
+  description?: string;
+  required: boolean;
+  default?: unknown;
+}
+
+export interface CustomTool {
+  id: string;
+  name: string;
+  description: string;
+  parameters: ToolParameter[];
 }
 
 export interface MCPServer {

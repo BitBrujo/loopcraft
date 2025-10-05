@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 export function ActionMapper() {
   const {
     currentResource,
-    mcpContext,
+    customTools,
     actionMappings,
     addActionMapping,
     updateActionMapping,
@@ -37,8 +37,8 @@ export function ActionMapper() {
     const element = interactiveElements.find(e => e.id === elementId);
     if (!element) return;
 
-    // Create new mapping with first available tool
-    const firstTool = mcpContext.selectedTools[0];
+    // Create new mapping with first available custom tool
+    const firstTool = customTools[0];
     if (!firstTool) return;
 
     const newMapping: ActionMapping = {
@@ -46,7 +46,7 @@ export function ActionMapper() {
       uiElementId: elementId,
       uiElementType: element.type,
       toolName: firstTool.name,
-      serverName: firstTool.serverName,
+      serverName: 'custom', // Custom tools don't have a server
       parameterBindings: {}, // Legacy
       parameterSources: {}, // New: typed parameter sources
       responseHandler: 'show-notification',
@@ -109,13 +109,13 @@ export function ActionMapper() {
     );
   }
 
-  if (mcpContext.selectedTools.length === 0) {
+  if (customTools.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         <div className="text-center space-y-2">
           <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground/50" />
-          <p>No tools available</p>
-          <p className="text-sm">Connect MCP servers via Settings to use their tools</p>
+          <p>No custom tools defined</p>
+          <p className="text-sm">Go to the Define Tools tab to create tools for your server</p>
         </div>
       </div>
     );
@@ -191,18 +191,17 @@ export function ActionMapper() {
                     <td className="p-3">
                       {mapping ? (
                         <select
-                          value={`${mapping.serverName}:${mapping.toolName}`}
+                          value={mapping.toolName}
                           onChange={(e) => {
-                            const [serverName, toolName] = e.target.value.split(':');
-                            handleToolChange(mapping.id, toolName, serverName);
+                            handleToolChange(mapping.id, e.target.value, 'custom');
                           }}
                           className="text-sm border rounded px-2 py-1 bg-background w-full"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          {mcpContext.selectedTools.map((tool) => (
+                          {customTools.map((tool) => (
                             <option
-                              key={`${tool.serverName}:${tool.name}`}
-                              value={`${tool.serverName}:${tool.name}`}
+                              key={tool.id}
+                              value={tool.name}
                             >
                               {tool.name}
                             </option>
@@ -215,7 +214,7 @@ export function ActionMapper() {
                     <td className="p-3">
                       {mapping ? (
                         <span className="text-sm text-muted-foreground">
-                          {mapping.serverName}
+                          Custom
                         </span>
                       ) : (
                         <span className="text-sm text-muted-foreground">-</span>

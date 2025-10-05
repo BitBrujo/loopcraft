@@ -13,17 +13,17 @@ import {
 } from "@/lib/code-generation";
 
 export function GenerateTab() {
-  const { currentResource, actionMappings, setActiveTab } = useUIBuilderStore();
+  const { currentResource, customTools, actionMappings, setActiveTab } = useUIBuilderStore();
   const [copiedTab, setCopiedTab] = useState<string | null>(null);
 
   // Calculate statistics
   const agentSlots = currentResource?.templatePlaceholders?.length || 0;
   const userActions = actionMappings.length;
-  const tools = new Set(actionMappings.map(m => `${m.serverName}:${m.toolName}`)).size;
+  const tools = customTools.length;
 
   // Generate code using utilities
   const tsCode = currentResource ? generateTypeScriptCode(currentResource) : '// No resource';
-  const serverCode = currentResource ? generateServerCode(currentResource) : '// No resource';
+  const serverCode = currentResource ? generateServerCode(currentResource, customTools, actionMappings) : '// No resource';
   const uiToolCode = currentResource ? generateUIToolCode(currentResource) : '// No resource';
   const quickStartGuide = generateQuickStartGuide(agentSlots, userActions, tools);
 

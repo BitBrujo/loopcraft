@@ -53,11 +53,11 @@ export function DesignTab() {
             )}
           </div>
           <Button
-            onClick={() => setActiveTab('actions')}
+            onClick={() => setActiveTab('tools')}
             disabled={!canProceed}
             className="gap-2"
           >
-            Next: Configure Actions
+            Next: Define Tools
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>

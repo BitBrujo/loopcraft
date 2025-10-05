@@ -4,7 +4,7 @@
  * Functions for generating TypeScript, JSON, server code, etc.
  */
 
-import type { UIResource } from '@/types/ui-builder';
+import type { UIResource, CustomTool, ActionMapping } from '@/types/ui-builder';
 
 export function generateTypeScriptCode(resource: UIResource): string {
   const contentParam =
@@ -45,7 +45,11 @@ const uiResource = createUIResource({
 export default uiResource;`;
 }
 
-export function generateServerCode(resource: UIResource): string {
+export function generateServerCode(
+  resource: UIResource,
+  customTools: CustomTool[] = [],
+  actionMappings: ActionMapping[] = []
+): string {
   const serverName = resource.uri.split('/')[2] || 'my-ui-server';
   const agentPlaceholders = resource.templatePlaceholders || [];
 
@@ -90,7 +94,7 @@ function fillAgentPlaceholders(html, agentContext) {
 `;
   }
 
-  // List Tools
+  // List Tools - include get_ui + all custom tools
   code += `
 // List Tools
 server.setRequestHandler('tools/list', async () => ({
@@ -103,30 +107,56 @@ server.setRequestHandler('tools/list', async () => ({
         properties: {
 `;
 
-  // Add agent placeholder parameters
+  // Add agent placeholder parameters to get_ui tool
   agentPlaceholders.forEach((placeholder, index) => {
     code += `          '${placeholder}': { type: 'string', description: 'Value for ${placeholder}' }`;
-    if (index < agentPlaceholders.length - 1) code += ',';
+    if (index < agentPlaceholders.length - 1 || customTools.length > 0) code += ',';
     code += '\n';
   });
 
   code += `        },
       },
-    },
+    },`;
+
+  // Add custom tools to the list
+  customTools.forEach((tool, toolIndex) => {
+    code += `
+    {
+      name: '${tool.name}',
+      description: '${tool.description || ''}',
+      inputSchema: {
+        type: 'object',
+        properties: {
+`;
+    tool.parameters.forEach((param, paramIndex) => {
+      code += `          '${param.name}': { type: '${param.type}', description: '${param.description || ''}' }`;
+      if (paramIndex < tool.parameters.length - 1) code += ',';
+      code += '\n';
+    });
+    code += `        },
+        required: [${tool.parameters.filter(p => p.required).map(p => `'${p.name}'`).join(', ')}],
+      },
+    }`;
+    if (toolIndex < customTools.length - 1) code += ',';
+  });
+
+  code += `
   ],
 }));
 
 // Call Tool
 server.setRequestHandler('tools/call', async (request) => {
-  if (request.params.name === 'get_ui') {
+  const { name, arguments: args } = request.params;
+
+  // Handle get_ui tool
+  if (name === 'get_ui') {
     let htmlContent = \`${resource.content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
 `;
 
   if (agentPlaceholders.length > 0) {
     code += `
     // Fill agent placeholders
-    const args = request.params.arguments || {};
-    htmlContent = fillAgentPlaceholders(htmlContent, args);
+    htmlContent = fillAgentPlaceholders(htmlContent, args || {});
 `;
   }
 
@@ -154,7 +184,38 @@ server.setRequestHandler('tools/call', async (request) => {
       }],
     };
   }
-  throw new Error('Tool not found');
+`;
+
+  // Generate handlers for custom tools
+  customTools.forEach(tool => {
+    code += `
+  // Handle ${tool.name} tool
+  if (name === '${tool.name}') {
+    // TODO: Implement ${tool.name} logic
+    // Available parameters: ${tool.parameters.map(p => p.name).join(', ')}
+
+    // Example: Extract parameters from args
+    ${tool.parameters.map(p => `const ${p.name} = args?.['${p.name}'];`).join('\n    ')}
+
+    // Your tool implementation here
+    const result = {
+      success: true,
+      message: '${tool.name} executed successfully',
+      // Add your response data here
+    };
+
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify(result),
+      }],
+    };
+  }
+`;
+  });
+
+  code += `
+  throw new Error(\`Tool not found: \${name}\`);
 });
 
 // Start server

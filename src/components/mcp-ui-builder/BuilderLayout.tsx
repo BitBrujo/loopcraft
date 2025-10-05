@@ -10,6 +10,7 @@ import { SaveDialog } from "./SaveDialog";
 import { LoadDialog } from "./LoadDialog";
 import { ContextSidebar } from "./ContextSidebar";
 import { DesignTab } from "./tabs/DesignTab";
+import { DefineToolsTab } from "./tabs/DefineToolsTab";
 import { ActionsTab } from "./tabs/ActionsTab";
 import { GenerateTab } from "./tabs/GenerateTab";
 import { TestTab } from "./tabs/TestTab";
@@ -33,6 +34,7 @@ import type { TabId } from "@/types/ui-builder";
 
 const tabs: Array<{ id: TabId; label: string }> = [
   { id: 'design', label: 'Design' },
+  { id: 'tools', label: 'Define Tools' },
   { id: 'actions', label: 'Actions' },
   { id: 'generate', label: 'Generate' },
   { id: 'test', label: 'Test' },
@@ -170,6 +172,8 @@ export function BuilderLayout() {
     switch (activeTab) {
       case 'design':
         return <DesignTab />;
+      case 'tools':
+        return <DefineToolsTab />;
       case 'actions':
         return <ActionsTab />;
       case 'generate':

@@ -9,6 +9,7 @@ import type {
   ActionMapping,
   TestConfig,
   ValidationStatus,
+  CustomTool,
 } from '@/types/ui-builder';
 
 interface UIBuilderStore {
@@ -31,6 +32,9 @@ interface UIBuilderStore {
 
   // MCP Integration context
   mcpContext: MCPContext;
+
+  // Custom tools
+  customTools: CustomTool[];
 
   // Action mappings
   actionMappings: ActionMapping[];
@@ -79,6 +83,12 @@ interface UIBuilderStore {
   removeSelectedTool: (toolName: string, serverName: string) => void;
   toggleServer: (serverName: string) => void;
   setPurpose: (purpose: string) => void;
+
+  // Actions - Custom Tools
+  addCustomTool: (tool: CustomTool) => void;
+  updateCustomTool: (id: string, updates: Partial<CustomTool>) => void;
+  removeCustomTool: (id: string) => void;
+  clearCustomTools: () => void;
 
   // Actions - Action Mappings
   addActionMapping: (mapping: ActionMapping) => void;
@@ -129,6 +139,7 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         selectedTools: [],
         purpose: '',
       },
+      customTools: [],
       actionMappings: [],
       testConfig: {
         mockResponses: [],
@@ -243,6 +254,26 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
           mcpContext: { ...state.mcpContext, purpose },
         })),
 
+      addCustomTool: (tool) =>
+        set((state) => ({
+          customTools: [...state.customTools, tool],
+        })),
+
+      updateCustomTool: (id, updates) =>
+        set((state) => ({
+          customTools: state.customTools.map((t) =>
+            t.id === id ? { ...t, ...updates } : t
+          ),
+        })),
+
+      removeCustomTool: (id) =>
+        set((state) => ({
+          customTools: state.customTools.filter((t) => t.id !== id),
+        })),
+
+      clearCustomTools: () =>
+        set({ customTools: [] }),
+
       addActionMapping: (mapping) =>
         set((state) => ({
           actionMappings: [...state.actionMappings, mapping],
@@ -343,6 +374,7 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         showPreview: state.showPreview,
         activeTab: state.activeTab,
         mcpContext: state.mcpContext,
+        customTools: state.customTools,
         actionMappings: state.actionMappings,
         testConfig: {
           mockResponses: state.testConfig.mockResponses,

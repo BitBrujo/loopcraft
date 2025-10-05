@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { PlayCircle, StopCircle, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
+import { generateServerCode } from "@/lib/code-generation";
 
 export function TestTab() {
   const router = useRouter();
   const {
     currentResource,
+    customTools,
     actionMappings,
     isTestServerActive,
     testServerName,
@@ -32,145 +34,6 @@ export function TestTab() {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const generateServerCode = () => {
-    if (!currentResource) return "";
-
-    const serverName = currentResource.uri.split('/')[2] || 'test-server';
-    const agentPlaceholders = currentResource.templatePlaceholders || [];
-
-    let code = `#!/usr/bin/env node\n`;
-    code += `import { Server } from '@modelcontextprotocol/sdk/server/index.js';\n`;
-    code += `import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';\n`;
-    code += `import { createUIResource } from '@mcp-ui/server';\n\n`;
-
-    code += `const server = new Server(\n`;
-    code += `  { name: '${serverName}', version: '1.0.0' },\n`;
-    code += `  { capabilities: { resources: {}, tools: {} } }\n`;
-    code += `);\n\n`;
-
-    // Add helper function for placeholder replacement if needed
-    if (agentPlaceholders.length > 0) {
-      code += `// Helper function to replace agent placeholders in HTML\n`;
-      code += `function fillAgentPlaceholders(html, agentContext) {\n`;
-      code += `  let result = html;\n`;
-      agentPlaceholders.forEach(placeholder => {
-        code += `  if (agentContext['${placeholder}'] !== undefined) {\n`;
-        code += `    result = result.replace(/\\{\\{${placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\}\\}/g, agentContext['${placeholder}']);\n`;
-        code += `  }\n`;
-      });
-      code += `  return result;\n`;
-      code += `}\n\n`;
-    }
-
-    // Add get_ui tool for agent context
-    code += `server.setRequestHandler('tools/list', async () => ({\n`;
-    code += `  tools: [\n`;
-
-    // Add get_ui tool with agent parameters
-    code += `    {\n`;
-    code += `      name: 'get_ui',\n`;
-    code += `      description: '${currentResource.description || 'Get the interactive UI component'}',\n`;
-    code += `      inputSchema: {\n`;
-    code += `        type: 'object',\n`;
-    code += `        properties: {\n`;
-
-    // Add agent placeholder parameters
-    agentPlaceholders.forEach((placeholder, index) => {
-      code += `          '${placeholder}': { type: 'string', description: 'Value for ${placeholder}' }`;
-      if (index < agentPlaceholders.length - 1 || actionMappings.length > 0) code += ',';
-      code += '\n';
-    });
-
-    code += `        }\n`;
-    code += `      }\n`;
-    code += `    }`;
-
-    // Add action mapping tools
-    if (actionMappings.length > 0) {
-      code += `,\n`;
-      actionMappings.forEach((mapping, index) => {
-        const paramSources = mapping.parameterSources || {};
-        code += `    {\n`;
-        code += `      name: '${mapping.toolName}',\n`;
-        code += `      description: 'Handle ${mapping.uiElementId}',\n`;
-        code += `      inputSchema: {\n`;
-        code += `        type: 'object',\n`;
-        code += `        properties: {\n`;
-
-        // Generate properties from parameterSources
-        const paramKeys = Object.keys(paramSources);
-        paramKeys.forEach((paramName, pIndex) => {
-          code += `          '${paramName}': { type: 'string' }`;
-          if (pIndex < paramKeys.length - 1) code += ',';
-          code += '\n';
-        });
-
-        code += `        }\n`;
-        code += `      }\n`;
-        code += `    }`;
-        if (index < actionMappings.length - 1) code += ',';
-        code += '\n';
-      });
-    }
-
-    code += `  ]\n`;
-    code += `}));\n\n`;
-
-    // Add tool call handler
-    code += `server.setRequestHandler('tools/call', async (request) => {\n`;
-    code += `  const { name, arguments: args } = request.params;\n\n`;
-
-    // Handle get_ui tool
-    code += `  if (name === 'get_ui') {\n`;
-    code += `    let htmlContent = \`${currentResource.content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;\n\n`;
-
-    if (agentPlaceholders.length > 0) {
-      code += `    // Fill agent placeholders\n`;
-      code += `    htmlContent = fillAgentPlaceholders(htmlContent, args);\n\n`;
-    }
-
-    code += `    const uiResource = createUIResource({\n`;
-    code += `      uri: '${currentResource.uri}',\n`;
-    code += `      content: { type: '${currentResource.contentType}', htmlString: htmlContent },\n`;
-    code += `      encoding: 'text'`;
-
-    if (currentResource.title || currentResource.description) {
-      code += `,\n      metadata: {\n`;
-      if (currentResource.title) code += `        title: '${currentResource.title}',\n`;
-      if (currentResource.description) code += `        description: '${currentResource.description}'\n`;
-      code += `      }`;
-    }
-
-    code += `\n    });\n\n`;
-    code += `    return {\n`;
-    code += `      content: [{\n`;
-    code += `        type: 'text',\n`;
-    code += `        text: '__MCP_UI_RESOURCE__:' + JSON.stringify(uiResource)\n`;
-    code += `      }]\n`;
-    code += `    };\n`;
-    code += `  }\n\n`;
-
-    // Handle action mapping tools
-    actionMappings.forEach((mapping, index) => {
-      code += `  ${index > 0 || agentPlaceholders.length > 0 ? 'else ' : ''}if (name === '${mapping.toolName}') {\n`;
-      code += `    console.error('Tool called:', name, args);\n`;
-      code += `    return { content: [{ type: 'text', text: 'Tool executed: ' + JSON.stringify(args) }] };\n`;
-      code += `  }\n\n`;
-    });
-
-    code += `  throw new Error(\`Unknown tool: \${name}\`);\n`;
-    code += `});\n\n`;
-
-    code += `async function main() {\n`;
-    code += `  const transport = new StdioServerTransport();\n`;
-    code += `  await server.connect(transport);\n`;
-    code += `  console.error('Test MCP Server running');\n`;
-    code += `}\n\n`;
-    code += `main().catch(console.error);\n`;
-
-    return code;
-  };
-
   const handleExportAndTest = async () => {
     if (!currentResource) {
       setError("No resource to test");
@@ -182,8 +45,8 @@ export function TestTab() {
     setStatus("Generating server code...");
 
     try {
-      // Generate server code
-      const serverCode = generateServerCode();
+      // Generate server code using shared function
+      const serverCode = generateServerCode(currentResource, customTools, actionMappings);
       const timestamp = Date.now();
       const serverName = `__test_${timestamp}`;
       const fileName = `mcp-ui-test-${timestamp}.js`;

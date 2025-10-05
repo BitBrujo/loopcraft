@@ -11,7 +11,7 @@ import { validateActionMappingsDebounced, isValidationValid, getValidationSummar
 export function ActionsTab() {
   const {
     currentResource,
-    mcpContext,
+    customTools,
     actionMappings,
     validationStatus,
     setValidationStatus,
@@ -23,10 +23,30 @@ export function ActionsTab() {
   // Auto-validate on changes
   useEffect(() => {
     if (currentResource && currentResource.contentType === 'rawHtml') {
+      // Convert customTools to MCPTool format for validation
+      const toolsForValidation = customTools.map(tool => ({
+        name: tool.name,
+        description: tool.description,
+        inputSchema: {
+          type: 'object',
+          properties: Object.fromEntries(
+            tool.parameters.map(p => [
+              p.name,
+              {
+                type: p.type,
+                description: p.description,
+              }
+            ])
+          ),
+          required: tool.parameters.filter(p => p.required).map(p => p.name),
+        },
+        serverName: 'custom',
+      }));
+
       validateActionMappingsDebounced(
         actionMappings,
         currentResource.content,
-        mcpContext.selectedTools,
+        toolsForValidation,
         (status) => {
           setValidationStatus(status);
         },
@@ -34,7 +54,7 @@ export function ActionsTab() {
         currentResource.templatePlaceholders
       );
     }
-  }, [actionMappings, currentResource, mcpContext.selectedTools, setValidationStatus]);
+  }, [actionMappings, currentResource, customTools, setValidationStatus]);
 
   // Auto-select first mapping when mappings change
   useEffect(() => {

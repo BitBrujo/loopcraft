@@ -11,15 +11,33 @@ interface ParameterBindingEditorProps {
 }
 
 export function ParameterBindingEditor({ mappingId }: ParameterBindingEditorProps) {
-  const { currentResource, mcpContext, actionMappings, updateActionMapping } = useUIBuilderStore();
+  const { currentResource, customTools, actionMappings, updateActionMapping } = useUIBuilderStore();
 
   const [expandedParams, setExpandedParams] = useState<Set<string>>(new Set());
   const [availableFields, setAvailableFields] = useState<{ id: string; name: string; type: string }[]>([]);
 
   const mapping = actionMappings.find(m => m.id === mappingId);
-  const tool = mcpContext.selectedTools.find(
-    t => mapping && t.name === mapping.toolName && t.serverName === mapping.serverName
-  );
+
+  // Find the custom tool and convert to MCPTool format for consistency
+  const customTool = customTools.find(t => mapping && t.name === mapping.toolName);
+  const tool = customTool ? {
+    name: customTool.name,
+    description: customTool.description,
+    inputSchema: {
+      type: 'object',
+      properties: Object.fromEntries(
+        customTool.parameters.map(p => [
+          p.name,
+          {
+            type: p.type,
+            description: p.description,
+          }
+        ])
+      ),
+      required: customTool.parameters.filter(p => p.required).map(p => p.name),
+    },
+    serverName: 'custom',
+  } : undefined;
 
   // Extract available fields from HTML
   useEffect(() => {

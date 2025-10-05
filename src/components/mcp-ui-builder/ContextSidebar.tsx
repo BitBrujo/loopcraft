@@ -1,19 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Server, AlertCircle, CheckCircle, ChevronDown, ChevronRight, TestTube, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { Wrench, AlertCircle, CheckCircle, ChevronDown, ChevronRight, TestTube, Sparkles } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { Button } from "@/components/ui/button";
-
-interface ServerStatus {
-  name: string;
-  type: 'stdio' | 'sse';
-  status: 'connected' | 'disconnected';
-}
 
 export function ContextSidebar() {
   const {
     currentResource,
+    customTools,
     actionMappings,
     validationStatus,
     isTestServerActive,
@@ -22,26 +17,13 @@ export function ContextSidebar() {
     setActiveTab,
   } = useUIBuilderStore();
 
-  const [servers, setServers] = useState<ServerStatus[]>([]);
-  const [showServers, setShowServers] = useState(true);
+  const [showTools, setShowTools] = useState(true);
   const [showAgentSlots, setShowAgentSlots] = useState(true);
   const [showActions, setShowActions] = useState(true);
   const [showStatus, setShowStatus] = useState(true);
   const [showTestServer, setShowTestServer] = useState(true);
   const [isStopping, setIsStopping] = useState(false);
 
-  useEffect(() => {
-    const fetchServers = async () => {
-      const response = await fetch('/api/mcp/servers');
-      if (response.ok) {
-        const data = await response.json();
-        setServers(data.servers);
-      }
-    };
-    fetchServers();
-  }, []);
-
-  const connectedServers = servers.filter((s) => s.status === 'connected');
   const agentSlots = currentResource?.templatePlaceholders || [];
   const actionMappingsCount = actionMappings.length;
   const warningsCount = validationStatus.warnings.length;
@@ -78,44 +60,44 @@ export function ContextSidebar() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {/* Servers Section */}
+        {/* Custom Tools Section */}
         <div className="border-b">
           <button
             className="w-full flex items-center justify-between p-3 hover:bg-muted/30 text-left"
-            onClick={() => setShowServers(!showServers)}
+            onClick={() => setShowTools(!showTools)}
           >
             <div className="flex items-center gap-2">
-              <Server className="h-4 w-4" />
-              <span className="text-sm font-medium">Servers</span>
+              <Wrench className="h-4 w-4" />
+              <span className="text-sm font-medium">Custom Tools</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">
-                {connectedServers.length}/{servers.length}
+                {customTools.length}
               </span>
-              {showServers ? (
+              {showTools ? (
                 <ChevronDown className="h-3 w-3" />
               ) : (
                 <ChevronRight className="h-3 w-3" />
               )}
             </div>
           </button>
-          {showServers && (
+          {showTools && (
             <div className="p-3 pt-0 space-y-2">
-              {servers.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No servers configured</p>
+              {customTools.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No tools defined. Go to Define Tools tab to create tools.
+                </p>
               ) : (
-                servers.map((server) => (
+                customTools.map((tool) => (
                   <div
-                    key={server.name}
-                    className="flex items-center justify-between text-xs p-2 bg-muted/30 rounded"
+                    key={tool.id}
+                    className="text-xs p-2 bg-purple-50 dark:bg-purple-900/20 rounded border border-purple-200 dark:border-purple-800"
                   >
-                    <span className="font-mono">{server.name}</span>
-                    <div className="flex items-center gap-1">
-                      {server.status === 'connected' ? (
-                        <CheckCircle className="h-3 w-3 text-green-500" />
-                      ) : (
-                        <AlertCircle className="h-3 w-3 text-red-500" />
-                      )}
+                    <div className="font-medium text-purple-700 dark:text-purple-300">
+                      {tool.name}
+                    </div>
+                    <div className="text-purple-600 dark:text-purple-400 text-[10px] mt-1">
+                      {tool.parameters.length} parameter{tool.parameters.length !== 1 ? 's' : ''}
                     </div>
                   </div>
                 ))
