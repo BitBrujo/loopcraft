@@ -153,7 +153,21 @@ main().catch(console.error);
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to create test server');
+
+        // Handle duplicate server name
+        if (response.status === 409) {
+          const shouldContinue = window.confirm(
+            error.message + '\n\nDo you want to go to Settings to delete it?'
+          );
+
+          if (shouldContinue) {
+            router.push('/settings');
+          }
+          setIsGenerating(false);
+          return;
+        }
+
+        throw new Error(error.message || error.error || 'Failed to create test server');
       }
 
       const data = await response.json();

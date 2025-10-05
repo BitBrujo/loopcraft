@@ -39,6 +39,19 @@ export async function POST(req: NextRequest) {
       command: ['npx', '-y', 'tsx', filePath],
     };
 
+    // Check if server with this name already exists
+    const existing = await query<Array<{ id: number }>>(
+      `SELECT id FROM mcp_servers WHERE user_id = ? AND name = ?`,
+      [user.userId, serverName]
+    );
+
+    if (existing.length > 0) {
+      return NextResponse.json(
+        { error: 'duplicate', message: `A server named "${serverName}" already exists. Please delete it first or choose a different name.` },
+        { status: 409 }
+      );
+    }
+
     // Insert into database
     const result = await query<{ insertId: number }>(
       `INSERT INTO mcp_servers (user_id, name, type, config, enabled)
