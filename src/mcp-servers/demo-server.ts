@@ -10,6 +10,7 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { createUIResource } from '@mcp-ui/server';
 import express from 'express';
 import cors from 'cors';
@@ -60,7 +61,7 @@ app.post('/mcp', async (req, res) => {
   );
 
   // Tool 1: Contact Form - Returns HTML form UI
-  server.setRequestHandler('tools/list', async () => ({
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [
       {
         name: 'get_contact_form',
@@ -109,7 +110,7 @@ app.post('/mcp', async (req, res) => {
   }));
 
   // Tool call handler
-  server.setRequestHandler('tools/call', async (request) => {
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
     if (name === 'get_contact_form') {

@@ -2,13 +2,22 @@
   "name": "loopcraft",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
+  "bin": {
+    "loopcraft-demo": "./build/mcp-servers/demo-server.js",
+    "loopcraft-hypermemory": "./build/mcp-servers/hypermemory-server.js"
+  },
+  "files": [
+    "build/mcp-servers"
+  ],
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "mcp:demo": "tsx src/mcp-servers/demo-server.ts",
-    "mcp:hypermemory": "tsx src/mcp-servers/hypermemory-server.ts"
+    "build:mcp": "tsc -p tsconfig.mcp.json && chmod +x build/mcp-servers/*.js",
+    "mcp:demo": "npm run build:mcp && node build/mcp-servers/demo-server.js",
+    "mcp:hypermemory": "npm run build:mcp && node build/mcp-servers/hypermemory-server.js"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.38",
@@ -59,6 +68,8 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

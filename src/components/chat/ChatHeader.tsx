@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "./ThemeToggle";
 import { MobileSidebar } from "./MobileSidebar";
-import { MessageSquare, Settings, PencilRuler, User, LogOut, MessageCircle } from "lucide-react";
+import { MessageSquare, Settings, PencilRuler, User, LogOut, MessageCircle, Wrench } from "lucide-react";
 
 export function ChatHeader() {
   const router = useRouter();
@@ -84,6 +84,18 @@ export function ChatHeader() {
 
         {/* Center: Navigation */}
         <div className="inline-flex items-center gap-1 p-1 rounded-lg ring-2 ring-border bg-background/50">
+          <Link href="/mcp-server-builder">
+            <button
+              className={`px-4 py-2 text-sm rounded-md transition-all flex items-center ${
+                pathname === "/mcp-server-builder"
+                  ? "bg-foreground/10 font-medium shadow-sm"
+                  : "hover:bg-muted/50 text-muted-foreground"
+              }`}
+            >
+              <Wrench className="h-4 w-4 mr-2" />
+              Server
+            </button>
+          </Link>
           <Link href="/mcp-ui-builder">
             <button
               className={`px-4 py-2 text-sm rounded-md transition-all flex items-center ${
@@ -93,7 +105,7 @@ export function ChatHeader() {
               }`}
             >
               <PencilRuler className="h-4 w-4 mr-2" />
-              Builder
+              UI
             </button>
           </Link>
           <Link href="/chat">

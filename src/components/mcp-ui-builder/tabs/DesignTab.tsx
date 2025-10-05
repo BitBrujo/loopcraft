@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, Sparkles, BookOpen, Zap } from "lucide-react";
+import { ArrowRight, Sparkles, BookOpen, Zap, Link as LinkIcon } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { Button } from "@/components/ui/button";
 import { EditorPanel } from "../EditorPanel";
@@ -10,6 +10,13 @@ import { extractTemplatePlaceholders } from "@/lib/html-parser";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -17,6 +24,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+interface MCPServer {
+  id: number;
+  name: string;
+  type: string;
+  enabled: boolean;
+}
 
 export function DesignTab() {
   const {
@@ -29,10 +43,40 @@ export function DesignTab() {
     actionMappings,
     clearCustomTools,
     clearActionMappings,
+    connectedServerName,
+    setConnectedServerName,
   } = useUIBuilderStore();
 
   const [showModeChangeDialog, setShowModeChangeDialog] = useState(false);
   const [pendingMode, setPendingMode] = useState<'readonly' | 'interactive' | null>(null);
+  const [servers, setServers] = useState<MCPServer[]>([]);
+  const [isLoadingServers, setIsLoadingServers] = useState(false);
+
+  // Load user's MCP servers
+  useEffect(() => {
+    const loadServers = async () => {
+      setIsLoadingServers(true);
+      try {
+        const token = localStorage.getItem('token');
+        const headers: HeadersInit = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch('/api/mcp-servers', { headers });
+        if (response.ok) {
+          const data = await response.json();
+          setServers(data.servers || []);
+        }
+      } catch (error) {
+        console.error('Failed to load MCP servers:', error);
+      } finally {
+        setIsLoadingServers(false);
+      }
+    };
+
+    loadServers();
+  }, []);
 
   // Auto-detect template placeholders when content changes
   useEffect(() => {
@@ -76,8 +120,42 @@ export function DesignTab() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Mode Selector */}
-      <div className="border-b bg-muted/30 p-4">
+      {/* Server Connection & Mode Selector */}
+      <div className="border-b bg-muted/30 p-4 space-y-4">
+        {/* Server Connection Selector */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <LinkIcon className="h-4 w-4 text-muted-foreground" />
+            <h3 className="text-sm font-semibold">Connect to MCP Server</h3>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Select an existing MCP server to wrap with a UI, or leave empty to create standalone UI
+          </p>
+          <Select
+            value={connectedServerName || ''}
+            onValueChange={(value) => setConnectedServerName(value || null)}
+            disabled={isLoadingServers}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={isLoadingServers ? "Loading servers..." : "None (standalone UI)"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">None (standalone UI)</SelectItem>
+              {servers.filter(s => s.enabled).map((server) => (
+                <SelectItem key={server.id} value={server.name}>
+                  {server.name} ({server.type})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {connectedServerName && (
+            <p className="text-xs text-green-600">
+              ✓ Connected to &quot;{connectedServerName}&quot; - tools will be available in Actions tab
+            </p>
+          )}
+        </div>
+
+        {/* Mode Selector */}
         <div className="space-y-3">
           <div>
             <h3 className="text-sm font-semibold mb-1">UI Mode</h3>

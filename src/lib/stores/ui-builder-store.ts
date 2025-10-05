@@ -37,6 +37,9 @@ interface UIBuilderStore {
   // MCP Integration context
   mcpContext: MCPContext;
 
+  // Connected server (for UI wrapper workflow)
+  connectedServerName: string | null;
+
   // Custom tools
   customTools: CustomTool[];
 
@@ -90,6 +93,9 @@ interface UIBuilderStore {
   removeSelectedTool: (toolName: string, serverName: string) => void;
   toggleServer: (serverName: string) => void;
   setPurpose: (purpose: string) => void;
+
+  // Actions - Connected Server
+  setConnectedServerName: (serverName: string | null) => void;
 
   // Actions - Custom Tools
   addCustomTool: (tool: CustomTool) => void;
@@ -147,6 +153,7 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         selectedTools: [],
         purpose: '',
       },
+      connectedServerName: null,
       customTools: [],
       actionMappings: [],
       testConfig: {
@@ -265,6 +272,9 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         set((state) => ({
           mcpContext: { ...state.mcpContext, purpose },
         })),
+
+      setConnectedServerName: (serverName) =>
+        set({ connectedServerName: serverName }),
 
       addCustomTool: (tool) =>
         set((state) => ({
@@ -387,6 +397,7 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         activeTab: state.activeTab,
         uiMode: state.uiMode,
         mcpContext: state.mcpContext,
+        connectedServerName: state.connectedServerName,
         customTools: state.customTools,
         actionMappings: state.actionMappings,
         testConfig: {
