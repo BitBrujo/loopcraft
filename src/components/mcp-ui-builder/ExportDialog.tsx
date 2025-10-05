@@ -213,8 +213,10 @@ function generateActionHandlers(actionMappings: ActionMapping[], mcpContext: MCP
 
 function generateMCPServer(resource: UIResource, actionMappings: ActionMapping[], mcpContext: MCPContext): string {
   const serverName = resource.uri.split('/')[2] || 'my-ui-server';
+  const agentPlaceholders = resource.templatePlaceholders || [];
 
-  let code = `import { Server } from '@modelcontextprotocol/sdk/server/index.js';\n`;
+  let code = `#!/usr/bin/env node\n\n`;
+  code += `import { Server } from '@modelcontextprotocol/sdk/server/index.js';\n`;
   code += `import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';\n`;
   code += `import { createUIResource } from '@mcp-ui/server';\n\n`;
 
@@ -233,64 +235,122 @@ function generateMCPServer(resource: UIResource, actionMappings: ActionMapping[]
   code += `  }\n`;
   code += `);\n\n`;
 
-  // Add resource handler
-  code += `// Resource: UI Component\n`;
-  code += `server.setRequestHandler('resources/list', async () => ({\n`;
-  code += `  resources: [{\n`;
-  code += `    uri: '${resource.uri}',\n`;
-  code += `    name: '${resource.title || 'UI Component'}',\n`;
-  code += `    description: '${resource.description || 'Interactive UI component'}',\n`;
-  code += `    mimeType: 'application/vnd.mcp.ui+json',\n`;
-  code += `  }],\n`;
-  code += `}));\n\n`;
+  // Add helper function for placeholder replacement if needed
+  if (agentPlaceholders.length > 0) {
+    code += `// Helper function to replace agent placeholders in HTML\n`;
+    code += `function fillAgentPlaceholders(html, agentContext) {\n`;
+    code += `  let result = html;\n`;
+    agentPlaceholders.forEach(placeholder => {
+      const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      code += `  if (agentContext['${placeholder}'] !== undefined) {\n`;
+      code += `    result = result.replace(/\\{\\{${escapedPlaceholder}\\}\\}/g, agentContext['${placeholder}']);\n`;
+      code += `  }\n`;
+    });
+    code += `  return result;\n`;
+    code += `}\n\n`;
+  }
 
-  code += `server.setRequestHandler('resources/read', async (request) => {\n`;
-  code += `  if (request.params.uri === '${resource.uri}') {\n`;
-  const resourceDataStr = JSON.stringify({
-    uri: resource.uri,
-    contentType: resource.contentType,
-    content: resource.content,
-    preferredSize: resource.preferredSize,
-  }, null, 6).replace(/\n/g, '\n    ');
-  code += `    const uiResource = createUIResource(${resourceDataStr});\n`;
-  code += `    return { contents: [{ uri: request.params.uri, ...uiResource }] };\n`;
-  code += `  }\n`;
-  code += `  throw new Error('Resource not found');\n`;
-  code += `});\n\n`;
+  // Add tools
+  code += `// Tools\n`;
+  code += `server.setRequestHandler('tools/list', async () => ({\n`;
+  code += `  tools: [\n`;
 
-  // Add tool handlers for each action
+  // Add get_ui tool with agent parameters
+  code += `    {\n`;
+  code += `      name: 'get_ui',\n`;
+  code += `      description: '${resource.description || 'Get the interactive UI component'}',\n`;
+  code += `      inputSchema: {\n`;
+  code += `        type: 'object',\n`;
+  code += `        properties: {\n`;
+
+  // Add agent placeholder parameters
+  agentPlaceholders.forEach((placeholder, index) => {
+    code += `          '${placeholder}': { type: 'string', description: 'Value for ${placeholder}' }`;
+    if (index < agentPlaceholders.length - 1 || actionMappings.length > 0) code += ',';
+    code += '\n';
+  });
+
+  code += `        },\n`;
+  code += `      },\n`;
+  code += `    }`;
+
+  // Add action mapping tools
   if (actionMappings.length > 0) {
-    code += `// Tools for UI Actions\n`;
-    code += `server.setRequestHandler('tools/list', async () => ({\n`;
-    code += `  tools: [\n`;
+    code += `,\n`;
     actionMappings.forEach((mapping, index) => {
+      const paramSources = mapping.parameterSources || {};
       code += `    {\n`;
       code += `      name: '${mapping.toolName}',\n`;
       code += `      description: 'Handle ${mapping.uiElementId} interaction',\n`;
       code += `      inputSchema: {\n`;
       code += `        type: 'object',\n`;
-      const bindingsStr = JSON.stringify(mapping.parameterBindings, null, 8).replace(/\n/g, '\n        ');
-      code += `        properties: ${bindingsStr},\n`;
+      code += `        properties: {\n`;
+
+      // Generate properties from parameterSources
+      const paramKeys = Object.keys(paramSources);
+      paramKeys.forEach((paramName, pIndex) => {
+        code += `          '${paramName}': { type: 'string' }`;
+        if (pIndex < paramKeys.length - 1) code += ',';
+        code += '\n';
+      });
+
+      code += `        },\n`;
       code += `      },\n`;
       code += `    }`;
       if (index < actionMappings.length - 1) code += ',';
       code += '\n';
     });
-    code += `  ],\n`;
-    code += `}));\n\n`;
-
-    code += `server.setRequestHandler('tools/call', async (request) => {\n`;
-    code += `  const { name, arguments: args } = request.params;\n\n`;
-    actionMappings.forEach((mapping, index) => {
-      code += `  ${index > 0 ? 'else ' : ''}if (name === '${mapping.toolName}') {\n`;
-      code += `    // TODO: Implement tool logic\n`;
-      code += `    console.log('Tool called:', name, args);\n`;
-      code += `    return { content: [{ type: 'text', text: 'Tool executed successfully' }] };\n`;
-      code += `  }\n`;
-    });
-    code += `\n  throw new Error(\`Unknown tool: \${name}\`);\n`;
-    code += `});\n\n`;
   }
+
+  code += `  ],\n`;
+  code += `}));\n\n`;
+
+  // Add tool call handler
+  code += `// Tool call handler\n`;
+  code += `server.setRequestHandler('tools/call', async (request) => {\n`;
+  code += `  const { name, arguments: args } = request.params;\n\n`;
+
+  // Handle get_ui tool
+  code += `  if (name === 'get_ui') {\n`;
+  code += `    let htmlContent = \`${resource.content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;\n\n`;
+
+  if (agentPlaceholders.length > 0) {
+    code += `    // Fill agent placeholders\n`;
+    code += `    htmlContent = fillAgentPlaceholders(htmlContent, args);\n\n`;
+  }
+
+  code += `    const uiResource = createUIResource({\n`;
+  code += `      uri: '${resource.uri}',\n`;
+  code += `      content: { type: '${resource.contentType}', htmlString: htmlContent },\n`;
+  code += `      encoding: 'text'`;
+
+  if (resource.title || resource.description) {
+    code += `,\n      metadata: {\n`;
+    if (resource.title) code += `        title: '${resource.title}',\n`;
+    if (resource.description) code += `        description: '${resource.description}'\n`;
+    code += `      }`;
+  }
+
+  code += `\n    });\n\n`;
+  code += `    return {\n`;
+  code += `      content: [{\n`;
+  code += `        type: 'text',\n`;
+  code += `        text: '__MCP_UI_RESOURCE__:' + JSON.stringify(uiResource)\n`;
+  code += `      }]\n`;
+  code += `    };\n`;
+  code += `  }\n\n`;
+
+  // Handle action mapping tools
+  actionMappings.forEach((mapping, index) => {
+    code += `  ${index > 0 || agentPlaceholders.length > 0 ? 'else ' : ''}if (name === '${mapping.toolName}') {\n`;
+    code += `    // TODO: Implement tool logic\n`;
+    code += `    console.error('Tool called:', name, args);\n`;
+    code += `    return { content: [{ type: 'text', text: 'Tool executed successfully' }] };\n`;
+    code += `  }\n\n`;
+  });
+
+  code += `  throw new Error(\`Unknown tool: \${name}\`);\n`;
+  code += `});\n\n`;
 
   // Start server
   code += `// Start server\n`;

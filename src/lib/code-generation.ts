@@ -47,8 +47,9 @@ export default uiResource;`;
 
 export function generateServerCode(resource: UIResource): string {
   const serverName = resource.uri.split('/')[2] || 'my-ui-server';
+  const agentPlaceholders = resource.templatePlaceholders || [];
 
-  const code = `#!/usr/bin/env node
+  let code = `#!/usr/bin/env node
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -68,47 +69,48 @@ const server = new Server(
     },
   }
 );
+`;
 
-// UI Resource
-const uiResource = createUIResource({
-  uri: '${resource.uri}',
-  content: ${resource.contentType === 'rawHtml' ? `{ type: 'rawHtml', htmlString: \`${resource.content}\` }` : `{ type: 'externalUrl', iframeUrl: "${resource.content}" }`},
-  encoding: 'text',
-});
-
-// List Resources
-server.setRequestHandler('resources/list', async () => ({
-  resources: [{
-    uri: '${resource.uri}',
-    name: '${resource.title || 'UI Component'}',
-    description: '${resource.description || 'Interactive UI component'}',
-    mimeType: 'application/vnd.mcp.ui+json',
-  }],
-}));
-
-// Read Resource
-server.setRequestHandler('resources/read', async (request) => {
-  if (request.params.uri === '${resource.uri}') {
-    return {
-      contents: [{
-        uri: uiResource.uri,
-        mimeType: 'application/vnd.mcp.ui+json',
-        text: JSON.stringify(uiResource),
-      }],
-    };
+  // Add helper function for placeholder replacement if needed
+  if (agentPlaceholders.length > 0) {
+    code += `
+// Helper function to replace agent placeholders in HTML
+function fillAgentPlaceholders(html, agentContext) {
+  let result = html;
+`;
+    agentPlaceholders.forEach(placeholder => {
+      const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      code += `  if (agentContext['${placeholder}'] !== undefined) {
+    result = result.replace(/\\{\\{${escapedPlaceholder}\\}\\}/g, agentContext['${placeholder}']);
   }
-  throw new Error('Resource not found');
-});
+`;
+    });
+    code += `  return result;
+}
+`;
+  }
 
+  // List Tools
+  code += `
 // List Tools
 server.setRequestHandler('tools/list', async () => ({
   tools: [
     {
       name: 'get_ui',
-      description: 'Get the interactive UI component',
+      description: '${resource.description || 'Get the interactive UI component'}',
       inputSchema: {
         type: 'object',
-        properties: {},
+        properties: {
+`;
+
+  // Add agent placeholder parameters
+  agentPlaceholders.forEach((placeholder, index) => {
+    code += `          '${placeholder}': { type: 'string', description: 'Value for ${placeholder}' }`;
+    if (index < agentPlaceholders.length - 1) code += ',';
+    code += '\n';
+  });
+
+  code += `        },
       },
     },
   ],
@@ -117,6 +119,34 @@ server.setRequestHandler('tools/list', async () => ({
 // Call Tool
 server.setRequestHandler('tools/call', async (request) => {
   if (request.params.name === 'get_ui') {
+    let htmlContent = \`${resource.content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
+`;
+
+  if (agentPlaceholders.length > 0) {
+    code += `
+    // Fill agent placeholders
+    const args = request.params.arguments || {};
+    htmlContent = fillAgentPlaceholders(htmlContent, args);
+`;
+  }
+
+  code += `
+    const uiResource = createUIResource({
+      uri: '${resource.uri}',
+      content: { type: '${resource.contentType}', htmlString: htmlContent },
+      encoding: 'text'`;
+
+  if (resource.title || resource.description) {
+    code += `,
+      metadata: {`;
+    if (resource.title) code += `\n        title: '${resource.title}',`;
+    if (resource.description) code += `\n        description: '${resource.description}'`;
+    code += `\n      }`;
+  }
+
+  code += `
+    });
+
     return {
       content: [{
         type: 'text',
@@ -242,7 +272,7 @@ npm install @mcp-ui/server @modelcontextprotocol/sdk
 
 ### 2. Copy Generated Code
 - Use the **Server** tab to copy complete MCP server code
-- Save it as \`server.ts\` or \`server.js\` in your project
+- Save it as \`server.js\` in your project
 
 ### 3. Add to LoopCraft via Settings
 1. Navigate to Settings > MCP Servers
@@ -250,20 +280,31 @@ npm install @mcp-ui/server @modelcontextprotocol/sdk
 3. Configure:
    - **Name**: my-ui-server
    - **Type**: stdio
-   - **Command**: \`["npx", "tsx", "/path/to/server.ts"]\`
+   - **Command**: \`["node", "/absolute/path/to/server.js"]\`
 4. Enable the server
 
 ### 4. Test in Chat
 1. Navigate to Chat
-2. Ask the AI: "Show me the UI component"
-3. The AI will call your MCP server and display the interactive UI
+2. Ask the AI: "Use the get_ui tool to show me the UI"${agentSlots > 0 ? `
+3. The AI will automatically fill agent placeholders with contextual data` : ''}
+${agentSlots > 0 ? `4. The interactive UI will appear with all placeholders filled` : `3. The interactive UI will appear`}
 
 ## Agent Context Slots
 
 ${agentSlots > 0 ? `Your UI includes ${agentSlots} agent-fillable slot${agentSlots !== 1 ? 's' : ''}.
-The AI will automatically populate these with context-aware data when rendering the UI.
 
-Example: \`{{agent.summary}}\` will be replaced with a summary generated by the AI.` : 'No agent slots detected. Add `{{placeholder}}` syntax to your HTML to make it dynamic.'}
+**How it works:**
+1. The AI calls \`get_ui\` tool with agent context parameters
+2. Server replaces \`{{placeholders}}\` with provided values
+3. UI renders with filled-in data
+
+**Example flow:**
+- HTML: \`<p>Welcome {{agent.name}}!</p>\`
+- AI provides: \`{ "agent.name": "Alice" }\`
+- Result: \`<p>Welcome Alice!</p>\`
+
+**Testing:**
+Ask: "Show me the UI with agent name 'Bob' and summary 'Product manager'"` : 'No agent slots detected. Add `{{placeholder}}` syntax to your HTML to make it dynamic.'}
 
 ## User Interactions
 
@@ -272,15 +313,16 @@ When users interact with these elements, the configured tools will be called.` :
 
 ## Troubleshooting
 
-- **Server not connecting**: Check command path and ensure \`npx tsx\` is available
+- **Server not connecting**: Check absolute path in command and ensure Node.js is available
 - **UI not rendering**: Verify the tool returns data with \`__MCP_UI_RESOURCE__:\` prefix
-- **Agent slots not filling**: Ensure placeholders match exactly in both HTML and mappings
+- **Agent slots not filling**: Ask AI to provide values (e.g., "show UI with agent.name as 'Alice'")
+- **Placeholders still showing**: Ensure AI called \`get_ui\` with all required parameters
 - **Form submissions failing**: Check parameter source types and values in Actions tab
 
 ## Next Steps
 
-1. Test the UI in Chat
-2. Refine agent slot placeholders based on AI context
+1. Test the UI in Chat with different agent context values
+2. Refine placeholders to match your use case
 3. Add more interactive elements and tool mappings
 4. Deploy your MCP server for production use
 `;
