@@ -41,7 +41,7 @@ export function TestServerTab() {
     // Generate MCP server code
     const code = `import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { ListToolsRequestSchema, CallToolRequestSchema, ListResourcesRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
 // Create MCP server
 const server = new Server(
@@ -52,6 +52,7 @@ const server = new Server(
   {
     capabilities: {
       tools: {},
+      resources: {},
     },
   }
 );
@@ -80,6 +81,13 @@ ${activeTool.parameters
         },
       },
     ],
+  };
+});
+
+// Resource list handler (empty - this server provides tools only)
+server.setRequestHandler(ListResourcesRequestSchema, async () => {
+  return {
+    resources: [],
   };
 });
 
