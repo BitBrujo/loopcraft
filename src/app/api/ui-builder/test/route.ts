@@ -33,10 +33,10 @@ export async function POST(req: NextRequest) {
     const filePath = join(tempDir, fileName);
     await writeFile(filePath, serverCode, 'utf-8');
 
-    // Create server config
+    // Create server config using npx tsx to handle TypeScript/ESM
     const config = {
       type: 'stdio',
-      command: ['node', filePath],
+      command: ['npx', '-y', 'tsx', filePath],
     };
 
     // Insert into database

@@ -136,7 +136,7 @@ main().catch(console.error);
         throw new Error('Authentication required');
       }
 
-      const fileName = `mcp-${serverConfig.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.mjs`;
+      const fileName = `mcp-${serverConfig.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.ts`;
 
       const response = await fetch('/api/ui-builder/test', {
         method: 'POST',

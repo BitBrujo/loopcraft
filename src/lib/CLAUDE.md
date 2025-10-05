@@ -178,65 +178,101 @@ Exports singleton `mcpClientManager` for use across the application.
     - Returns decoded payload or null
     - Use in API routes to authenticate requests
 
-**stores/ui-builder-store.ts** - UI Builder State Management
+**stores/server-builder-store.ts** - MCP Server Builder State Management
 - Zustand store with localStorage persistence
-- Manages complete MCP-UI Function Builder state
+- Manages MCP Server Builder state
 
 **State Fields:**
-- `currentResource`: UIResource being edited
-- `savedTemplates`: User's saved templates
-- `activeTab`: Current tab (context | design | actions | flow | test)
-- `mcpContext`: MCP integration context
-  - `selectedServers`: Array of selected server names
-  - `selectedTools`: Array of selected MCPTool objects
-  - `purpose`: UI component purpose description
-- `actionMappings`: Array of ActionMapping objects
-- `testConfig`: Test configuration
-  - `mockResponses`: Array of MockResponse objects
-  - `testHistory`: Array of TestResult objects
-  - `useMockData`: Boolean flag for mock vs real data
-- `validationStatus`: Validation state
-  - `missingMappings`: Array of missing mapping messages
-  - `typeMismatches`: Array of TypeMismatch objects
-  - `warnings`: Array of warning messages
+- `serverConfig`: Current server configuration (name, description, tools, transport type)
+- `activeTool`: Tool being edited
+- `activeTab`: Current tab ('templates' | 'customize' | 'test')
+- `testResults`: Array of TestResult objects
 - `isTestServerActive`: Boolean flag for test server status
 - `testServerName`: Name of active test server (or null)
 - `testServerId`: Database ID of test server (or null)
 - `testServerFile`: File path of temp server (or null)
-- `previewKey`: Preview refresh counter
-- `showPreview`: Preview visibility toggle
 - `isLoading`: Loading state
 - `error`: Error message
 
 **Action Methods:**
+- **Server Config**: `setServerConfig`, `updateServerConfig`, `resetServerConfig`
+- **Tools**: `addTool`, `updateTool`, `removeTool`
+- **Active Tool**: `setActiveTool`, `updateActiveTool`
+- **Tabs**: `setActiveTab`
+- **Test**: `addTestResult`, `clearTestResults`, `startTestServer`, `stopTestServer`
+- **Loading/Error**: `setLoading`, `setError`
+
+**Persistence:**
+Partial persistence via Zustand middleware:
+- Persisted: `serverConfig`, `activeTool`, `activeTab`
+- Not persisted: `testResults`, `isLoading`, `error`, test server state
+
+**stores/ui-builder-store.ts** - MCP-UI Wrapper Builder State Management
+- Zustand store with localStorage persistence
+- Manages UI Wrapper Builder state
+
+**State Fields:**
+- `currentResource`: UIResource being edited (includes `templatePlaceholders`)
+- `savedTemplates`: User's saved templates
+- `activeTab`: Current tab ('design' | 'tools' | 'actions' | 'generate' | 'test')
+- `uiMode`: UI mode ('readonly' | 'interactive')
+- `connectedServerName`: Selected MCP server to wrap with UI (**new field**)
+- `mcpContext`: MCP integration context
+- `customTools`: User-defined custom tools
+- `actionMappings`: UI element → tool bindings
+- `testConfig`: Test configuration
+- `validationStatus`: Validation state
+- `isTestServerActive`, `testServerName`, `testServerId`, `testServerFile`: Test server tracking
+- `previewKey`, `showPreview`, `isLoading`, `error`: UI state
+
+**Action Methods:**
 - **Basic**: `setCurrentResource`, `updateResource`, `resetResource`, `loadTemplate`
-- **Complete State**: `loadCompleteState(state)` - Restores complete builder state from saved template
-  - Loads: `currentResource`, `mcpContext`, `actionMappings`, `testConfig`
-  - Refreshes preview with new `previewKey`
-  - Used by LoadDialog to restore saved sessions
+- **Complete State**: `loadCompleteState(state)` - Restores saved template state
 - **Templates**: `setSavedTemplates`, `addTemplate`, `removeTemplate`
 - **Tabs**: `setActiveTab`
+- **UI Mode**: `setUIMode`
+- **Connected Server**: `setConnectedServerName` (**new method**)
 - **MCP Context**: `setMCPContext`, `addSelectedTool`, `removeSelectedTool`, `toggleServer`, `setPurpose`
+- **Custom Tools**: `addCustomTool`, `updateCustomTool`, `removeCustomTool`, `clearCustomTools`
 - **Action Mappings**: `addActionMapping`, `updateActionMapping`, `removeActionMapping`, `clearActionMappings`
 - **Test Config**: `setTestConfig`, `addMockResponse`, `removeMockResponse`, `addTestResult`, `toggleMockData`
-- **Test Server**: `startTestServer(name, id, file)`, `stopTestServer()` - Manage test server lifecycle
+- **Test Server**: `startTestServer`, `stopTestServer`
 - **Validation**: `setValidationStatus`, `addValidationWarning`, `clearValidationWarnings`
 - **Preview**: `refreshPreview`, `setShowPreview`
 - **Loading/Error**: `setLoading`, `setError`
 
 **Persistence:**
 Partial persistence via Zustand middleware:
-- Persisted: `currentResource`, `showPreview`, `activeTab`, `mcpContext`, `actionMappings`, `testConfig` (excluding testHistory)
+- Persisted: `currentResource`, `showPreview`, `activeTab`, `uiMode`, `mcpContext`, `connectedServerName`, `customTools`, `actionMappings`, `testConfig` (excluding testHistory)
 - Not persisted: `savedTemplates`, `isLoading`, `error`, `validationStatus`
 
-**Usage Pattern:**
-```typescript
-import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
+**tool-templates.ts** - MCP Server Builder Template Library
+- 60+ pre-built tool templates across 10 categories
+- Plain language descriptions for non-technical users
 
-const { currentResource, activeTab, setActiveTab, addSelectedTool } = useUIBuilderStore();
-```
+**Key Functions:**
+- `toolTemplates`: Array of 60+ ToolTemplate objects
+  - Each template includes: id, name, category, description
+  - Plain language fields: `userEnters` (what user provides), `userSees` (what user experiences)
+  - Complete tool definition with parameters, return type, examples
+- `getCategorizedTemplates()`: Group templates by category
+  - Returns: `Record<string, ToolTemplate[]>`
+- `getCategoryInfo(category)`: Get category metadata
+  - Returns: `{ icon, title, description }`
 
-**html-parser.ts** - HTML Parser for MCP-UI Builder
+**Template Categories:**
+- `forms`: Accept Form Data (6 templates: Contact, Sign Up, Feedback, Settings, Survey, Booking)
+- `search`: Search & Find (6 templates: Simple, Advanced, Auto-Complete, Find by ID, Location, Faceted)
+- `save`: Save & Store (6 templates: Add New, Edit, Save Draft, Import, Delete, Batch Update)
+- `show`: Show Information (6 templates: Profile, Dashboard, List, Status Check, Activity Log, Report)
+- `process`: Process Data (6 templates: Calculate, Convert, Validate, Generate Code, Transform, Aggregate)
+- `messages`: Send Messages (6 templates: Email, Push Notification, Webhook, SMS, Slack, In-App)
+- `security`: Security & Access (6 templates: Login, Permissions, Password Reset, 2FA, API Key, Session)
+- `payments`: Money & Payments (6 templates: Payment, Pricing, Discount, Refund, Subscription, Invoice)
+- `files`: Files & Media (6 templates: Upload, Download, Preview, Convert, List, Delete)
+- `external`: External Services (6 templates: Weather, URL Shortener, Translate, Geocode, QR Code, Currency)
+
+**html-parser.ts** - HTML Parser for MCP-UI Wrapper Builder
 - Parses HTML content to detect interactive elements and template placeholders
 - Uses native browser DOMParser for client-side parsing
 
