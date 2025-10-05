@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "./ThemeToggle";
 import { MobileSidebar } from "./MobileSidebar";
-import { MessageSquare, Settings, PencilRuler, User, LogOut, MessageCircle, Wrench } from "lucide-react";
+import { MessageSquare, Settings, PencilRuler, User, LogOut, MessageCircle, Wrench, Server, Home } from "lucide-react";
 
 export function ChatHeader() {
   const router = useRouter();
@@ -67,7 +67,7 @@ export function ChatHeader() {
   return (
     <header className="border-b border-border bg-card/50 backdrop-blur-sm">
       <div className="flex h-14 items-center justify-between px-4">
-        {/* Left: Branding */}
+        {/* Left: Branding + Home */}
         <div className="flex items-center space-x-3 flex-1">
           <MobileSidebar />
           <div className="flex items-center space-x-2">
@@ -77,6 +77,12 @@ export function ChatHeader() {
             <h1 className="text-lg font-semibold tracking-tight">LoopCraft</h1>
           </div>
           <Separator orientation="vertical" className="h-6 hidden sm:block" />
+          <Link href="/home">
+            <Button variant="ghost" size="sm" className="h-8 hidden sm:flex">
+              <Home className="h-4 w-4 mr-2" />
+              Home
+            </Button>
+          </Link>
           <Badge variant="secondary" className="text-xs hidden sm:block">
             {modelName}
           </Badge>
@@ -86,37 +92,52 @@ export function ChatHeader() {
         <div className="inline-flex items-center gap-1 p-1 rounded-lg ring-2 ring-border bg-background/50">
           <Link href="/mcp-server-builder">
             <button
-              className={`px-4 py-2 text-sm rounded-md transition-all flex items-center ${
+              className={`px-3 py-2 text-sm rounded-md transition-all flex items-center ${
                 pathname === "/mcp-server-builder"
                   ? "bg-foreground/10 font-medium shadow-sm"
                   : "hover:bg-muted/50 text-muted-foreground"
               }`}
             >
-              <Wrench className="h-4 w-4 mr-2" />
-              Server
+              <Wrench className="h-4 w-4 mr-1.5" />
+              <span className="hidden md:inline">MCP Server Builder</span>
+              <span className="md:hidden">Server</span>
             </button>
           </Link>
           <Link href="/mcp-ui-builder">
             <button
-              className={`px-4 py-2 text-sm rounded-md transition-all flex items-center ${
+              className={`px-3 py-2 text-sm rounded-md transition-all flex items-center ${
                 pathname === "/mcp-ui-builder"
                   ? "bg-foreground/10 font-medium shadow-sm"
                   : "hover:bg-muted/50 text-muted-foreground"
               }`}
             >
-              <PencilRuler className="h-4 w-4 mr-2" />
-              UI
+              <PencilRuler className="h-4 w-4 mr-1.5" />
+              <span className="hidden md:inline">MCP-UI Builder</span>
+              <span className="md:hidden">UI</span>
+            </button>
+          </Link>
+          <Link href="/mcp-servers">
+            <button
+              className={`px-3 py-2 text-sm rounded-md transition-all flex items-center ${
+                pathname === "/mcp-servers"
+                  ? "bg-foreground/10 font-medium shadow-sm"
+                  : "hover:bg-muted/50 text-muted-foreground"
+              }`}
+            >
+              <Server className="h-4 w-4 mr-1.5" />
+              <span className="hidden md:inline">MCP Server List</span>
+              <span className="md:hidden">Servers</span>
             </button>
           </Link>
           <Link href="/chat">
             <button
-              className={`px-4 py-2 text-sm rounded-md transition-all flex items-center ${
+              className={`px-3 py-2 text-sm rounded-md transition-all flex items-center ${
                 pathname === "/chat"
                   ? "bg-foreground/10 font-medium shadow-sm"
                   : "hover:bg-muted/50 text-muted-foreground"
               }`}
             >
-              <MessageCircle className="h-4 w-4 mr-2" />
+              <MessageCircle className="h-4 w-4 mr-1.5" />
               Chat
             </button>
           </Link>

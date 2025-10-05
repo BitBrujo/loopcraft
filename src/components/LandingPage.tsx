@@ -15,9 +15,9 @@ export function LandingPage() {
     if (token) {
       setIsAuthenticated(true);
       setIsChecking(false);
-      // Redirect to builder after showing welcome message
+      // Redirect to home after showing welcome message
       setTimeout(() => {
-        router.push("/mcp-ui-builder");
+        router.push("/home");
       }, 1500);
     } else {
       setIsChecking(false);

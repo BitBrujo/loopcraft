@@ -37,8 +37,8 @@ export default function LoginPage() {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
 
-        // Redirect to builder
-        router.push("/mcp-ui-builder");
+        // Redirect to home
+        router.push("/home");
       } else {
         setError(data.error || "Login failed");
       }
