@@ -24,8 +24,8 @@ export function PreviewPanel() {
     setError(null);
 
     try {
-      // Generate MCP resource using the test API
-      const response = await fetch("/api/ui-builder/test", {
+      // Generate MCP resource using the preview API
+      const response = await fetch("/api/ui-builder/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resource: currentResource }),

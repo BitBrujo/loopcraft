@@ -1,6 +1,5 @@
 "use client";
 
-import { useTheme } from "next-themes";
 import Editor from "@monaco-editor/react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 
@@ -10,7 +9,6 @@ interface HTMLEditorProps {
 }
 
 export function HTMLEditor({ value, onChange }: HTMLEditorProps) {
-  const { theme } = useTheme();
   const { refreshPreview } = useUIBuilderStore();
 
   const handleChange = (value: string | undefined) => {
@@ -26,7 +24,7 @@ export function HTMLEditor({ value, onChange }: HTMLEditorProps) {
       <Editor
         height="100%"
         defaultLanguage="html"
-        theme={theme === "dark" ? "vs-dark" : "vs"}
+        theme="vs-dark"
         value={value}
         onChange={handleChange}
         options={{

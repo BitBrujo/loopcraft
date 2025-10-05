@@ -1,6 +1,5 @@
 "use client";
 
-import { useTheme } from "next-themes";
 import Editor from "@monaco-editor/react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 
@@ -56,7 +55,6 @@ export default function render(root, { data }) {
 }`;
 
 export function RemoteDomEditor({ value, onChange }: RemoteDomEditorProps) {
-  const { theme } = useTheme();
   const { refreshPreview } = useUIBuilderStore();
 
   const handleChange = (value: string | undefined) => {
@@ -89,7 +87,7 @@ export function RemoteDomEditor({ value, onChange }: RemoteDomEditorProps) {
         <Editor
           height="100%"
           defaultLanguage="javascript"
-          theme={theme === "dark" ? "vs-dark" : "vs"}
+          theme="vs-dark"
           value={value || exampleScript}
           onChange={handleChange}
           options={{
