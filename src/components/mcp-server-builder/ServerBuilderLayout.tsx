@@ -1,12 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useServerBuilderStore } from "@/lib/stores/server-builder-store";
 import { TemplateGalleryTab } from "./tabs/TemplateGalleryTab";
 import { CustomizeToolTab } from "./tabs/CustomizeToolTab";
 import { TestServerTab } from "./tabs/TestServerTab";
-import { Button } from "@/components/ui/button";
-import { Home } from "lucide-react";
+import { ChatLayout } from "@/components/chat/ChatLayout";
 import type { TabId } from "@/types/server-builder";
 
 const tabs: Array<{ id: TabId; label: string }> = [
@@ -32,21 +30,13 @@ export function ServerBuilderLayout() {
   };
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-background">
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+    <ChatLayout>
+      <div className="flex-1 flex flex-col overflow-hidden bg-background">
         {/* Header */}
-        <div className="h-14 border-b bg-card/50 backdrop-blur flex items-center justify-between px-4">
-          <Link href="/home">
-            <Button variant="ghost" size="sm" className="h-8">
-              <Home className="h-4 w-4 mr-2" />
-              Home
-            </Button>
-          </Link>
+        <div className="h-14 border-b bg-card/50 backdrop-blur flex items-center justify-center px-4">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
             MCP Server Builder
           </h1>
-          <div className="w-[72px]"></div>
         </div>
 
         {/* Tab Navigation */}
@@ -96,6 +86,6 @@ export function ServerBuilderLayout() {
           {renderTabContent()}
         </div>
       </div>
-    </div>
+    </ChatLayout>
   );
 }

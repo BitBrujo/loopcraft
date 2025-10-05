@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react";
 import { ChatHeader } from "./ChatHeader";
+import { RightSidebar } from "./RightSidebar";
 import { cn } from "@/lib/utils";
 
 interface ChatLayoutProps {
@@ -15,6 +16,7 @@ export function ChatLayout({ children, className }: ChatLayoutProps) {
       <ChatHeader />
       <div className="flex flex-1 overflow-hidden">
         {children}
+        <RightSidebar />
       </div>
     </div>
   );

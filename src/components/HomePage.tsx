@@ -35,64 +35,60 @@ export function HomePage() {
       description: "Create functional MCP servers from 60+ templates with inline editing and one-click testing",
       icon: Wrench,
       href: "/mcp-server-builder",
-      color: "from-blue-500 to-cyan-500",
     },
     {
       title: "MCP-UI Builder",
       description: "Add interactive UI presentation to existing MCP servers or create standalone UIs",
       icon: PencilRuler,
       href: "/mcp-ui-builder",
-      color: "from-purple-500 to-pink-500",
     },
     {
       title: "MCP Server List",
       description: "Configure and manage your Model Context Protocol server connections",
       icon: Server,
       href: "/mcp-servers",
-      color: "from-green-500 to-emerald-500",
     },
     {
       title: "Chat",
       description: "Test your MCP servers with AI-powered chat interface and tool calling",
       icon: MessageCircle,
       href: "/chat",
-      color: "from-orange-500 to-red-500",
     },
   ];
 
   return (
     <ChatLayout>
       <div className="flex-1 overflow-y-auto">
-        <div className="container max-w-5xl mx-auto py-12 px-4">
+        <div className="container max-w-4xl mx-auto py-8 px-4">
           {/* Title */}
-          <div className="text-center mb-12">
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-4">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-3">
               LoopCraft
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               Build, test, and deploy MCP servers with ease
             </p>
           </div>
 
           {/* Feature Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {features.map((feature) => {
               const Icon = feature.icon;
               return (
                 <Card
                   key={feature.href}
-                  className="p-8 hover:shadow-lg transition-all cursor-pointer border-2 hover:border-primary/50"
+                  className="p-5 hover:shadow-lg transition-all cursor-pointer border-2 hover:border-primary/50"
                   onClick={() => router.push(feature.href)}
                 >
-                  <div className="flex flex-col items-center text-center space-y-4">
-                    <div className={`h-16 w-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center`}>
-                      <Icon className="h-8 w-8 text-white" />
+                  <div className="flex flex-col items-center text-center space-y-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                      <Icon className="h-6 w-6 text-white" />
                     </div>
-                    <h2 className="text-2xl font-bold">{feature.title}</h2>
-                    <p className="text-muted-foreground">
+                    <h2 className="text-lg font-bold">{feature.title}</h2>
+                    <p className="text-sm text-muted-foreground">
                       {feature.description}
                     </p>
-                    <Button className="w-full mt-4">
+                    <Button className="w-full mt-2" size="sm">
                       Get Started
                     </Button>
                   </div>
@@ -102,8 +98,8 @@ export function HomePage() {
           </div>
 
           {/* Additional Info */}
-          <div className="mt-12 text-center">
-            <p className="text-sm text-muted-foreground">
+          <div className="mt-8 text-center">
+            <p className="text-xs text-muted-foreground">
               Choose a feature above to get started with LoopCraft
             </p>
           </div>
