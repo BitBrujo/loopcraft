@@ -20,7 +20,7 @@ export function TestServerTab() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string>("");
   const [showCode, setShowCode] = useState(false);
-  const [serverName, setServerName] = useState(serverConfig.name || "my-mcp-server");
+  const [serverName, setServerName] = useState(serverConfig?.name || "my-mcp-server");
 
   if (!activeTool || !serverConfig) {
     return (
