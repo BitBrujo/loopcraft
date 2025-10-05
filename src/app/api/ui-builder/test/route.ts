@@ -4,6 +4,7 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { getUserFromRequest } from '@/lib/auth';
 import { query } from '@/lib/db';
+import { cwd } from 'process';
 
 // POST /api/ui-builder/test - Create temporary test MCP server
 export async function POST(req: NextRequest) {
@@ -33,10 +34,16 @@ export async function POST(req: NextRequest) {
     const filePath = join(tempDir, fileName);
     await writeFile(filePath, serverCode, 'utf-8');
 
+    // Get NODE_PATH to include project's node_modules
+    const nodePath = join(cwd(), 'node_modules');
+
     // Create server config using npx tsx to handle TypeScript/ESM
     const config = {
       type: 'stdio',
       command: ['npx', '-y', 'tsx', filePath],
+      env: {
+        NODE_PATH: nodePath,
+      },
     };
 
     // Check if server with this name already exists

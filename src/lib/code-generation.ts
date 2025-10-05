@@ -61,6 +61,7 @@ export function generateServerCode(
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { createUIResource } from '@mcp-ui/server';
 
 // MCP Server for ${resource.uri}
@@ -102,7 +103,7 @@ function fillAgentPlaceholders(html, agentContext) {
   // List Tools - include get_ui + all custom tools
   code += `
 // List Tools
-server.setRequestHandler('tools/list', async () => ({
+server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
       name: 'get_ui',
@@ -150,7 +151,7 @@ server.setRequestHandler('tools/list', async () => ({
 }));
 
 // Call Tool
-server.setRequestHandler('tools/call', async (request) => {
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   // Handle get_ui tool
