@@ -122,7 +122,7 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
       showPreview: true,
       isLoading: false,
       error: null,
-      activeTab: 'context',
+      activeTab: 'design',
       mcpContext: {
         selectedServers: [],
         selectedTools: [],

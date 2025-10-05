@@ -30,7 +30,8 @@ export function ActionsTab() {
         (status) => {
           setValidationStatus(status);
         },
-        300
+        300,
+        currentResource.templatePlaceholders
       );
     }
   }, [actionMappings, currentResource, mcpContext.selectedTools, setValidationStatus]);
@@ -159,11 +160,11 @@ export function ActionsTab() {
             )}
           </div>
           <Button
-            onClick={() => setActiveTab('flow')}
+            onClick={() => setActiveTab('generate')}
             disabled={!canProceed}
             className="gap-2"
           >
-            Next: Visualize Flow
+            Next: Generate Code
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>

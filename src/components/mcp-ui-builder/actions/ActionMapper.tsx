@@ -46,7 +46,8 @@ export function ActionMapper() {
       uiElementType: element.type,
       toolName: firstTool.name,
       serverName: firstTool.serverName,
-      parameterBindings: {},
+      parameterBindings: {}, // Legacy
+      parameterSources: {}, // New: typed parameter sources
       responseHandler: 'show-notification',
     };
 
@@ -59,6 +60,7 @@ export function ActionMapper() {
       serverName,
       // Reset parameter bindings when tool changes
       parameterBindings: {},
+      parameterSources: {},
     });
   };
 
@@ -111,8 +113,8 @@ export function ActionMapper() {
       <div className="flex items-center justify-center h-full text-muted-foreground">
         <div className="text-center space-y-2">
           <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground/50" />
-          <p>No tools selected</p>
-          <p className="text-sm">Go to Context tab to select MCP tools</p>
+          <p>No tools available</p>
+          <p className="text-sm">Connect MCP servers via Settings to use their tools</p>
         </div>
       </div>
     );

@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertCircle, ChevronDown, ChevronRight } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { parseHTMLForInteractiveElements } from "@/lib/html-parser";
-import type { ActionMapping } from "@/types/ui-builder";
+import type { ActionMapping, ParameterSourceType, ParameterSource } from "@/types/ui-builder";
 
 interface ParameterBindingEditorProps {
   mappingId: string;
@@ -88,6 +88,26 @@ export function ParameterBindingEditor({ mappingId }: ParameterBindingEditorProp
       newExpanded.add(paramName);
     }
     setExpandedParams(newExpanded);
+  };
+
+  const handleSourceTypeChange = (paramName: string, sourceType: ParameterSourceType) => {
+    // Initialize parameterSources if it doesn't exist
+    const newSources = { ...(mapping.parameterSources || {}) };
+    newSources[paramName] = {
+      sourceType,
+      sourceValue: '', // Reset value when type changes
+    };
+    updateActionMapping(mapping.id, { parameterSources: newSources });
+  };
+
+  const handleSourceValueChange = (paramName: string, sourceValue: string) => {
+    const newSources = { ...(mapping.parameterSources || {}) };
+    if (!newSources[paramName]) {
+      newSources[paramName] = { sourceType: 'static', sourceValue };
+    } else {
+      newSources[paramName] = { ...newSources[paramName], sourceValue };
+    }
+    updateActionMapping(mapping.id, { parameterSources: newSources });
   };
 
   const handleBindingChange = (paramName: string, fieldId: string) => {
@@ -174,10 +194,13 @@ export function ParameterBindingEditor({ mappingId }: ParameterBindingEditorProp
         <div className="p-3 space-y-3">
           {Object.entries(properties).map(([paramName, paramSchema]) => {
             const isRequired = requiredParams.includes(paramName);
-            const currentBinding = mapping.parameterBindings[paramName] || '';
+            const paramSource = mapping.parameterSources?.[paramName];
+            const sourceType = paramSource?.sourceType || 'form'; // Default to form for backward compatibility
+            const sourceValue = paramSource?.sourceValue || '';
+            const agentPlaceholders = currentResource?.templatePlaceholders || [];
 
             return (
-              <div key={paramName} className="space-y-1">
+              <div key={paramName} className="space-y-2 p-3 border rounded-lg bg-muted/30">
                 <label className="text-sm font-medium flex items-center gap-1">
                   {paramName}
                   {isRequired && <span className="text-red-600">*</span>}
@@ -185,19 +208,90 @@ export function ParameterBindingEditor({ mappingId }: ParameterBindingEditorProp
                     ({paramSchema.type || 'any'})
                   </span>
                 </label>
-                <select
-                  value={currentBinding}
-                  onChange={(e) => handleBindingChange(paramName, e.target.value)}
-                  className="w-full text-sm border rounded px-2 py-1 bg-background"
-                >
-                  <option value="">- Select HTML field -</option>
-                  {availableFields.map(field => (
-                    <option key={field.id} value={field.id}>
-                      {field.name} ({field.type})
-                    </option>
-                  ))}
-                </select>
-                {isRequired && !currentBinding && (
+
+                {/* Source Type Selector */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Source Type</label>
+                  <select
+                    value={sourceType}
+                    onChange={(e) => handleSourceTypeChange(paramName, e.target.value as ParameterSourceType)}
+                    className="w-full text-sm border rounded px-2 py-1.5 bg-background"
+                  >
+                    <option value="static">Static Value</option>
+                    <option value="form">Form Field</option>
+                    <option value="agent">Agent Context</option>
+                    <option value="tool" disabled>Tool Result (coming soon)</option>
+                  </select>
+                </div>
+
+                {/* Source Value Input - changes based on source type */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">
+                    {sourceType === 'static' && 'Value'}
+                    {sourceType === 'form' && 'HTML Field'}
+                    {sourceType === 'agent' && 'Agent Placeholder'}
+                    {sourceType === 'tool' && 'Tool Result Path'}
+                  </label>
+
+                  {sourceType === 'static' && (
+                    <input
+                      type="text"
+                      value={sourceValue}
+                      onChange={(e) => handleSourceValueChange(paramName, e.target.value)}
+                      placeholder="Enter static value..."
+                      className="w-full text-sm border rounded px-2 py-1.5 bg-background"
+                    />
+                  )}
+
+                  {sourceType === 'form' && (
+                    <select
+                      value={sourceValue}
+                      onChange={(e) => handleSourceValueChange(paramName, e.target.value)}
+                      className="w-full text-sm border rounded px-2 py-1.5 bg-background"
+                    >
+                      <option value="">- Select HTML field -</option>
+                      {availableFields.map(field => (
+                        <option key={field.id} value={field.id}>
+                          {field.name} ({field.type})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  {sourceType === 'agent' && (
+                    <div className="space-y-2">
+                      <select
+                        value={sourceValue}
+                        onChange={(e) => handleSourceValueChange(paramName, e.target.value)}
+                        className="w-full text-sm border rounded px-2 py-1.5 bg-background"
+                      >
+                        <option value="">- Select placeholder -</option>
+                        {agentPlaceholders.map(placeholder => (
+                          <option key={placeholder} value={placeholder}>
+                            {`{{${placeholder}}}`}
+                          </option>
+                        ))}
+                      </select>
+                      {agentPlaceholders.length === 0 && (
+                        <div className="flex items-center gap-1 text-xs text-blue-600">
+                          <Sparkles className="h-3 w-3" />
+                          <span>Add {`{{placeholder}}`} to your HTML in Design tab</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {sourceType === 'tool' && (
+                    <input
+                      type="text"
+                      disabled
+                      placeholder="Tool result path (coming soon)"
+                      className="w-full text-sm border rounded px-2 py-1.5 bg-muted cursor-not-allowed"
+                    />
+                  )}
+                </div>
+
+                {isRequired && !sourceValue && (
                   <p className="text-xs text-red-600">Required parameter</p>
                 )}
               </div>
@@ -243,7 +337,7 @@ export function ParameterBindingEditor({ mappingId }: ParameterBindingEditorProp
                 uiElementId: mapping.uiElementId,
                 toolName: mapping.toolName,
                 serverName: mapping.serverName,
-                parameterBindings: mapping.parameterBindings,
+                parameterSources: mapping.parameterSources || {},
                 responseHandler: mapping.responseHandler,
               },
               null,

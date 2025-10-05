@@ -8,10 +8,9 @@ import { ExportDialog } from "./ExportDialog";
 import { SaveDialog } from "./SaveDialog";
 import { LoadDialog } from "./LoadDialog";
 import { ContextSidebar } from "./ContextSidebar";
-import { ContextTab } from "./tabs/ContextTab";
 import { DesignTab } from "./tabs/DesignTab";
 import { ActionsTab } from "./tabs/ActionsTab";
-import { FlowTab } from "./tabs/FlowTab";
+import { GenerateTab } from "./tabs/GenerateTab";
 import { TestTab } from "./tabs/TestTab";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,10 +31,9 @@ import {
 import type { TabId } from "@/types/ui-builder";
 
 const tabs: Array<{ id: TabId; label: string }> = [
-  { id: 'context', label: 'Context' },
   { id: 'design', label: 'Design' },
   { id: 'actions', label: 'Actions' },
-  { id: 'flow', label: 'Flow' },
+  { id: 'generate', label: 'Generate' },
   { id: 'test', label: 'Test' },
 ];
 
@@ -94,7 +92,7 @@ export function BuilderLayout() {
     clearActionMappings();
     setTestConfig({ mockResponses: [], testHistory: [], useMockData: true });
     setValidationStatus({ missingMappings: [], typeMismatches: [], warnings: [] });
-    setActiveTab('context');
+    setActiveTab('design');
     setShowResetConfirmation(false);
   };
 
@@ -147,18 +145,16 @@ export function BuilderLayout() {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'context':
-        return <ContextTab />;
       case 'design':
         return <DesignTab />;
       case 'actions':
         return <ActionsTab />;
-      case 'flow':
-        return <FlowTab />;
+      case 'generate':
+        return <GenerateTab />;
       case 'test':
         return <TestTab />;
       default:
-        return <ContextTab />;
+        return <DesignTab />;
     }
   };
 
@@ -269,8 +265,8 @@ export function BuilderLayout() {
             {renderTabContent()}
           </div>
 
-          {/* Right Sidebar - Context Sidebar (persistent, hidden on Context tab) */}
-          {activeTab !== 'context' && <ContextSidebar />}
+          {/* Right Sidebar - Context Sidebar (persistent on all tabs) */}
+          <ContextSidebar />
 
           {/* Toggle config panel if hidden */}
           {activeTab === 'design' && !showConfig && (

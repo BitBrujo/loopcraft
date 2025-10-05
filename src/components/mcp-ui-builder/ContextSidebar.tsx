@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Server, Wrench, AlertCircle, CheckCircle, ChevronDown, ChevronRight, TestTube } from "lucide-react";
+import { Server, AlertCircle, CheckCircle, ChevronDown, ChevronRight, TestTube, Sparkles } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { Button } from "@/components/ui/button";
 
@@ -13,7 +13,7 @@ interface ServerStatus {
 
 export function ContextSidebar() {
   const {
-    mcpContext,
+    currentResource,
     actionMappings,
     validationStatus,
     isTestServerActive,
@@ -24,7 +24,7 @@ export function ContextSidebar() {
 
   const [servers, setServers] = useState<ServerStatus[]>([]);
   const [showServers, setShowServers] = useState(true);
-  const [showTools, setShowTools] = useState(true);
+  const [showAgentSlots, setShowAgentSlots] = useState(true);
   const [showActions, setShowActions] = useState(true);
   const [showStatus, setShowStatus] = useState(true);
   const [showTestServer, setShowTestServer] = useState(true);
@@ -42,7 +42,7 @@ export function ContextSidebar() {
   }, []);
 
   const connectedServers = servers.filter((s) => s.status === 'connected');
-  const selectedToolsCount = mcpContext.selectedTools.length;
+  const agentSlots = currentResource?.templatePlaceholders || [];
   const actionMappingsCount = actionMappings.length;
   const warningsCount = validationStatus.warnings.length;
   const errorsCount = validationStatus.missingMappings.length + validationStatus.typeMismatches.length;
@@ -124,42 +124,41 @@ export function ContextSidebar() {
           )}
         </div>
 
-        {/* Selected Tools Section */}
+        {/* Agent-Fillable Slots Section */}
         <div className="border-b">
           <button
             className="w-full flex items-center justify-between p-3 hover:bg-muted/30 text-left"
-            onClick={() => setShowTools(!showTools)}
+            onClick={() => setShowAgentSlots(!showAgentSlots)}
           >
             <div className="flex items-center gap-2">
-              <Wrench className="h-4 w-4" />
-              <span className="text-sm font-medium">Selected Tools</span>
+              <Sparkles className="h-4 w-4 text-blue-500" />
+              <span className="text-sm font-medium">Agent Slots</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">
-                {selectedToolsCount}
+                {agentSlots.length}
               </span>
-              {showTools ? (
+              {showAgentSlots ? (
                 <ChevronDown className="h-3 w-3" />
               ) : (
                 <ChevronRight className="h-3 w-3" />
               )}
             </div>
           </button>
-          {showTools && (
+          {showAgentSlots && (
             <div className="p-3 pt-0 space-y-2">
-              {selectedToolsCount === 0 ? (
+              {agentSlots.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
-                  No tools selected yet
+                  No agent placeholders detected. Use {`{{placeholder}}`} syntax in your HTML.
                 </p>
               ) : (
-                mcpContext.selectedTools.map((tool) => (
+                agentSlots.map((slot, index) => (
                   <div
-                    key={`${tool.serverName}-${tool.name}`}
-                    className="text-xs p-2 bg-muted/30 rounded"
+                    key={index}
+                    className="text-xs p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800"
                   >
-                    <div className="font-medium">{tool.name}</div>
-                    <div className="text-muted-foreground text-[10px]">
-                      from {tool.serverName}
+                    <div className="font-mono text-blue-700 dark:text-blue-300">
+                      {`{{${slot}}}`}
                     </div>
                   </div>
                 ))
@@ -340,13 +339,6 @@ export function ContextSidebar() {
           </div>
         )}
 
-        {/* Purpose Section */}
-        {mcpContext.purpose && (
-          <div className="p-3">
-            <div className="text-xs font-medium mb-2">Purpose:</div>
-            <p className="text-xs text-muted-foreground">{mcpContext.purpose}</p>
-          </div>
-        )}
       </div>
     </div>
   );

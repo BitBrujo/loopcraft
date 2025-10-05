@@ -51,6 +51,7 @@ export interface UIResource {
   initialData?: Record<string, unknown>;
   actions?: ActionConfig[];
   metadata?: Record<string, unknown>;
+  templatePlaceholders?: string[]; // Agent-fillable slots like {{agent.name}}
 }
 
 export interface Template {
@@ -81,7 +82,7 @@ export interface ValidationError {
   message: string;
 }
 
-export type TabId = 'context' | 'design' | 'actions' | 'flow' | 'test';
+export type TabId = 'design' | 'actions' | 'generate' | 'test';
 
 export interface MCPTool {
   name: string;
@@ -102,13 +103,21 @@ export interface MCPContext {
   purpose: string;
 }
 
+export type ParameterSourceType = 'static' | 'form' | 'agent' | 'tool';
+
+export interface ParameterSource {
+  sourceType: ParameterSourceType;
+  sourceValue: string; // Static value, form field name, placeholder name, or tool result path
+}
+
 export interface ActionMapping {
   id: string;
   uiElementId: string;
   uiElementType: 'button' | 'form' | 'link' | 'input' | 'select' | 'textarea' | 'custom';
   toolName: string;
   serverName: string;
-  parameterBindings: Record<string, string>;
+  parameterBindings: Record<string, string>; // Legacy: string values (deprecated)
+  parameterSources?: Record<string, ParameterSource>; // New: typed parameter sources (optional for backward compatibility)
   responseHandler: 'update-ui' | 'show-notification' | 'custom';
   customHandlerCode?: string;
 }

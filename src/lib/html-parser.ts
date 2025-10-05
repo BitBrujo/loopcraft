@@ -169,6 +169,32 @@ export function validateElementId(htmlContent: string, elementId: string): boole
 }
 
 /**
+ * Extract template placeholders from HTML content
+ * Finds patterns like {{agent.name}}, {{context.data}}, etc.
+ */
+export function extractTemplatePlaceholders(htmlContent: string): string[] {
+  const placeholderRegex = /\{\{([^}]+)\}\}/g;
+  const placeholders: Set<string> = new Set();
+
+  let match;
+  while ((match = placeholderRegex.exec(htmlContent)) !== null) {
+    const placeholder = match[1].trim();
+    if (placeholder) {
+      placeholders.add(placeholder);
+    }
+  }
+
+  return Array.from(placeholders);
+}
+
+/**
+ * Check if HTML contains any template placeholders
+ */
+export function hasTemplatePlaceholders(htmlContent: string): boolean {
+  return /\{\{[^}]+\}\}/.test(htmlContent);
+}
+
+/**
  * Get element type from HTML
  */
 export function getElementType(htmlContent: string, elementId: string): InteractiveElement['type'] | null {
