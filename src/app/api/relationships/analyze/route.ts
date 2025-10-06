@@ -7,12 +7,17 @@ import type {
   ComponentRelationship,
   DependencyWarning,
 } from '@/types/server-builder';
+import type {
+  ConversationalContext,
+  TemplateMatch,
+} from '@/types/conversational-builder';
 import {
   generateAnalysisPrompt,
   parseAIResponse,
   analyzeRelationships,
   validateDependencies,
 } from '@/lib/relationship-mapper';
+import { SchemaGenerator } from '@/lib/conversational-builder/schema-generator';
 
 // Simple in-memory cache for analysis results (5 minute TTL)
 const analysisCache = new Map<
@@ -47,12 +52,39 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       context,
+      conversationalContext,
       useAI = false,
     }: {
-      context: AnalysisContext;
+      context?: AnalysisContext;
+      conversationalContext?: ConversationalContext;
       useAI?: boolean;
     } = body;
 
+    // Support both analysis contexts
+    if (!context && !conversationalContext) {
+      return NextResponse.json(
+        { error: 'Invalid analysis context' },
+        { status: 400 }
+      );
+    }
+
+    // Handle conversational context
+    if (conversationalContext) {
+      const toolMatches = SchemaGenerator.findMatchingTools(conversationalContext);
+      const resourceMatches = SchemaGenerator.findMatchingResources(conversationalContext);
+
+      return NextResponse.json({
+        relationships: [],
+        warnings: [],
+        templateMatches: {
+          tools: toolMatches,
+          resources: resourceMatches,
+        },
+        cached: false,
+      });
+    }
+
+    // Original analysis context validation
     if (!context || !context.existingTools || !context.existingResources) {
       return NextResponse.json(
         { error: 'Invalid analysis context' },
