@@ -107,9 +107,9 @@ export async function POST(request: NextRequest) {
     const matchingResources = SchemaGenerator.findMatchingResources(updatedContext);
 
     // Build AI prompt
-    const aiConfig = await getAIConfig(user.id);
+    const aiConfig = await getAIConfig(request);
     const ollama = createOllama({
-      baseURL: aiConfig.baseUrl,
+      baseURL: aiConfig.baseURL,
     });
 
     const systemPrompt = SYSTEM_PROMPT.replace('{phase}', currentPhase)
@@ -139,7 +139,7 @@ User message: ${message}
 
     // Stream AI response
     const result = await streamText({
-      model: ollama(aiConfig.model),
+      model: ollama(aiConfig.modelName),
       system: systemPrompt,
       messages: [
         ...context.conversationHistory.map((msg) => ({
@@ -152,7 +152,6 @@ User message: ${message}
         },
       ],
       temperature: 0.7,
-      maxTokens: 1000,
     });
 
     // Build response with structured data

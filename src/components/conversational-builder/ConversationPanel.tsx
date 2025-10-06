@@ -59,12 +59,12 @@ export function ConversationPanel({
           {messages.length === 0 && (
             <Card className="p-4 bg-muted/50">
               <p className="text-sm text-muted-foreground">
-                👋 Hi! I'll help you build an MCP server. Tell me what you need:
+                👋 Hi! I&apos;ll help you build an MCP server. Tell me what you need:
               </p>
               <ul className="mt-2 text-sm text-muted-foreground space-y-1">
-                <li>• "I need a server for PostgreSQL database access"</li>
-                <li>• "Create a file upload system"</li>
-                <li>• "Build an API wrapper for our REST service"</li>
+                <li>• &quot;I need a server for PostgreSQL database access&quot;</li>
+                <li>• &quot;Create a file upload system&quot;</li>
+                <li>• &quot;Build an API wrapper for our REST service&quot;</li>
               </ul>
             </Card>
           )}

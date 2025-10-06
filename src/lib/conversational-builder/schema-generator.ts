@@ -28,9 +28,9 @@ export class SchemaGenerator {
     return {
       name: serverName,
       description,
-      version: '1.0.0',
       tools: [],
       resources: [],
+      transportType: 'stdio' as const,
     };
   }
 
@@ -43,7 +43,7 @@ export class SchemaGenerator {
 
     for (const template of toolTemplates) {
       let confidence = 0;
-      let reasons: string[] = [];
+      const reasons: string[] = [];
 
       // Match by category
       if (userIntent && this.categoriesMatch(template.category, userIntent.type)) {
@@ -96,7 +96,7 @@ export class SchemaGenerator {
 
     for (const template of resourceTemplates) {
       let confidence = 0;
-      let reasons: string[] = [];
+      const reasons: string[] = [];
 
       // Match by category
       if (userIntent && this.categoriesMatch(template.category, userIntent.type)) {
@@ -152,8 +152,11 @@ export class SchemaGenerator {
       name: template.name,
       description: template.description,
       category: template.category,
-      parameters: template.parameters || [],
-      returnType: template.returnType || 'object',
+      parameters: template.tool.parameters || [],
+      returnType: template.tool.returnType || 'object',
+      returnDescription: template.tool.returnDescription || '',
+      exampleInput: template.tool.exampleInput,
+      exampleOutput: template.tool.exampleOutput,
     };
   }
 
@@ -169,10 +172,11 @@ export class SchemaGenerator {
       name: template.name,
       description: template.description,
       category: template.category,
-      uri: template.uri,
-      mimeType: template.mimeType,
-      variables: template.variables || [],
-      exampleData: template.exampleData,
+      uri: template.resource.uri,
+      mimeType: template.resource.mimeType,
+      isTemplate: template.resource.isTemplate || false,
+      uriVariables: template.resource.uriVariables,
+      exampleData: template.resource.exampleData,
     };
   }
 
@@ -192,17 +196,17 @@ export class SchemaGenerator {
 
   private static categoriesMatch(templateCategory: ToolCategory, intentType: string): boolean {
     const categoryMap: Record<string, ToolCategory[]> = {
-      database: ['💾 Save & Store', '🔍 Search & Find', '📊 Show Information'],
-      api: ['🌐 External Services', '🔄 Process Data', '📊 Show Information'],
-      file_system: ['📁 Files & Media', '💾 Save & Store', '🔍 Search & Find'],
-      notification: ['🔔 Send Messages'],
-      custom: Object.values(toolTemplates).map((t) => t.category),
+      database: ['save', 'search', 'show'],
+      api: ['external', 'process', 'show'],
+      file_system: ['files', 'save', 'search'],
+      notification: ['messages'],
+      custom: ['forms', 'search', 'save', 'show', 'process', 'messages', 'security', 'payments', 'files', 'external'],
     };
 
     return categoryMap[intentType]?.includes(templateCategory) || false;
   }
 
-  private static toolMatchesCapability(template: any, capability: Capability): boolean {
+  private static toolMatchesCapability(template: { name: string; description: string }, capability: Capability): boolean {
     const capabilityKeywords: Record<string, string[]> = {
       CRUD: ['create', 'read', 'update', 'delete', 'save', 'get', 'modify', 'remove'],
       authentication: ['auth', 'login', 'verify', 'token', 'session'],
@@ -216,16 +220,16 @@ export class SchemaGenerator {
     return keywords.some((kw) => text.includes(kw));
   }
 
-  private static resourceMatchesCapability(template: any, capability: Capability): boolean {
+  private static resourceMatchesCapability(template: { name: string; description: string }, capability: Capability): boolean {
     return this.toolMatchesCapability(template, capability);
   }
 
-  private static toolMatchesEntity(template: any, entity: DetectedEntity): boolean {
+  private static toolMatchesEntity(template: { name: string; description: string }, entity: DetectedEntity): boolean {
     const text = `${template.name} ${template.description}`.toLowerCase();
     return text.includes(entity.value.toLowerCase());
   }
 
-  private static resourceMatchesEntity(template: any, entity: DetectedEntity): boolean {
+  private static resourceMatchesEntity(template: { name: string; description: string }, entity: DetectedEntity): boolean {
     return this.toolMatchesEntity(template, entity);
   }
 

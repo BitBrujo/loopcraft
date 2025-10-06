@@ -59,8 +59,8 @@ export function LivePreview({ serverConfig, uiResource }: LivePreviewProps) {
                     <dd>{serverConfig.description || 'Not set'}</dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">Version:</dt>
-                    <dd className="font-mono">{serverConfig.version}</dd>
+                    <dt className="text-muted-foreground">Transport:</dt>
+                    <dd className="font-mono">{serverConfig.transportType || 'stdio'}</dd>
                   </div>
                 </dl>
               </Card>
@@ -133,10 +133,10 @@ export function LivePreview({ serverConfig, uiResource }: LivePreviewProps) {
                       <span className="text-muted-foreground">MIME Type: </span>
                       <code className="bg-muted px-1 rounded">{resource.mimeType}</code>
                     </div>
-                    {resource.variables && resource.variables.length > 0 && (
+                    {resource.uriVariables && resource.uriVariables.length > 0 && (
                       <div>
                         <span className="text-muted-foreground">Variables: </span>
-                        {resource.variables.map((v) => v.name).join(', ')}
+                        {resource.uriVariables.map((v) => v.name).join(', ')}
                       </div>
                     )}
                   </div>
@@ -150,13 +150,9 @@ export function LivePreview({ serverConfig, uiResource }: LivePreviewProps) {
                   <h3 className="font-semibold mb-2">UI Configuration</h3>
                   <div className="space-y-2 text-sm">
                     <div>
-                      <span className="text-muted-foreground">Mode: </span>
-                      <Badge>{uiResource?.config?.mode || 'interactive'}</Badge>
-                    </div>
-                    <div>
                       <span className="text-muted-foreground">Content Type: </span>
                       <code className="bg-muted px-1 rounded">
-                        {uiResource?.config?.contentType || 'text/html'}
+                        {uiResource?.contentType || 'rawHtml'}
                       </code>
                     </div>
                     {uiResource?.templatePlaceholders && uiResource.templatePlaceholders.length > 0 && (

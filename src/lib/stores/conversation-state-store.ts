@@ -66,9 +66,9 @@ const initialState: ConversationState = {
   serverConfig: {
     name: '',
     description: '',
-    version: '1.0.0',
     tools: [],
     resources: [],
+    transportType: 'stdio' as const,
   },
   actionMappings: [],
   customTools: [],

@@ -88,7 +88,7 @@ export default function ConversationalBuilderPage() {
 
       const decoder = new TextDecoder();
       let assistantMessage = '';
-      let metadata: any = null;
+      let metadata: Record<string, unknown> | null = null;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -111,19 +111,26 @@ export default function ConversationalBuilderPage() {
                 if (parsed.phase) setPhase(parsed.phase);
                 if (parsed.intent) setIntent(parsed.intent);
                 if (parsed.entities) {
-                  parsed.entities.forEach((e: any) => addEntity(e));
+                  (parsed.entities as Array<{ type: string; value: string; context?: string }>).forEach((e) => addEntity(e as never));
                 }
                 if (parsed.capabilities) {
-                  parsed.capabilities.forEach((c: any) => addCapability(c));
+                  (parsed.capabilities as Array<{ id: string; name: string; type: string; implemented: boolean }>).forEach((c) => addCapability(c as never));
                 }
                 if (parsed.questions) setPendingQuestions(parsed.questions);
                 if (parsed.suggestions) {
                   // Map suggestions with actions
-                  const mappedSuggestions = parsed.suggestions.map((s: any) => ({
+                  const mappedSuggestions = (parsed.suggestions as Array<{
+                    id: string;
+                    type: string;
+                    title: string;
+                    description: string;
+                    confidence: number;
+                    actionLabel: string;
+                  }>).map((s) => ({
                     ...s,
                     action: () => handleAcceptSuggestion(s.id),
                   }));
-                  setSuggestions(mappedSuggestions);
+                  setSuggestions(mappedSuggestions as never);
                 }
               } else if (parsed.type === 'text') {
                 assistantMessage += parsed.content;
@@ -141,7 +148,7 @@ export default function ConversationalBuilderPage() {
         role: 'assistant',
         content: assistantMessage,
         metadata: {
-          phase: metadata?.phase,
+          phase: metadata?.phase as never,
         },
       });
 
