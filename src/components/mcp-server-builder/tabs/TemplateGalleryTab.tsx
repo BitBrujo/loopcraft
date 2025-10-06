@@ -259,7 +259,7 @@ export function TemplateGalleryTab() {
             )}
           </div>
           <p className="text-xs text-muted-foreground">
-            Tools you've added for your server
+            Tools you&apos;ve added for your server
           </p>
         </div>
 
