@@ -85,16 +85,16 @@ export function TemplateGalleryTab() {
   };
 
   return (
-    <div className="flex-1 flex overflow-hidden">
+    <div className="flex-1 flex overflow-hidden h-full">
       {/* Left Column - Categories */}
-      <div className="w-80 border-r bg-card flex flex-col">
-        <div className="bg-card border-b p-4">
+      <div className="w-80 border-r bg-card flex flex-col h-full">
+        <div className="bg-card border-b p-4 flex-shrink-0">
           <h3 className="font-semibold text-lg mb-2">Categories</h3>
           <p className="text-xs text-muted-foreground">
             Choose what you want your tool to do
           </p>
         </div>
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
           {categories.map((category) => {
             const info = getCategoryInfo(category);
             const count = categorizedTemplates[category].length;
