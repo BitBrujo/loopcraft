@@ -36,7 +36,7 @@ export function ServerBuilderLayout() {
       <div className="flex-1 flex flex-col overflow-hidden bg-background">
         {/* Header */}
         <div className="h-14 border-b bg-card/50 backdrop-blur flex items-center justify-center px-4">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             MCP Server Builder
           </h1>
         </div>

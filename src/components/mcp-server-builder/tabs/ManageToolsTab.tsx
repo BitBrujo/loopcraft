@@ -100,17 +100,34 @@ export function ManageToolsTab() {
   }
 
   return (
-    <div className="flex-1 flex overflow-hidden">
-      {/* Left Sidebar - Tool List */}
-      <div className="w-80 border-r bg-card overflow-y-auto">
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Top Navigation Bar */}
+      <div className="border-b bg-card/50 backdrop-blur">
+        <div className="flex items-center justify-between px-6 py-3">
+          <Button
+            variant="outline"
+            onClick={handleAddMoreTools}
+            size="default"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Add More Tools
+          </Button>
+          <Button
+            onClick={handleContinueToTest}
+            size="default"
+            className="gap-2"
+          >
+            <CheckCircle className="h-5 w-5" />
+            Continue to Test
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Sidebar - Tool List */}
+        <div className="w-80 border-r bg-card overflow-y-auto">
         <div className="sticky top-0 bg-card border-b p-4 z-10">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-lg">Server Tools ({tools.length})</h3>
-            <Button variant="ghost" size="sm" onClick={handleAddMoreTools}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add
-            </Button>
-          </div>
+          <h3 className="font-semibold text-lg mb-2">Server Tools ({tools.length})</h3>
           <p className="text-xs text-muted-foreground">
             Click a tool to edit its configuration
           </p>
@@ -392,27 +409,10 @@ export function ManageToolsTab() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center justify-between pt-4">
-                <Button
-                  variant="outline"
-                  onClick={handleAddMoreTools}
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Add More Tools
-                </Button>
-                <Button
-                  onClick={handleContinueToTest}
-                  size="lg"
-                  className="gap-2"
-                >
-                  <CheckCircle className="h-5 w-5" />
-                  Continue to Test
-                </Button>
-              </div>
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
