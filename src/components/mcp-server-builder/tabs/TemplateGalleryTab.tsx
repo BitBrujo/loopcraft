@@ -87,14 +87,14 @@ export function TemplateGalleryTab() {
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* Left Column - Categories */}
-      <div className="w-80 border-r bg-card overflow-y-auto">
-        <div className="sticky top-0 bg-card border-b p-4 z-10">
+      <div className="w-80 border-r bg-card flex flex-col">
+        <div className="bg-card border-b p-4">
           <h3 className="font-semibold text-lg mb-2">Categories</h3>
           <p className="text-xs text-muted-foreground">
             Choose what you want your tool to do
           </p>
         </div>
-        <div className="p-3 space-y-2">
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {categories.map((category) => {
             const info = getCategoryInfo(category);
             const count = categorizedTemplates[category].length;
@@ -134,8 +134,8 @@ export function TemplateGalleryTab() {
       </div>
 
       {/* Middle Column - Templates */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="sticky top-0 bg-background border-b p-4 z-10">
+      <div className="flex-1 flex flex-col">
+        <div className="bg-background border-b p-4">
           <div className="mb-3">
             <h3 className="font-semibold text-lg">
               {selectedCategory
@@ -162,7 +162,7 @@ export function TemplateGalleryTab() {
           )}
         </div>
 
-        <div className="p-4">
+        <div className="flex-1 overflow-y-auto p-4">
           {!selectedCategory ? (
             <div className="flex items-center justify-center h-64 text-muted-foreground">
               <div className="text-center">
@@ -248,8 +248,8 @@ export function TemplateGalleryTab() {
       </div>
 
       {/* Right Column - Selected Tools */}
-      <div className="w-80 border-l bg-card overflow-y-auto">
-        <div className="sticky top-0 bg-card border-b p-4 z-10">
+      <div className="w-80 border-l bg-card flex flex-col">
+        <div className="bg-card border-b p-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold text-lg">Selected Tools</h3>
             {selectedTools.length > 0 && (
@@ -263,7 +263,7 @@ export function TemplateGalleryTab() {
           </p>
         </div>
 
-        <div className="p-3">
+        <div className="flex-1 overflow-y-auto p-3">
           {selectedTools.length === 0 ? (
             <div className="flex items-center justify-center h-64 text-muted-foreground">
               <div className="text-center">
@@ -300,7 +300,7 @@ export function TemplateGalleryTab() {
         </div>
 
         {selectedTools.length > 0 && (
-          <div className="sticky bottom-0 bg-card border-t p-4">
+          <div className="bg-card border-t p-4">
             <Button
               onClick={handleContinueToManage}
               className="w-full"
