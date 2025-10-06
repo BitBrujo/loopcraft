@@ -14,7 +14,7 @@ const tabs: Array<{ id: TabId; label: string }> = [
 ];
 
 export function ServerBuilderLayout() {
-  const { activeTab, setActiveTab, serverConfig } = useServerBuilderStore();
+  const { activeTab, setActiveTab, serverConfig, addSelectedToolsToServer } = useServerBuilderStore();
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -65,7 +65,13 @@ export function ServerBuilderLayout() {
                         ? 'hover:bg-orange-500/10 text-muted-foreground'
                         : 'hover:bg-muted/50 text-muted-foreground'
                     }`}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => {
+                      // Auto-commit selected tools when navigating to Manage Tools tab
+                      if (tab.id === 'customize') {
+                        addSelectedToolsToServer();
+                      }
+                      setActiveTab(tab.id);
+                    }}
                     disabled={isDisabled}
                   >
                     <span className="flex items-center justify-center w-5 h-5 rounded-full border text-xs">
