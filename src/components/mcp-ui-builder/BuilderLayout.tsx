@@ -9,6 +9,7 @@ import { ExportDialog } from "./ExportDialog";
 import { SaveDialog } from "./SaveDialog";
 import { LoadDialog } from "./LoadDialog";
 import { ContextSidebar } from "./ContextSidebar";
+import { ConfigurationTab } from "./tabs/ConfigurationTab";
 import { DesignTab } from "./tabs/DesignTab";
 import { DefineToolsTab } from "./tabs/DefineToolsTab";
 import { ActionsTab } from "./tabs/ActionsTab";
@@ -33,6 +34,7 @@ import {
 import type { TabId } from "@/types/ui-builder";
 
 const allTabs: Array<{ id: TabId; label: string }> = [
+  { id: 'config', label: 'Config' },
   { id: 'design', label: 'Design' },
   { id: 'tools', label: 'Define Tools' },
   { id: 'actions', label: 'Actions' },
@@ -176,6 +178,8 @@ export function BuilderLayout() {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'config':
+        return <ConfigurationTab />;
       case 'design':
         return <DesignTab />;
       case 'tools':
@@ -187,7 +191,7 @@ export function BuilderLayout() {
       case 'test':
         return <TestTab />;
       default:
-        return <DesignTab />;
+        return <ConfigurationTab />;
     }
   };
 
