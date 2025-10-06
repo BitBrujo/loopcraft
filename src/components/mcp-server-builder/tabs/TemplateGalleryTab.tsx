@@ -77,12 +77,22 @@ export function TemplateGalleryTab() {
   };
 
   const isToolSelected = (toolId: string) => {
-    return selectedTools.some((t) => t.id === toolId);
+    // Check both temporary selections AND tools already in server config
+    return selectedTools.some((t) => t.id === toolId) ||
+           (serverConfig?.tools.some((t) => t.id === toolId) || false);
   };
 
   const isToolInServer = (toolId: string) => {
     return serverConfig?.tools.some((t) => t.id === toolId) || false;
   };
+
+  // Combine selected tools and tools already in server (avoid duplicates)
+  const allSelectedTools = [
+    ...selectedTools,
+    ...(serverConfig?.tools || []).filter(
+      (serverTool) => !selectedTools.some((t) => t.id === serverTool.id)
+    ),
+  ];
 
   return (
     <div className="flex-1 flex overflow-hidden h-full">
@@ -252,9 +262,9 @@ export function TemplateGalleryTab() {
         <div className="bg-card border-b p-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold text-lg">Selected Tools</h3>
-            {selectedTools.length > 0 && (
+            {allSelectedTools.length > 0 && (
               <div className="bg-orange-500 text-white px-2.5 py-1 rounded-full text-xs font-medium">
-                {selectedTools.length}
+                {allSelectedTools.length}
               </div>
             )}
           </div>
@@ -264,7 +274,7 @@ export function TemplateGalleryTab() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-3">
-          {selectedTools.length === 0 ? (
+          {allSelectedTools.length === 0 ? (
             <div className="flex items-center justify-center h-64 text-muted-foreground">
               <div className="text-center">
                 <Plus className="h-16 w-16 mx-auto mb-4 opacity-50" />
@@ -274,32 +284,43 @@ export function TemplateGalleryTab() {
             </div>
           ) : (
             <div className="space-y-2">
-              {selectedTools.map((tool) => (
-                <div
-                  key={tool.id}
-                  className="bg-muted/30 rounded-lg p-3 border border-transparent hover:border-orange-500/50 transition-all"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm truncate">{tool.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {tool.parameters.length} param{tool.parameters.length !== 1 ? 's' : ''}
+              {allSelectedTools.map((tool) => {
+                const inServer = isToolInServer(tool.id);
+                return (
+                  <div
+                    key={tool.id}
+                    className={`bg-muted/30 rounded-lg p-3 border transition-all ${
+                      inServer ? 'border-green-500/50' : 'border-transparent hover:border-orange-500/50'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate">{tool.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {tool.parameters.length} param{tool.parameters.length !== 1 ? 's' : ''}
+                        </div>
                       </div>
+                      {inServer ? (
+                        <div className="text-green-500 text-xs font-medium">
+                          <Check className="h-4 w-4" />
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => toggleToolSelection(tool)}
+                          className="text-muted-foreground hover:text-destructive transition-colors"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
-                    <button
-                      onClick={() => toggleToolSelection(tool)}
-                      className="text-muted-foreground hover:text-destructive transition-colors"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
 
-        {selectedTools.length > 0 && (
+        {allSelectedTools.length > 0 && (
           <div className="bg-card border-t p-4">
             <Button
               onClick={handleContinueToManage}
