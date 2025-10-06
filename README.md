@@ -44,12 +44,6 @@ Visual tool for adding UI presentation to MCP servers:
 - Action mapping UI → MCP tool bindings
 - Live preview and one-click testing
 
-### 🔐 Authentication & Database
-- JWT-based authentication with bcrypt password hashing
-- MySQL 8.0 with Docker containerization
-- User-specific prompts, settings, and MCP server configurations
-- Persistent storage with automatic schema initialization
-
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -120,32 +114,6 @@ docker-compose down      # Stop MySQL
 npm run mcp:demo         # Start demo server on port 3001
 ```
 
-## 🏗️ Architecture
-
-### MCP Integration Flow
-
-1. **Server Initialization** (`src/lib/mcp-init.ts`)
-   - User-specific servers loaded from database per request
-   - Managed by `MCPClientManager` singleton
-   - Automatic cleanup of deleted servers
-   - Error tracking for troubleshooting
-
-2. **Tool Registration** (`src/app/api/chat/route.ts`)
-   - MCP tools dynamically fetched from connected servers
-   - Tools prefixed as `mcp_{serverName}_{toolName}`
-   - Support for UI resources with `ui://` URIs
-
-3. **UI Rendering** (`src/components/assistant-ui/mcp-ui-renderer.tsx`)
-   - Interactive MCP UI components with iframe sandboxing
-   - Bidirectional communication via postMessage
-   - Tool execution with authentication
-
-4. **Resource Handling**
-   - Custom `getMCPResource` tool for fetching resources
-   - Standard MCP format without custom wrappers
-   - Support for templates and dynamic URIs
-     
-
 ## 🛠️ Tech Stack
 
 - **Framework**: Next.js 15 with App Router and Turbopack
@@ -159,10 +127,6 @@ npm run mcp:demo         # Start demo server on port 3001
 ## 📝 License
 
 MIT License
-
-## 🤝 Contributing
-
-Contributions are welcome! Please read the contributing guidelines before submitting PRs.
 
 ## 📞 Support
 
