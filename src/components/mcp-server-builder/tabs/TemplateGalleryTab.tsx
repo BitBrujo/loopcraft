@@ -207,8 +207,20 @@ export function TemplateGalleryTab() {
                     }`}
                   >
                     {inServer && (
-                      <div className="absolute top-3 right-3 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
-                        <Check className="h-3 w-3" /> In Server
+                      <div className="absolute top-3 right-3 flex items-center gap-2">
+                        <div className="bg-green-500 text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
+                          <Check className="h-3 w-3" /> In Server
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveFromServer(template.tool.id);
+                          }}
+                          className="bg-destructive text-white p-1.5 rounded hover:bg-destructive/90 transition-colors"
+                          title="Remove from server"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
                       </div>
                     )}
 
@@ -308,18 +320,20 @@ export function TemplateGalleryTab() {
                           {tool.parameters.length} param{tool.parameters.length !== 1 ? 's' : ''}
                         </div>
                       </div>
-                      {inServer ? (
-                        <div className="text-green-500 text-xs font-medium">
-                          <Check className="h-4 w-4" />
-                        </div>
-                      ) : (
+                      <div className="flex items-center gap-2">
+                        {inServer && (
+                          <div className="text-green-500 text-xs">
+                            <Check className="h-4 w-4" />
+                          </div>
+                        )}
                         <button
-                          onClick={() => toggleToolSelection(tool)}
+                          onClick={() => inServer ? handleRemoveFromServer(tool.id) : toggleToolSelection(tool)}
                           className="text-muted-foreground hover:text-destructive transition-colors"
+                          title={inServer ? 'Remove from server' : 'Remove from selection'}
                         >
                           <X className="h-4 w-4" />
                         </button>
-                      )}
+                      </div>
                     </div>
                   </div>
                 );
