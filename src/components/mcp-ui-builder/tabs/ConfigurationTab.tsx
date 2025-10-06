@@ -141,54 +141,54 @@ export function ConfigurationTab() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* Main content area with scroll */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto p-8 space-y-8">
+        <div className="max-w-7xl mx-auto p-12 space-y-12">
           {/* UI Mode Selector */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-1">UI Mode</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-2xl font-semibold mb-2">UI Mode</h3>
+              <p className="text-base text-muted-foreground">
                 Choose the type of UI you want to create
               </p>
             </div>
             <RadioGroup value={uiMode} onValueChange={handleModeChange}>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-6">
                 {/* Read-Only Option */}
-                <div className={`relative flex items-start space-x-3 rounded-lg border p-4 cursor-pointer transition-all ${
+                <div className={`relative flex items-start space-x-4 rounded-lg border p-6 cursor-pointer transition-all ${
                   uiMode === 'readonly'
                     ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
                     : 'border-border hover:border-primary/50 hover:bg-muted/50'
                 }`}>
                   <RadioGroupItem value="readonly" id="readonly" className="mt-1" />
                   <Label htmlFor="readonly" className="flex-1 cursor-pointer">
-                    <div className="flex items-center gap-2 mb-1">
-                      <BookOpen className="h-4 w-4 text-blue-600" />
-                      <span className="font-semibold">Read-Only UI</span>
+                    <div className="flex items-center gap-2 mb-2">
+                      <BookOpen className="h-5 w-5 text-blue-600" />
+                      <span className="text-lg font-semibold">Read-Only UI</span>
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       Display-only content like dashboards, charts, or reports. No user interactions needed.
                     </p>
-                    <p className="text-xs text-blue-600 mt-2 font-medium">
+                    <p className="text-sm text-blue-600 mt-3 font-medium">
                       Workflow: Config → Design → Generate → Test
                     </p>
                   </Label>
                 </div>
 
                 {/* Interactive Option */}
-                <div className={`relative flex items-start space-x-3 rounded-lg border p-4 cursor-pointer transition-all ${
+                <div className={`relative flex items-start space-x-4 rounded-lg border p-6 cursor-pointer transition-all ${
                   uiMode === 'interactive'
                     ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
                     : 'border-border hover:border-primary/50 hover:bg-muted/50'
                 }`}>
                   <RadioGroupItem value="interactive" id="interactive" className="mt-1" />
                   <Label htmlFor="interactive" className="flex-1 cursor-pointer">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Zap className="h-4 w-4 text-orange-600" />
-                      <span className="font-semibold">Interactive UI</span>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Zap className="h-5 w-5 text-orange-600" />
+                      <span className="text-lg font-semibold">Interactive UI</span>
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       Forms, buttons, and user interactions that trigger MCP tool calls.
                     </p>
-                    <p className="text-xs text-orange-600 mt-2 font-medium">
+                    <p className="text-sm text-orange-600 mt-3 font-medium">
                       Workflow: Config → Design → Tools → Actions → Generate → Test
                     </p>
                   </Label>
@@ -198,156 +198,137 @@ export function ConfigurationTab() {
           </div>
 
           {/* Basic Settings */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-1">Basic Settings</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-2xl font-semibold mb-2">Basic Settings</h3>
+              <p className="text-base text-muted-foreground">
                 Configure the fundamental properties of your UI resource
               </p>
             </div>
 
-            {/* URI */}
-            <div className="space-y-2">
-              <Label htmlFor="uri" className="text-sm font-medium">URI</Label>
-              <Input
-                id="uri"
-                type="text"
-                value={currentResource.uri}
-                onChange={(e) => handleFieldChange("uri", e.target.value)}
-                placeholder="ui://server/resource"
-                className="h-9 text-sm"
-              />
-              <p className="text-xs text-muted-foreground">
-                Format: ui://[server]/[resource-name]
-              </p>
-            </div>
-
-            {/* Frame Size */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Preferred Frame Size</Label>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="width" className="text-xs font-medium text-muted-foreground">
-                    Width (px)
-                  </Label>
+            <div className="grid grid-cols-2 gap-8">
+              {/* Left Column */}
+              <div className="space-y-6">
+                {/* URI */}
+                <div className="space-y-3">
+                  <Label htmlFor="uri" className="text-base font-medium">URI</Label>
                   <Input
-                    id="width"
-                    type="number"
-                    value={currentResource.preferredSize.width}
-                    onChange={(e) =>
-                      handleSizeChange("width", parseInt(e.target.value) || 800)
-                    }
-                    className="h-9 text-sm"
+                    id="uri"
+                    type="text"
+                    value={currentResource.uri}
+                    onChange={(e) => handleFieldChange("uri", e.target.value)}
+                    placeholder="ui://server/resource"
+                    className="h-11 text-base"
                   />
+                  <p className="text-sm text-muted-foreground">
+                    Format: ui://[server]/[resource-name]
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="height" className="text-xs font-medium text-muted-foreground">
-                    Height (px)
-                  </Label>
-                  <Input
-                    id="height"
-                    type="number"
-                    value={currentResource.preferredSize.height}
-                    onChange={(e) =>
-                      handleSizeChange("height", parseInt(e.target.value) || 600)
-                    }
-                    className="h-9 text-sm"
-                  />
+
+                {/* Frame Size */}
+                <div className="space-y-3">
+                  <Label className="text-base font-medium">Preferred Frame Size</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="width" className="text-sm font-medium text-muted-foreground">
+                        Width (px)
+                      </Label>
+                      <Input
+                        id="width"
+                        type="number"
+                        value={currentResource.preferredSize.width}
+                        onChange={(e) =>
+                          handleSizeChange("width", parseInt(e.target.value) || 800)
+                        }
+                        className="h-11 text-base"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="height" className="text-sm font-medium text-muted-foreground">
+                        Height (px)
+                      </Label>
+                      <Input
+                        id="height"
+                        type="number"
+                        value={currentResource.preferredSize.height}
+                        onChange={(e) =>
+                          handleSizeChange("height", parseInt(e.target.value) || 600)
+                        }
+                        className="h-11 text-base"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Presets */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-muted-foreground">Presets</Label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {frameSizePresets.map((preset) => (
+                        <Button
+                          key={preset.name}
+                          variant="outline"
+                          size="default"
+                          className="h-10 text-sm"
+                          onClick={() => applyPreset(preset)}
+                        >
+                          {preset.name}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Presets */}
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Presets</Label>
-                <div className="grid grid-cols-4 gap-2">
-                  {frameSizePresets.map((preset) => (
-                    <Button
-                      key={preset.name}
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-xs"
-                      onClick={() => applyPreset(preset)}
-                    >
-                      {preset.name}
-                    </Button>
-                  ))}
+              {/* Right Column */}
+              <div className="space-y-6">
+                {/* MCP Server Connection */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <LinkIcon className="h-5 w-5 text-muted-foreground" />
+                    <Label className="text-base font-medium">Connect to MCP Server</Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Select an existing MCP server to wrap with a UI, or leave empty to create standalone UI
+                  </p>
+                  <Select
+                    value={connectedServerName || '__none__'}
+                    onValueChange={(value) => setConnectedServerName(value === '__none__' ? null : value)}
+                    disabled={isLoadingServers}
+                  >
+                    <SelectTrigger className="h-12 text-base">
+                      <SelectValue placeholder={isLoadingServers ? "Loading servers..." : "None (standalone UI)"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">None (standalone UI)</SelectItem>
+                      {servers.filter(s => s.enabled).map((server) => (
+                        <SelectItem key={server.id} value={server.name}>
+                          {server.name} ({server.type})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {connectedServerName && (
+                    <p className="text-sm text-green-600">
+                      ✓ Connected to &quot;{connectedServerName}&quot; - tools will be available in Actions tab
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
-
-            {/* Initial Render Data */}
-            <div className="space-y-2">
-              <Label htmlFor="initialData" className="text-sm font-medium">Initial Render Data</Label>
-              <p className="text-xs text-muted-foreground">
-                JSON data to pass to the UI component (optional)
-              </p>
-              <textarea
-                id="initialData"
-                value={
-                  currentResource.initialData
-                    ? JSON.stringify(currentResource.initialData, null, 2)
-                    : ""
-                }
-                onChange={(e) => {
-                  try {
-                    const parsed = e.target.value ? JSON.parse(e.target.value) : undefined;
-                    updateResource({ initialData: parsed });
-                  } catch {
-                    // Invalid JSON, ignore
-                  }
-                }}
-                placeholder={'{\n  "theme": "dark",\n  "userId": "123"\n}'}
-                className="w-full px-3 py-2 text-sm border rounded-md resize-none h-32 font-mono"
-              />
-            </div>
-          </div>
-
-          {/* MCP Server Connection */}
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-semibold mb-1 flex items-center gap-2">
-                <LinkIcon className="h-5 w-5 text-muted-foreground" />
-                Connect to MCP Server
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Select an existing MCP server to wrap with a UI, or leave empty to create standalone UI
-              </p>
-            </div>
-            <Select
-              value={connectedServerName || '__none__'}
-              onValueChange={(value) => setConnectedServerName(value === '__none__' ? null : value)}
-              disabled={isLoadingServers}
-            >
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder={isLoadingServers ? "Loading servers..." : "None (standalone UI)"} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">None (standalone UI)</SelectItem>
-                {servers.filter(s => s.enabled).map((server) => (
-                  <SelectItem key={server.id} value={server.name}>
-                    {server.name} ({server.type})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {connectedServerName && (
-              <p className="text-xs text-green-600">
-                ✓ Connected to &quot;{connectedServerName}&quot; - tools will be available in Actions tab
-              </p>
-            )}
           </div>
         </div>
       </div>
 
       {/* Footer with Continue button */}
-      <div className="border-t bg-card p-4">
-        <div className="flex items-center justify-end">
+      <div className="border-t bg-card p-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-end">
           <Button
             onClick={() => setActiveTab('design')}
-            className="gap-2"
+            className="gap-2 h-11 px-6 text-base"
+            size="lg"
           >
             Next: Design UI
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-5 w-5" />
           </Button>
         </div>
       </div>
