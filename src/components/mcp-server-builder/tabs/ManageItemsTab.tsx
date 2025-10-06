@@ -721,8 +721,8 @@ export function ManageItemsTab() {
 
             </div>
           </div>
-        )}
-        </div>
+        ) : null}
+      </div>
       </div>
     </div>
   );
