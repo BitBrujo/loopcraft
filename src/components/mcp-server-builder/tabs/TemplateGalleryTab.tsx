@@ -46,6 +46,7 @@ export function TemplateGalleryTab() {
     serverConfig,
     toggleToolSelection,
     addSelectedToolsToServer,
+    removeTool,
     setActiveTab,
   } = useServerBuilderStore();
 
@@ -67,6 +68,10 @@ export function TemplateGalleryTab() {
     const template = toolTemplates.find((t) => t.id === templateId);
     if (!template) return;
     toggleToolSelection(template.tool);
+  };
+
+  const handleRemoveFromServer = (toolId: string) => {
+    removeTool(toolId);
   };
 
   const handleContinueToManage = () => {
@@ -229,19 +234,22 @@ export function TemplateGalleryTab() {
                     </div>
 
                     <Button
-                      onClick={() => handleToggleTool(template.id)}
+                      onClick={() =>
+                        inServer
+                          ? handleRemoveFromServer(template.tool.id)
+                          : handleToggleTool(template.id)
+                      }
                       className="w-full"
-                      variant={selected ? "default" : inServer ? "secondary" : "outline"}
-                      disabled={inServer}
+                      variant={selected ? "default" : inServer ? "destructive" : "outline"}
                       size="sm"
                     >
                       {inServer ? (
                         <>
-                          <Check className="mr-2 h-4 w-4" /> Already Added
+                          <X className="mr-2 h-4 w-4" /> Remove from Server
                         </>
                       ) : selected ? (
                         <>
-                          <Check className="mr-2 h-4 w-4" /> Selected
+                          <X className="mr-2 h-4 w-4" /> Remove
                         </>
                       ) : (
                         <>
