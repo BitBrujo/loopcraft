@@ -4,6 +4,7 @@ import { generateId } from '@/lib/utils';
 import type {
   ServerConfig,
   ToolDefinition,
+  ResourceDefinition,
   TabId,
   TestResult,
 } from '@/types/server-builder';
@@ -15,8 +16,14 @@ interface ServerBuilderStore {
   // Active tool being edited (for customize view)
   activeTool: ToolDefinition | null;
 
+  // Active resource being edited (for customize view)
+  activeResource: ResourceDefinition | null;
+
   // Selected tools (for multi-select in browse view)
   selectedTools: ToolDefinition[];
+
+  // Selected resources (for multi-select in browse view)
+  selectedResources: ResourceDefinition[];
 
   // Tab navigation
   activeTab: TabId;
@@ -39,15 +46,27 @@ interface ServerBuilderStore {
   addTool: (tool: ToolDefinition) => void;
   updateTool: (id: string, updates: Partial<ToolDefinition>) => void;
   removeTool: (id: string) => void;
+  addResource: (resource: ResourceDefinition) => void;
+  updateResource: (id: string, updates: Partial<ResourceDefinition>) => void;
+  removeResource: (id: string) => void;
 
   // Actions - Active Tool
   setActiveTool: (tool: ToolDefinition | null) => void;
   updateActiveTool: (updates: Partial<ToolDefinition>) => void;
 
+  // Actions - Active Resource
+  setActiveResource: (resource: ResourceDefinition | null) => void;
+  updateActiveResource: (updates: Partial<ResourceDefinition>) => void;
+
   // Actions - Selected Tools
   toggleToolSelection: (tool: ToolDefinition) => void;
   clearSelectedTools: () => void;
   addSelectedToolsToServer: () => void;
+
+  // Actions - Selected Resources
+  toggleResourceSelection: (resource: ResourceDefinition) => void;
+  clearSelectedResources: () => void;
+  addSelectedResourcesToServer: () => void;
 
   // Actions - Tabs
   setActiveTab: (tab: TabId) => void;
@@ -67,6 +86,7 @@ const defaultServerConfig: ServerConfig = {
   name: 'my-mcp-server',
   description: 'Custom MCP server',
   tools: [],
+  resources: [],
   transportType: 'stdio',
 };
 
@@ -75,7 +95,9 @@ export const useServerBuilderStore = create<ServerBuilderStore>()(
     (set) => ({
       serverConfig: defaultServerConfig,
       activeTool: null,
+      activeResource: null,
       selectedTools: [],
+      selectedResources: [],
       activeTab: 'templates',
       testResults: [],
       isTestServerActive: false,
@@ -142,6 +164,46 @@ export const useServerBuilderStore = create<ServerBuilderStore>()(
             : null,
         })),
 
+      addResource: (resource) =>
+        set((state) => {
+          if (!state.serverConfig) return { serverConfig: null };
+
+          // Generate unique ID if resource with same ID already exists
+          const existingIds = new Set(state.serverConfig.resources.map((r) => r.id));
+          const resourceToAdd = existingIds.has(resource.id)
+            ? { ...resource, id: `${resource.id}_${generateId().slice(0, 8)}` }
+            : resource;
+
+          return {
+            serverConfig: {
+              ...state.serverConfig,
+              resources: [...state.serverConfig.resources, resourceToAdd],
+            },
+          };
+        }),
+
+      updateResource: (id, updates) =>
+        set((state) => ({
+          serverConfig: state.serverConfig
+            ? {
+                ...state.serverConfig,
+                resources: state.serverConfig.resources.map((r) =>
+                  r.id === id ? { ...r, ...updates } : r
+                ),
+              }
+            : null,
+        })),
+
+      removeResource: (id) =>
+        set((state) => ({
+          serverConfig: state.serverConfig
+            ? {
+                ...state.serverConfig,
+                resources: state.serverConfig.resources.filter((r) => r.id !== id),
+              }
+            : null,
+        })),
+
       setActiveTool: (tool) =>
         set({ activeTool: tool }),
 
@@ -149,6 +211,16 @@ export const useServerBuilderStore = create<ServerBuilderStore>()(
         set((state) => ({
           activeTool: state.activeTool
             ? { ...state.activeTool, ...updates }
+            : null,
+        })),
+
+      setActiveResource: (resource) =>
+        set({ activeResource: resource }),
+
+      updateActiveResource: (updates) =>
+        set((state) => ({
+          activeResource: state.activeResource
+            ? { ...state.activeResource, ...updates }
             : null,
         })),
 
@@ -179,6 +251,36 @@ export const useServerBuilderStore = create<ServerBuilderStore>()(
               tools: [...state.serverConfig.tools, ...newTools],
             },
             selectedTools: [], // Clear selections after adding
+          };
+        }),
+
+      toggleResourceSelection: (resource) =>
+        set((state) => {
+          const isSelected = state.selectedResources.some((r) => r.id === resource.id);
+          return {
+            selectedResources: isSelected
+              ? state.selectedResources.filter((r) => r.id !== resource.id)
+              : [...state.selectedResources, resource],
+          };
+        }),
+
+      clearSelectedResources: () =>
+        set({ selectedResources: [] }),
+
+      addSelectedResourcesToServer: () =>
+        set((state) => {
+          if (!state.serverConfig) return state;
+
+          // Add selected resources to server config (avoid duplicates)
+          const existingIds = new Set(state.serverConfig.resources.map((r) => r.id));
+          const newResources = state.selectedResources.filter((r) => !existingIds.has(r.id));
+
+          return {
+            serverConfig: {
+              ...state.serverConfig,
+              resources: [...state.serverConfig.resources, ...newResources],
+            },
+            selectedResources: [], // Clear selections after adding
           };
         }),
 
@@ -220,7 +322,9 @@ export const useServerBuilderStore = create<ServerBuilderStore>()(
       partialize: (state) => ({
         serverConfig: state.serverConfig,
         activeTool: state.activeTool,
+        activeResource: state.activeResource,
         selectedTools: state.selectedTools,
+        selectedResources: state.selectedResources,
         activeTab: state.activeTab,
       }),
     }

@@ -44,10 +44,43 @@ export interface ToolTemplate {
   tool: ToolDefinition;
 }
 
+// Resource types for MCP resources
+export type ResourceVariableType = 'string' | 'number' | 'boolean';
+
+export interface ResourceVariable {
+  name: string;
+  type: ResourceVariableType;
+  description: string;
+  required: boolean;
+}
+
+export interface ResourceDefinition {
+  id: string;
+  uri: string; // e.g., "calendar://events/2024" or "products://{category}/{id}"
+  name: string;
+  description: string;
+  category: ToolCategory;
+  mimeType: string; // e.g., "application/json", "text/plain", "text/html"
+  isTemplate: boolean; // true if URI has variables like {category}
+  uriVariables?: ResourceVariable[]; // For template resources
+  exampleData?: unknown; // Example resource content
+}
+
+export interface ResourceTemplate {
+  id: string;
+  name: string;
+  category: ToolCategory;
+  description: string;
+  userProvides: string; // Plain language: what data this resource contains
+  aiSees: string; // Plain language: how AI can use this resource
+  resource: ResourceDefinition;
+}
+
 export interface ServerConfig {
   name: string;
   description: string;
   tools: ToolDefinition[];
+  resources: ResourceDefinition[]; // MCP resources
   transportType: 'stdio' | 'sse';
   port?: number; // For SSE servers
 }
