@@ -77,7 +77,7 @@ export function SuggestionsPanel({
         <p className="text-sm text-muted-foreground">{currentPhase.description}</p>
       </div>
 
-      <ScrollArea className="flex-1 p-4 space-y-4">
+      <ScrollArea className="flex-1 h-0 p-4 space-y-4">
         {/* Deployment Section */}
         {canDeploy && (
           <Card className="p-4 bg-green-500/10 border-green-500/20">

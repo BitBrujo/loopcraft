@@ -10,7 +10,7 @@ import { SchemaGenerator } from '@/lib/conversational-builder/schema-generator';
 import { ClarificationEngine } from '@/lib/conversational-builder/clarification-engine';
 import { ConversationalContext } from '@/types/conversational-builder';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, RotateCcw } from 'lucide-react';
 
 export default function ConversationalBuilderPage() {
   const router = useRouter();
@@ -47,6 +47,7 @@ export default function ConversationalBuilderPage() {
     setDeploying,
     setDeployedServer,
     setDeploymentError,
+    reset,
   } = useConversationState();
 
   const handleSendMessage = async (message: string) => {
@@ -255,6 +256,16 @@ export default function ConversationalBuilderPage() {
     }
   };
 
+  const handleReset = () => {
+    if (
+      confirm(
+        'Are you sure you want to reset? This will clear all conversation history, configuration, and progress.'
+      )
+    ) {
+      reset();
+    }
+  };
+
   const canDeploy =
     serverConfig.tools.length > 0 &&
     serverConfig.resources.length > 0 &&
@@ -265,21 +276,31 @@ export default function ConversationalBuilderPage() {
     <div className="h-screen flex flex-col">
       {/* Header */}
       <div className="border-b border-border p-4">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push('/')}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Conversational Builder</h1>
-            <p className="text-sm text-muted-foreground">
-              Build MCP servers through natural conversation
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push('/')}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold">Conversational Builder</h1>
+              <p className="text-sm text-muted-foreground">
+                Build MCP servers through natural conversation
+              </p>
+            </div>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleReset}
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Reset
+          </Button>
         </div>
       </div>
 

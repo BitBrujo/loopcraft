@@ -81,7 +81,7 @@ export function ChatHeader() {
       icon: Wand2,
     },
     {
-      href: "/",
+      href: "/chat",
       label: "Chat",
       icon: MessageCircle,
     },

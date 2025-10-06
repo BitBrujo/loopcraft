@@ -28,7 +28,7 @@ export function LivePreview({ serverConfig, uiResource }: LivePreviewProps) {
       </div>
 
       {/* Preview Content */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 h-0">
         {!hasTools && !hasResources && !hasUI ? (
           <div className="p-8 text-center text-muted-foreground">
             <p>Your server configuration will appear here as we build it together.</p>
