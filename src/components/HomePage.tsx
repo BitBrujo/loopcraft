@@ -88,7 +88,11 @@ export function HomePage() {
                     <p className="text-sm text-muted-foreground">
                       {feature.description}
                     </p>
-                    <Button className="w-full mt-2" size="sm">
+                    <Button
+                      variant="outline"
+                      className="w-full mt-2 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-colors"
+                      size="sm"
+                    >
                       Get Started
                     </Button>
                   </div>

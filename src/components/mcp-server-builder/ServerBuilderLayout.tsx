@@ -43,7 +43,7 @@ export function ServerBuilderLayout() {
         <div className="border-b bg-muted/30">
           <div className="flex items-center justify-center px-4 py-3">
             {/* Centered Tab Container */}
-            <div className="inline-flex items-center gap-1 p-1 rounded-lg ring-2 ring-blue-500/60 bg-background/50">
+            <div className="inline-flex items-center gap-1 p-1 rounded-lg ring-2 ring-orange-500/60 bg-background/50">
               {tabs.map((tab, index) => {
                 const isActive = activeTab === tab.id;
                 const isCompleted =
@@ -60,11 +60,11 @@ export function ServerBuilderLayout() {
                     key={tab.id}
                     className={`px-4 py-2 text-sm rounded-md transition-all flex items-center gap-2 ${
                       isActive
-                        ? 'bg-blue-500 text-white shadow-sm font-medium'
+                        ? 'bg-orange-500 text-white shadow-sm font-medium'
                         : isDisabled
                         ? 'opacity-50 cursor-not-allowed text-muted-foreground'
                         : isCompleted
-                        ? 'hover:bg-blue-500/10 text-muted-foreground'
+                        ? 'hover:bg-orange-500/10 text-muted-foreground'
                         : 'hover:bg-muted/50 text-muted-foreground'
                     }`}
                     onClick={() => !isDisabled && setActiveTab(tab.id)}

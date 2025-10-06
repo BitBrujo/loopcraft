@@ -44,7 +44,7 @@ export function RightSidebar() {
             title={item.title}
             className={cn(
               "w-12 h-12 rounded-lg transition-all flex items-center justify-center",
-              "hover:bg-muted/50",
+              "hover:bg-orange-500 hover:text-white",
               isActive
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-muted-foreground"

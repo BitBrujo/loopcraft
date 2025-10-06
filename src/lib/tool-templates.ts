@@ -1371,52 +1371,52 @@ export const getCategorizedTemplates = () => {
 export const getCategoryInfo = (category: string) => {
   const info: Record<string, { icon: string; title: string; description: string }> = {
     forms: {
-      icon: '📝',
+      icon: 'FileText',
       title: 'Accept Form Data',
       description: 'Collect user input through forms and submissions',
     },
     search: {
-      icon: '🔍',
+      icon: 'Search',
       title: 'Search & Find',
       description: 'Search, filter, and discover content',
     },
     save: {
-      icon: '💾',
+      icon: 'Save',
       title: 'Save & Store',
       description: 'Create, update, and manage data',
     },
     show: {
-      icon: '📊',
+      icon: 'BarChart3',
       title: 'Show Information',
       description: 'Display data, reports, and dashboards',
     },
     process: {
-      icon: '🔄',
+      icon: 'RefreshCw',
       title: 'Process Data',
       description: 'Transform, validate, and calculate',
     },
     messages: {
-      icon: '🔔',
+      icon: 'Bell',
       title: 'Send Messages',
       description: 'Send notifications and communications',
     },
     security: {
-      icon: '🔐',
+      icon: 'Shield',
       title: 'Security & Access',
       description: 'Authentication and authorization',
     },
     payments: {
-      icon: '💰',
+      icon: 'CreditCard',
       title: 'Money & Payments',
       description: 'Process payments and transactions',
     },
     files: {
-      icon: '📁',
+      icon: 'Folder',
       title: 'Files & Media',
       description: 'Upload, download, and manage files',
     },
     external: {
-      icon: '🌐',
+      icon: 'Globe',
       title: 'External Services',
       description: 'Integrate with third-party APIs',
     },

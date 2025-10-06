@@ -5,8 +5,35 @@ import { useServerBuilderStore } from "@/lib/stores/server-builder-store";
 import { toolTemplates, getCategorizedTemplates, getCategoryInfo } from "@/lib/tool-templates";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, ChevronRight } from "lucide-react";
+import {
+  Search,
+  ChevronRight,
+  FileText,
+  Search as SearchIcon,
+  Save,
+  BarChart3,
+  RefreshCw,
+  Bell,
+  Shield,
+  CreditCard,
+  Folder,
+  Globe
+} from "lucide-react";
 import type { ToolCategory } from "@/types/server-builder";
+
+// Icon mapping for categories
+const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  FileText,
+  Search: SearchIcon,
+  Save,
+  BarChart3,
+  RefreshCw,
+  Bell,
+  Shield,
+  CreditCard,
+  Folder,
+  Globe,
+};
 
 export function TemplateGalleryTab() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -78,16 +105,19 @@ export function TemplateGalleryTab() {
             {categories.map((category) => {
               const info = getCategoryInfo(category);
               const count = categorizedTemplates[category].length;
+              const IconComponent = categoryIcons[info.icon] || Folder;
 
               return (
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className="flex items-start gap-4 p-6 bg-card rounded-lg border hover:border-primary hover:shadow-md transition-all text-left group"
+                  className="flex items-start gap-4 p-6 bg-card rounded-lg border hover:border-orange-500 hover:shadow-md transition-all text-left group"
                 >
-                  <div className="text-4xl">{info.icon}</div>
+                  <div className="text-orange-500">
+                    <IconComponent className="h-10 w-10" />
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-lg mb-1 group-hover:text-primary">
+                    <h3 className="font-semibold text-lg mb-1 group-hover:text-orange-500">
                       {info.title}
                     </h3>
                     <p className="text-sm text-muted-foreground mb-2">
