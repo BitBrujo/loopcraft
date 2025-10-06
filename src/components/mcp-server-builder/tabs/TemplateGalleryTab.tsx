@@ -123,11 +123,11 @@ export function TemplateGalleryTab() {
   const isResourceSelected = (resourceId: string) => {
     // Check both temporary selections AND resources already in server config
     return selectedResources.some((r) => r.id === resourceId) ||
-           (serverConfig?.resources.some((r) => r.id === resourceId) || false);
+           ((serverConfig?.resources || []).some((r) => r.id === resourceId));
   };
 
   const isResourceInServer = (resourceId: string) => {
-    return serverConfig?.resources.some((r) => r.id === resourceId) || false;
+    return (serverConfig?.resources || []).some((r) => r.id === resourceId);
   };
 
   // Combine selected tools and tools already in server (avoid duplicates)
