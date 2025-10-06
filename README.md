@@ -1,141 +1,261 @@
 # LoopCraft
 
-LoopCraft is a Next.js application that integrates the Model Context Protocol (MCP) with an interactive chat interface and visual UI builder. It serves as both an MCP client and development environment, allowing AI assistants to interact with external tools and resources through MCP servers while rendering interactive UI components.
+A Next.js 15 application that integrates the Model Context Protocol (MCP) with an AI-powered chat interface. LoopCraft serves as an MCP client with MCP-UI integration, allowing AI assistants to interact with external tools and resources through MCP servers while rendering interactive UI components.
 
-## Key Features
+## ✨ Features
 
-- **MCP Integration**: Connect to multiple MCP servers (stdio, SSE, HTTP transports)
-- **Interactive Chat**: AI-powered chat with tool calling and MCP resource rendering
-- **Visual UI Builder**: 5-tab progressive workflow for creating MCP-UI resources
-  - Tool discovery and server exploration
-  - Visual UI design with live preview
-  - Action mapping (UI elements → MCP tools)
-  - Flow visualization with execution simulation
-  - Integration testing
-- **User Authentication**: JWT-based auth with per-user MCP server configurations
-- **Template System**: Save/load UI builder configurations
-- **Real-time Validation**: Type checking and completeness validation for action mappings
+### 🤖 AI-Powered Chat Interface
+- Natural language conversations with MCP tool integration
+- User-configurable AI models and providers (Ollama)
+- Streaming responses with real-time updates
+- Per-user AI configuration (model selection, API endpoints)
 
-## Technologies
+### 🔌 Model Context Protocol (MCP) Integration
+- **User-specific MCP servers** managed through Settings UI
+- Support for stdio, SSE, and HTTP transports
+- Dynamic tool registration and resource handling
+- Interactive MCP-UI component rendering with bidirectional communication
+- Automatic server cleanup and error tracking
 
-- **Next.js 15** with App Router and Turbopack
-- **React 19** with TypeScript
-- **MCP**: `@modelcontextprotocol/sdk`, `@mcp-ui/client`, `@mcp-ui/server`
-- **AI SDK**: Vercel AI SDK with `@assistant-ui/react`
-- **LLM**: Ollama (configurable)
-- **Database**: MySQL 8.0
-- **Authentication**: JWT + bcrypt
-- **Styling**: Tailwind CSS 4, Radix UI
-- **State**: Zustand
+### 🛠️ Three Specialized Builders
 
-## Prerequisites
+#### 1. **Conversational Builder** (`/conversational-builder`)
+Natural language-driven server creation through AI conversation:
+- Describe server needs in plain English
+- AI-powered intent detection and entity extraction
+- Progressive questioning for clarification
+- 60+ tool and resource templates
+- Real-time configuration preview
+- One-click deployment
 
+#### 2. **MCP Server Builder** (`/mcp-server-builder`)
+Template-first approach for creating functional MCP servers:
+- Browse 60+ pre-built tool and resource templates
+- 10 categories: Forms, Search, Storage, Display, Processing, Messaging, Security, Payments, Files, External APIs
+- AI-powered relationship analysis and suggestions
+- 3-tab workflow: Browse → Customize → Test
+- Export in 8 formats (TypeScript, JavaScript, Python, etc.)
+
+#### 3. **MCP-UI Wrapper Builder** (`/mcp-ui-builder`)
+Visual tool for adding UI presentation to MCP servers:
+- Connect to existing servers or create standalone UIs
+- Read-only (dashboards) and interactive (forms) modes
+- HTML/URL content with template placeholders
+- Action mapping UI → MCP tool bindings
+- Live preview and one-click testing
+
+### 🔐 Authentication & Database
+- JWT-based authentication with bcrypt password hashing
+- MySQL 8.0 with Docker containerization
+- User-specific prompts, settings, and MCP server configurations
+- Persistent storage with automatic schema initialization
+
+## 🚀 Quick Start
+
+### Prerequisites
 - Node.js 18+ and npm
-- Docker and Docker Compose (for MySQL)
-- Ollama with a compatible model (e.g., `llama3.2:latest`)
+- Docker and Docker Compose
+- Ollama (for AI functionality)
 
-## Installation
+### Installation
 
-1. Clone the repository:
+1. **Clone the repository**
 ```bash
 git clone <repository-url>
 cd loopcraft
 ```
 
-2. Install dependencies:
+2. **Install dependencies**
 ```bash
 npm install
 ```
 
-3. Start MySQL database:
-```bash
-docker-compose up -d
-```
-
-4. Configure environment variables:
+3. **Configure environment**
 ```bash
 cp .env.example .env.local
 ```
 
-Edit `.env.local` and configure:
-- `OLLAMA_BASE_URL`: Ollama API endpoint (default: `http://localhost:11434/api`)
-- `OLLAMA_MODEL`: Model to use (default: `llama3.2:latest`)
-- `MYSQL_PASSWORD`: Database password (required)
-- `MYSQL_ROOT_PASSWORD`: MySQL root password (required)
-- `JWT_SECRET`: Secret key for JWT tokens (generate with `openssl rand -hex 32`)
+Edit `.env.local` and set required variables:
+```env
+# AI Configuration (can be overridden per user in Settings)
+OLLAMA_BASE_URL=http://localhost:11434/api
+OLLAMA_MODEL=llama3.2:latest
 
-5. Start development server:
+# Database
+MYSQL_PASSWORD=your_secure_password
+MYSQL_ROOT_PASSWORD=your_root_password
+
+# Authentication
+JWT_SECRET=your_jwt_secret_here  # Generate with: openssl rand -hex 32
+JWT_EXPIRES_IN=7d
+```
+
+4. **Start MySQL database**
+```bash
+docker-compose up -d
+```
+
+5. **Run development server**
 ```bash
 npm run dev
 ```
 
-6. Open [http://localhost:3000](http://localhost:3000)
+6. **Open application**
+Navigate to [http://localhost:3000](http://localhost:3000)
 
-## Development Commands
+## 📋 Development Commands
 
 ```bash
-# Start development server
-npm run dev
+# Development
+npm run dev              # Start dev server with Turbopack
+npm run build            # Build for production
+npm start                # Start production server
+npm run lint             # Run ESLint
 
-# Build for production
-npm run build
+# Database
+docker-compose up -d     # Start MySQL
+docker-compose down      # Stop MySQL
 
-# Start production server
-npm start
-
-# Run linter
-npm run lint
-
-# Stop database
-docker-compose down
+# Demo MCP Server (for testing)
+npm run mcp:demo         # Start demo server on port 3001
 ```
 
-## MCP Server Configuration
+## 🏗️ Architecture
 
-Configure MCP servers in three ways:
+### MCP Integration Flow
 
-### 1. Database Configuration (Per-User)
-- Navigate to `/settings` after login
-- Add/edit/delete MCP servers via UI
-- Supports authentication via `env` field
-- Auto-connects when user is logged in
+1. **Server Initialization** (`src/lib/mcp-init.ts`)
+   - User-specific servers loaded from database per request
+   - Managed by `MCPClientManager` singleton
+   - Automatic cleanup of deleted servers
+   - Error tracking for troubleshooting
 
-### 2. Environment Variable (Global)
-Set `MCP_CONFIG` in `.env.local`:
-```json
-{
-  "mcpServers": {
-    "filesystem": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/files"]
-    }
-  }
-}
-```
+2. **Tool Registration** (`src/app/api/chat/route.ts`)
+   - MCP tools dynamically fetched from connected servers
+   - Tools prefixed as `mcp_{serverName}_{toolName}`
+   - Support for UI resources with `ui://` URIs
 
-### 3. Config File (Global)
-Edit `src/lib/mcp-config.ts` for default configurations.
+3. **UI Rendering** (`src/components/assistant-ui/mcp-ui-renderer.tsx`)
+   - Interactive MCP UI components with iframe sandboxing
+   - Bidirectional communication via postMessage
+   - Tool execution with authentication
+
+4. **Resource Handling**
+   - Custom `getMCPResource` tool for fetching resources
+   - Standard MCP format without custom wrappers
+   - Support for templates and dynamic URIs
+
+### Key Components
+
+- **MCPClientManager** - Connection management, tool calls, error tracking
+- **Chat API Route** - Streaming LLM responses with MCP integration
+- **Assistant Component** - Main chat interface with sidebar
+- **Builder Components** - Three specialized builder UIs
+- **Database Utilities** - Connection pooling and query helpers
+
+## 📚 API Documentation
+
+### Authentication (Public)
+- `POST /api/auth/register` - Create user account
+- `POST /api/auth/login` - Get JWT token
+
+### AI Configuration
+- `GET /api/ai-config` - Get current AI config
+- `PUT /api/ai-config` - Update user AI settings (auth required)
+
+### MCP Management (Auth Required)
+- `GET /api/mcp/servers` - List connected servers with status
+- `GET /api/mcp/tools` - List available tools
+- `GET /api/mcp/resources` - List available resources
+- `POST /api/mcp/call-tool` - Execute MCP tool
+
+### MCP Server Management (Auth Required)
+- `GET /api/mcp-servers` - List user MCP servers
+- `POST /api/mcp-servers` - Create server config
+- `PUT /api/mcp-servers/:id` - Update server
+- `DELETE /api/mcp-servers/:id` - Delete server
+
+### Builders
+- `POST /api/conversational-builder/chat` - Streaming AI conversation
+- `POST /api/relationships/analyze` - AI relationship analysis
+- `POST /api/ui-builder/test` - Create test server
+- `POST /api/ui-builder/preview` - Preview UI resource
+
+All authenticated endpoints require `Authorization: Bearer <token>` header.
+
+## 🗄️ Database Schema
+
+### Tables
+- **users** - User accounts with email/password
+- **prompts** - User-created prompts
+- **settings** - User settings (key-value pairs)
+- **mcp_servers** - Per-user MCP server configurations
+
+Schema automatically initializes on first Docker run via `docker/mysql/init.sql`.
+
+## 🔧 MCP Server Configuration
+
+All MCP servers are user-specific and managed through Settings UI:
 
 ### Transport Types
+- **stdio**: Local process-based servers
+  - Environment variables passed to spawned process
+  - Example: `{ command: ["npx", "-y", "server"], env: { "API_KEY": "xxx" } }`
 
-- **stdio**: Local process-based servers (e.g., filesystem, memory)
-- **sse**: Remote HTTP-based servers via Server-Sent Events
-- **http**: HTTP streaming transport
+- **sse**: Remote HTTP servers via Server-Sent Events
+  - Environment variables converted to HTTP headers
+  - Example: `{ url: "https://api.example.com/mcp", env: { "API_KEY": "xxx" } }`
 
-### Authentication
+- **http**: HTTP streaming (treated as SSE)
 
-Environment variables in MCP server configs are used for authentication:
-- **stdio**: Passed to spawned process as environment variables
-- **sse/http**: Converted to HTTP headers
+### Authentication Support
+- **App-level**: JWT tokens for database access
+- **MCP-level**: Environment variables for remote server auth
   - `API_KEY` → `Authorization: Bearer {value}`
   - `BEARER_TOKEN` → `Authorization: Bearer {value}`
   - `HEADER_X_Custom` → `X-Custom: {value}`
 
-## MCP-UI Builder
+## 🎯 Use Cases
 
-The visual UI builder (`/mcp-ui-builder`) provides a complete workflow for creating MCP-UI resources:
+### Recommended Workflows
 
+1. **Quick Start (Conversational Builder)**
+   - Best for beginners
+   - Natural language server creation
+   - AI-guided configuration
 
-## License
+2. **Template-Based (Server Builder)**
+   - Choose from 60+ templates
+   - Customize tools and resources
+   - Export and deploy
 
-[Add your license here] MIT License
+3. **UI Enhancement (UI Builder)**
+   - Wrap existing servers with UI
+   - Create standalone dashboards
+   - Interactive form builders
+
+4. **Full Stack (Combined)**
+   - Create server → Add UI → Map actions
+   - End-to-end MCP application development
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 15 with App Router and Turbopack
+- **UI**: React 19, TypeScript, Tailwind CSS 4, Radix UI
+- **AI**: Vercel AI SDK, @assistant-ui/react, Ollama
+- **MCP**: @modelcontextprotocol/sdk, @mcp-ui/client, @mcp-ui/server
+- **Database**: MySQL 8.0, Docker, mysql2 driver
+- **Auth**: JWT, bcrypt
+- **State**: Zustand
+
+## 📝 License
+
+MIT License
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read the contributing guidelines before submitting PRs.
+
+## 📞 Support
+
+For issues and questions, please open a GitHub issue.
