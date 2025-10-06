@@ -327,13 +327,23 @@ The user just added a ${recentlyAdded.type} with ID: ${recentlyAdded.id}
 
   prompt += `\n**Your Task:**
 1. Analyze what's missing to make this server more complete and useful
-2. Suggest 3-5 specific components (tools or resources) that would complement the existing setup
-3. Focus on common patterns like CRUD completeness, data flow, and typical use cases
+2. Suggest 3-5 specific components that would complement the existing setup
+3. **IMPORTANT**: Suggest BOTH tools AND resources - they work together:
+   - If there are tools but no resources, suggest resources that expose data those tools need
+   - If there are resources but few tools, suggest tools to manipulate/query those resources
+   - Consider which resources would help existing tools be more useful
+4. Focus on common patterns like CRUD completeness, data flow, and typical use cases
 
 **IMPORTANT - Available Template IDs:**
 You MUST use these exact IDs from the template library. Examples:
 - Tools: "submit_contact", "create_account", "search_items", "get_by_id", "update_existing", "delete_item"
-- Resources: "contact_form_schema", "user_profile_data", "product_catalog", "settings_config"
+- Resources: "contact_form_schema", "user_profile_data", "product_catalog", "settings_config", "form_templates", "search_filters"
+
+**Common Tool-Resource Pairings:**
+- "submit_contact" tool + "contact_form_schema" resource (form validation)
+- "search_products" tool + "product_catalog" resource (data source)
+- "create_account" tool + "user_profile_data" resource (user data)
+- "get_settings" tool + "settings_config" resource (configuration data)
 
 **Response Format (JSON only, no markdown):**
 {
@@ -459,6 +469,75 @@ export function analyzeRelationships(
             });
           }
         }
+      }
+    }
+
+    // Suggest resources for ALL existing tools (not just recently added)
+    if (context.existingTools.length > 0 && !context.recentlyAdded) {
+      // Aggregate suggestions from all tools
+      const allResourceSuggestions = new Map<string, RelationshipSuggestion>();
+
+      context.existingTools.forEach((tool) => {
+        const suggestions = suggestResourcesForTool(tool, context.existingResources);
+        suggestions.forEach((suggestion) => {
+          // Keep the highest confidence for each resource
+          const existing = allResourceSuggestions.get(suggestion.id);
+          if (!existing || suggestion.confidence > existing.confidence) {
+            allResourceSuggestions.set(suggestion.id, {
+              ...suggestion,
+              reason: `Complements ${tool.name}: ${suggestion.reason}`,
+            });
+          }
+        });
+      });
+
+      if (allResourceSuggestions.size > 0) {
+        // Sort by confidence and take top 5
+        const topSuggestions = Array.from(allResourceSuggestions.values())
+          .sort((a, b) => b.confidence - a.confidence)
+          .slice(0, 5);
+
+        relationships.push({
+          type: 'tool-resource',
+          sourceId: 'all-tools',
+          sourceName: `${context.existingTools.length} Tool${context.existingTools.length !== 1 ? 's' : ''}`,
+          suggestions: topSuggestions,
+          analysisMethod: 'rule-based',
+          timestamp: new Date(),
+        });
+      }
+    }
+
+    // Suggest tools for ALL existing resources (not just recently added)
+    if (context.existingResources.length > 0 && !context.recentlyAdded) {
+      const allToolSuggestions = new Map<string, RelationshipSuggestion>();
+
+      context.existingResources.forEach((resource) => {
+        const suggestions = suggestToolsForResource(resource, context.existingTools);
+        suggestions.forEach((suggestion) => {
+          const existing = allToolSuggestions.get(suggestion.id);
+          if (!existing || suggestion.confidence > existing.confidence) {
+            allToolSuggestions.set(suggestion.id, {
+              ...suggestion,
+              reason: `Works with ${resource.name}: ${suggestion.reason}`,
+            });
+          }
+        });
+      });
+
+      if (allToolSuggestions.size > 0) {
+        const topSuggestions = Array.from(allToolSuggestions.values())
+          .sort((a, b) => b.confidence - a.confidence)
+          .slice(0, 5);
+
+        relationships.push({
+          type: 'resource-tool',
+          sourceId: 'all-resources',
+          sourceName: `${context.existingResources.length} Resource${context.existingResources.length !== 1 ? 's' : ''}`,
+          suggestions: topSuggestions,
+          analysisMethod: 'rule-based',
+          timestamp: new Date(),
+        });
       }
     }
 
