@@ -8,7 +8,6 @@ import { ConfigPanel } from "./ConfigPanel";
 import { ExportDialog } from "./ExportDialog";
 import { SaveDialog } from "./SaveDialog";
 import { LoadDialog } from "./LoadDialog";
-import { ContextSidebar } from "./ContextSidebar";
 import { ConfigurationTab } from "./tabs/ConfigurationTab";
 import { DesignTab } from "./tabs/DesignTab";
 import { DefineToolsTab } from "./tabs/DefineToolsTab";
@@ -301,9 +300,6 @@ export function BuilderLayout() {
           <div className="flex-1 overflow-hidden">
             {renderTabContent()}
           </div>
-
-          {/* Right Sidebar - Context Sidebar (persistent on all tabs) */}
-          <ContextSidebar />
 
           {/* Toggle config panel if hidden */}
           {activeTab === 'design' && !showConfig && (
