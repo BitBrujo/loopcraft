@@ -10,7 +10,6 @@ export function TestServerTab() {
   const router = useRouter();
   const {
     serverConfig,
-    activeTool,
     isTestServerActive,
     testServerName,
     startTestServer,
@@ -22,12 +21,14 @@ export function TestServerTab() {
   const [showCode, setShowCode] = useState(false);
   const [serverName, setServerName] = useState(serverConfig?.name || "my-mcp-server");
 
-  if (!activeTool || !serverConfig) {
+  const tools = serverConfig?.tools || [];
+
+  if (!serverConfig || tools.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">
-            No tool selected. Please customize a tool first.
+            No tools added. Please add and customize tools first.
           </p>
           <Button onClick={() => router.push('/mcp-server-builder')}>
             Go Back
@@ -38,12 +39,55 @@ export function TestServerTab() {
   }
 
   const generateServerCode = () => {
-    // Generate MCP server code
-    const code = `import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+    // Generate MCP server code with ALL tools
+    const toolSchemas = tools.map(tool => `      {
+        name: '${tool.name}',
+        description: '${tool.description}',
+        inputSchema: {
+          type: 'object',
+          properties: {
+${tool.parameters
+  .map(
+    (param) =>
+      `            ${param.name}: {
+              type: '${param.type}',
+              description: '${param.description}',
+            },`
+  )
+  .join('\n')}
+          },
+          required: [${tool.parameters.filter((p) => p.required).map((p) => `'${p.name}'`).join(', ')}],
+        },
+      }`).join(',\n');
+
+    const toolHandlers = tools.map(tool => `  if (request.params.name === '${tool.name}') {
+    const args = request.params.arguments || {};
+
+    // TODO: Implement ${tool.name} logic here
+    // For now, returning mock response
+    const result = {
+      success: true,
+      message: 'Tool ${tool.name} executed successfully',
+      input: args,
+    };
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+`).join('\n');
+
+    const code = `#!/usr/bin/env node
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { ListToolsRequestSchema, CallToolRequestSchema, ListResourcesRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
-// Create MCP server
+// Create MCP server with ${tools.length} tool${tools.length > 1 ? 's' : ''}
 const server = new Server(
   {
     name: '${serverConfig.name}',
@@ -57,29 +101,11 @@ const server = new Server(
   }
 );
 
-// Tool: ${activeTool.name}
+// List all tools (${tools.length} total)
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
-      {
-        name: '${activeTool.name}',
-        description: '${activeTool.description}',
-        inputSchema: {
-          type: 'object',
-          properties: {
-${activeTool.parameters
-  .map(
-    (param) =>
-      `            ${param.name}: {
-              type: '${param.type}',
-              description: '${param.description}',
-            },`
-  )
-  .join('\n')}
-          },
-          required: [${activeTool.parameters.filter((p) => p.required).map((p) => `'${p.name}'`).join(', ')}],
-        },
-      },
+${toolSchemas}
     ],
   };
 });
@@ -91,29 +117,9 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => {
   };
 });
 
-// Tool handler
+// Tool handler - handles all ${tools.length} tool${tools.length > 1 ? 's' : ''}
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  if (request.params.name === '${activeTool.name}') {
-    const args = request.params.arguments || {};
-
-    // TODO: Implement your tool logic here
-    // For now, returning mock response
-    const result = {
-      success: true,
-      message: 'Tool executed successfully',
-      input: args,
-    };
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(result, null, 2),
-        },
-      ],
-    };
-  }
-
+${toolHandlers}
   throw new Error(\`Unknown tool: \${request.params.name}\`);
 });
 
@@ -206,52 +212,57 @@ main().catch(console.error);
           </p>
         </div>
 
-        {/* Tool Summary */}
+        {/* Server Summary */}
         <div className="bg-card rounded-lg border p-6 mb-6">
-          <h3 className="font-semibold text-lg mb-4">Tool Summary</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-lg">Server Summary</h3>
+            <div className="bg-orange-500 text-white px-3 py-1 rounded-lg text-sm font-medium">
+              {tools.length} Tool{tools.length > 1 ? 's' : ''}
+            </div>
+          </div>
 
           <div className="space-y-4">
-            <div>
-              <div className="text-sm text-muted-foreground mb-1">Tool Name</div>
-              <div className="font-mono bg-muted/50 p-2 rounded">{activeTool.name}</div>
-            </div>
-
-            <div>
-              <div className="text-sm text-muted-foreground mb-1">Description</div>
-              <div className="bg-muted/50 p-2 rounded">{activeTool.description}</div>
-            </div>
-
-            <div>
-              <div className="text-sm text-muted-foreground mb-1">
-                Parameters ({activeTool.parameters.length})
-              </div>
-              {activeTool.parameters.length === 0 ? (
-                <div className="text-sm italic text-muted-foreground">No parameters</div>
-              ) : (
-                <div className="space-y-2">
-                  {activeTool.parameters.map((param, i) => (
-                    <div key={i} className="bg-muted/50 p-2 rounded flex items-center gap-2">
-                      <span className="font-mono text-sm">{param.name}</span>
-                      <span className="text-xs text-muted-foreground">({param.type})</span>
-                      {param.required && (
-                        <span className="text-xs bg-destructive/20 text-destructive px-2 py-0.5 rounded">
-                          required
-                        </span>
-                      )}
-                      <span className="text-sm ml-auto">{param.description}</span>
-                    </div>
-                  ))}
+            {tools.map((tool) => (
+              <div key={tool.id} className="bg-muted/30 rounded-lg p-4 border">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <div className="font-mono font-semibold">{tool.name}</div>
+                    <div className="text-sm text-muted-foreground mt-1">{tool.description}</div>
+                  </div>
                 </div>
-              )}
-            </div>
 
-            <div>
-              <div className="text-sm text-muted-foreground mb-1">Returns</div>
-              <div className="bg-muted/50 p-2 rounded">
-                <span className="font-mono text-sm">{activeTool.returnType}</span>
-                <span className="text-sm ml-2">- {activeTool.returnDescription}</span>
+                <div className="mt-3">
+                  <div className="text-xs text-muted-foreground mb-1">
+                    Parameters ({tool.parameters.length})
+                  </div>
+                  {tool.parameters.length === 0 ? (
+                    <div className="text-xs italic text-muted-foreground">No parameters</div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {tool.parameters.map((param, i) => (
+                        <div
+                          key={i}
+                          className="bg-background px-2 py-1 rounded text-xs flex items-center gap-1"
+                        >
+                          <span className="font-mono">{param.name}</span>
+                          <span className="text-muted-foreground">({param.type})</span>
+                          {param.required && (
+                            <span className="text-destructive">*</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-2">
+                  <div className="text-xs text-muted-foreground">Returns</div>
+                  <div className="text-xs bg-background px-2 py-1 rounded inline-block mt-1">
+                    <span className="font-mono">{tool.returnType}</span>
+                  </div>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
 

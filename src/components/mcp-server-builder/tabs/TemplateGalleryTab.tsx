@@ -17,7 +17,9 @@ import {
   Shield,
   CreditCard,
   Folder,
-  Globe
+  Globe,
+  Check,
+  Plus
 } from "lucide-react";
 import type { ToolCategory } from "@/types/server-builder";
 
@@ -38,7 +40,13 @@ const categoryIcons: Record<string, React.ComponentType<{ className?: string }>>
 export function TemplateGalleryTab() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<ToolCategory | null>(null);
-  const { setActiveTool, setActiveTab, addTool } = useServerBuilderStore();
+  const {
+    selectedTools,
+    serverConfig,
+    toggleToolSelection,
+    addSelectedToolsToServer,
+    setActiveTab,
+  } = useServerBuilderStore();
 
   const categorizedTemplates = getCategorizedTemplates();
   const categories = Object.keys(categorizedTemplates) as ToolCategory[];
@@ -60,18 +68,25 @@ export function TemplateGalleryTab() {
           template.userSees.toLowerCase().includes(searchQuery.toLowerCase())
       );
 
-  const handleSelectTemplate = (templateId: string) => {
+  const handleToggleTool = (templateId: string) => {
     const template = toolTemplates.find((t) => t.id === templateId);
     if (!template) return;
+    toggleToolSelection(template.tool);
+  };
 
-    // Set as active tool for editing
-    setActiveTool(template.tool);
-
-    // Add to server config
-    addTool(template.tool);
-
-    // Navigate to customize tab
+  const handleContinueToManage = () => {
+    // Add selected tools to server config
+    addSelectedToolsToServer();
+    // Navigate to manage tools tab
     setActiveTab('customize');
+  };
+
+  const isToolSelected = (toolId: string) => {
+    return selectedTools.some((t) => t.id === toolId);
+  };
+
+  const isToolInServer = (toolId: string) => {
+    return serverConfig?.tools.some((t) => t.id === toolId) || false;
   };
 
   if (!selectedCategory) {
@@ -79,11 +94,23 @@ export function TemplateGalleryTab() {
     return (
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold mb-2">Pick Tool Type</h2>
-            <p className="text-muted-foreground">
-              Choose what you want your tool to do. Each template includes real examples in plain language.
-            </p>
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">Browse Categories</h2>
+              <p className="text-muted-foreground">
+                Choose what you want your tool to do. Each category includes real examples in plain language.
+              </p>
+            </div>
+            {selectedTools.length > 0 && (
+              <div className="flex items-center gap-3">
+                <div className="bg-orange-500 text-white px-4 py-2 rounded-lg font-medium">
+                  {selectedTools.length} tool{selectedTools.length > 1 ? 's' : ''} selected
+                </div>
+                <Button onClick={handleContinueToManage} size="lg">
+                  Continue to Manage <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Search */}
@@ -92,7 +119,7 @@ export function TemplateGalleryTab() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search templates..."
+                placeholder="Search tools..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -124,7 +151,7 @@ export function TemplateGalleryTab() {
                       {info.description}
                     </p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{count} templates</span>
+                      <span>{count} tools</span>
                       <ChevronRight className="h-3 w-3" />
                     </div>
                   </div>
@@ -169,7 +196,7 @@ export function TemplateGalleryTab() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Search templates..."
+              placeholder="Search tools..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -180,44 +207,75 @@ export function TemplateGalleryTab() {
         {/* Template Cards */}
         {filteredTemplates.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            No templates found matching &quot;{searchQuery}&quot;
+            No tools found matching &quot;{searchQuery}&quot;
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredTemplates.map((template) => (
-              <div
-                key={template.id}
-                className="bg-card rounded-lg border p-6 hover:border-primary hover:shadow-md transition-all"
-              >
-                <h3 className="font-semibold text-lg mb-2">{template.name}</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {template.description}
-                </p>
+            {filteredTemplates.map((template) => {
+              const selected = isToolSelected(template.tool.id);
+              const inServer = isToolInServer(template.tool.id);
 
-                <div className="space-y-3 mb-4">
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <div className="text-xs font-medium text-muted-foreground mb-1">
-                      They enter:
-                    </div>
-                    <div className="text-sm">{template.userEnters}</div>
-                  </div>
-
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <div className="text-xs font-medium text-muted-foreground mb-1">
-                      They see:
-                    </div>
-                    <div className="text-sm">{template.userSees}</div>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={() => handleSelectTemplate(template.id)}
-                  className="w-full"
+              return (
+                <div
+                  key={template.id}
+                  className={`bg-card rounded-lg border p-6 transition-all relative ${
+                    selected
+                      ? 'border-orange-500 shadow-md'
+                      : inServer
+                      ? 'border-green-500/50 bg-green-500/5'
+                      : 'hover:border-orange-500/50 hover:shadow-md'
+                  }`}
                 >
-                  Use This Template
-                </Button>
-              </div>
-            ))}
+                  {inServer && (
+                    <div className="absolute top-3 right-3 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
+                      <Check className="h-3 w-3" /> In Server
+                    </div>
+                  )}
+
+                  <h3 className="font-semibold text-lg mb-2">{template.name}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {template.description}
+                  </p>
+
+                  <div className="space-y-3 mb-4">
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <div className="text-xs font-medium text-muted-foreground mb-1">
+                        They enter:
+                      </div>
+                      <div className="text-sm">{template.userEnters}</div>
+                    </div>
+
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <div className="text-xs font-medium text-muted-foreground mb-1">
+                        They see:
+                      </div>
+                      <div className="text-sm">{template.userSees}</div>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={() => handleToggleTool(template.id)}
+                    className="w-full"
+                    variant={selected ? "default" : inServer ? "secondary" : "outline"}
+                    disabled={inServer}
+                  >
+                    {inServer ? (
+                      <>
+                        <Check className="mr-2 h-4 w-4" /> Already Added
+                      </>
+                    ) : selected ? (
+                      <>
+                        <Check className="mr-2 h-4 w-4" /> Selected
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="mr-2 h-4 w-4" /> Add Tool
+                      </>
+                    )}
+                  </Button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

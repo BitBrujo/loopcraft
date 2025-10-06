@@ -12,8 +12,11 @@ interface ServerBuilderStore {
   // Current server configuration
   serverConfig: ServerConfig | null;
 
-  // Active tool being edited
+  // Active tool being edited (for customize view)
   activeTool: ToolDefinition | null;
+
+  // Selected tools (for multi-select in browse view)
+  selectedTools: ToolDefinition[];
 
   // Tab navigation
   activeTab: TabId;
@@ -41,6 +44,11 @@ interface ServerBuilderStore {
   setActiveTool: (tool: ToolDefinition | null) => void;
   updateActiveTool: (updates: Partial<ToolDefinition>) => void;
 
+  // Actions - Selected Tools
+  toggleToolSelection: (tool: ToolDefinition) => void;
+  clearSelectedTools: () => void;
+  addSelectedToolsToServer: () => void;
+
   // Actions - Tabs
   setActiveTab: (tab: TabId) => void;
 
@@ -67,6 +75,7 @@ export const useServerBuilderStore = create<ServerBuilderStore>()(
     (set) => ({
       serverConfig: defaultServerConfig,
       activeTool: null,
+      selectedTools: [],
       activeTab: 'templates',
       testResults: [],
       isTestServerActive: false,
@@ -135,6 +144,36 @@ export const useServerBuilderStore = create<ServerBuilderStore>()(
             : null,
         })),
 
+      toggleToolSelection: (tool) =>
+        set((state) => {
+          const isSelected = state.selectedTools.some((t) => t.id === tool.id);
+          return {
+            selectedTools: isSelected
+              ? state.selectedTools.filter((t) => t.id !== tool.id)
+              : [...state.selectedTools, tool],
+          };
+        }),
+
+      clearSelectedTools: () =>
+        set({ selectedTools: [] }),
+
+      addSelectedToolsToServer: () =>
+        set((state) => {
+          if (!state.serverConfig) return state;
+
+          // Add selected tools to server config (avoid duplicates)
+          const existingIds = new Set(state.serverConfig.tools.map((t) => t.id));
+          const newTools = state.selectedTools.filter((t) => !existingIds.has(t.id));
+
+          return {
+            serverConfig: {
+              ...state.serverConfig,
+              tools: [...state.serverConfig.tools, ...newTools],
+            },
+            selectedTools: [], // Clear selections after adding
+          };
+        }),
+
       setActiveTab: (tab) =>
         set({ activeTab: tab }),
 
@@ -173,6 +212,7 @@ export const useServerBuilderStore = create<ServerBuilderStore>()(
       partialize: (state) => ({
         serverConfig: state.serverConfig,
         activeTool: state.activeTool,
+        selectedTools: state.selectedTools,
         activeTab: state.activeTab,
       }),
     }

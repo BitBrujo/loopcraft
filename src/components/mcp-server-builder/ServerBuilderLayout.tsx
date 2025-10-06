@@ -2,26 +2,26 @@
 
 import { useServerBuilderStore } from "@/lib/stores/server-builder-store";
 import { TemplateGalleryTab } from "./tabs/TemplateGalleryTab";
-import { CustomizeToolTab } from "./tabs/CustomizeToolTab";
+import { ManageToolsTab } from "./tabs/ManageToolsTab";
 import { TestServerTab } from "./tabs/TestServerTab";
 import { ChatLayout } from "@/components/chat/ChatLayout";
 import type { TabId } from "@/types/server-builder";
 
 const tabs: Array<{ id: TabId; label: string }> = [
-  { id: 'templates', label: 'Pick Template' },
-  { id: 'customize', label: 'Customize Tool' },
-  { id: 'test', label: 'Test in Chat' },
+  { id: 'templates', label: 'Browse Categories' },
+  { id: 'customize', label: 'Manage Tools' },
+  { id: 'test', label: 'Test Server' },
 ];
 
 export function ServerBuilderLayout() {
-  const { activeTab, setActiveTab, activeTool } = useServerBuilderStore();
+  const { activeTab, setActiveTab, serverConfig } = useServerBuilderStore();
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'templates':
         return <TemplateGalleryTab />;
       case 'customize':
-        return <CustomizeToolTab />;
+        return <ManageToolsTab />;
       case 'test':
         return <TestServerTab />;
       default:
@@ -29,12 +29,14 @@ export function ServerBuilderLayout() {
     }
   };
 
+  const tools = serverConfig?.tools || [];
+
   return (
     <ChatLayout>
       <div className="flex-1 flex flex-col overflow-hidden bg-background">
         {/* Header */}
         <div className="h-14 border-b bg-card/50 backdrop-blur flex items-center justify-center px-4">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
             MCP Server Builder
           </h1>
         </div>
@@ -47,13 +49,11 @@ export function ServerBuilderLayout() {
               {tabs.map((tab, index) => {
                 const isActive = activeTab === tab.id;
                 const isCompleted =
-                  (tab.id === 'templates' && activeTool) ||
-                  (tab.id === 'customize' && activeTool && activeTab === 'test');
+                  (tab.id === 'templates' && tools.length > 0) ||
+                  (tab.id === 'customize' && tools.length > 0 && activeTab === 'test');
 
-                // Disable tabs until previous steps are complete
-                const isDisabled =
-                  (tab.id === 'customize' && !activeTool) ||
-                  (tab.id === 'test' && !activeTool);
+                // No tab locking - users can navigate freely
+                const isDisabled = false;
 
                 return (
                   <button
@@ -61,13 +61,11 @@ export function ServerBuilderLayout() {
                     className={`px-4 py-2 text-sm rounded-md transition-all flex items-center gap-2 ${
                       isActive
                         ? 'bg-orange-500 text-white shadow-sm font-medium'
-                        : isDisabled
-                        ? 'opacity-50 cursor-not-allowed text-muted-foreground'
                         : isCompleted
                         ? 'hover:bg-orange-500/10 text-muted-foreground'
                         : 'hover:bg-muted/50 text-muted-foreground'
                     }`}
-                    onClick={() => !isDisabled && setActiveTab(tab.id)}
+                    onClick={() => setActiveTab(tab.id)}
                     disabled={isDisabled}
                   >
                     <span className="flex items-center justify-center w-5 h-5 rounded-full border text-xs">
@@ -82,7 +80,7 @@ export function ServerBuilderLayout() {
         </div>
 
         {/* Tab Content */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto">
           {renderTabContent()}
         </div>
       </div>
