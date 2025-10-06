@@ -169,7 +169,8 @@ export const useServerBuilderStore = create<ServerBuilderStore>()(
           if (!state.serverConfig) return { serverConfig: null };
 
           // Generate unique ID if resource with same ID already exists
-          const existingIds = new Set(state.serverConfig.resources.map((r) => r.id));
+          const existingResources = state.serverConfig.resources || [];
+          const existingIds = new Set(existingResources.map((r) => r.id));
           const resourceToAdd = existingIds.has(resource.id)
             ? { ...resource, id: `${resource.id}_${generateId().slice(0, 8)}` }
             : resource;
@@ -177,7 +178,7 @@ export const useServerBuilderStore = create<ServerBuilderStore>()(
           return {
             serverConfig: {
               ...state.serverConfig,
-              resources: [...state.serverConfig.resources, resourceToAdd],
+              resources: [...existingResources, resourceToAdd],
             },
           };
         }),
@@ -187,7 +188,7 @@ export const useServerBuilderStore = create<ServerBuilderStore>()(
           serverConfig: state.serverConfig
             ? {
                 ...state.serverConfig,
-                resources: state.serverConfig.resources.map((r) =>
+                resources: (state.serverConfig.resources || []).map((r) =>
                   r.id === id ? { ...r, ...updates } : r
                 ),
               }
@@ -199,7 +200,7 @@ export const useServerBuilderStore = create<ServerBuilderStore>()(
           serverConfig: state.serverConfig
             ? {
                 ...state.serverConfig,
-                resources: state.serverConfig.resources.filter((r) => r.id !== id),
+                resources: (state.serverConfig.resources || []).filter((r) => r.id !== id),
               }
             : null,
         })),
@@ -242,13 +243,14 @@ export const useServerBuilderStore = create<ServerBuilderStore>()(
           if (!state.serverConfig) return state;
 
           // Add selected tools to server config (avoid duplicates)
-          const existingIds = new Set(state.serverConfig.tools.map((t) => t.id));
+          const existingTools = state.serverConfig.tools || [];
+          const existingIds = new Set(existingTools.map((t) => t.id));
           const newTools = state.selectedTools.filter((t) => !existingIds.has(t.id));
 
           return {
             serverConfig: {
               ...state.serverConfig,
-              tools: [...state.serverConfig.tools, ...newTools],
+              tools: [...existingTools, ...newTools],
             },
             selectedTools: [], // Clear selections after adding
           };
@@ -272,13 +274,14 @@ export const useServerBuilderStore = create<ServerBuilderStore>()(
           if (!state.serverConfig) return state;
 
           // Add selected resources to server config (avoid duplicates)
-          const existingIds = new Set(state.serverConfig.resources.map((r) => r.id));
+          const existingResources = state.serverConfig.resources || [];
+          const existingIds = new Set(existingResources.map((r) => r.id));
           const newResources = state.selectedResources.filter((r) => !existingIds.has(r.id));
 
           return {
             serverConfig: {
               ...state.serverConfig,
-              resources: [...state.serverConfig.resources, ...newResources],
+              resources: [...existingResources, ...newResources],
             },
             selectedResources: [], // Clear selections after adding
           };
