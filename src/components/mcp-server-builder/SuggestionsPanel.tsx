@@ -171,9 +171,9 @@ export function SuggestionsPanel() {
 
                   {/* Suggestions */}
                   <div className="space-y-2">
-                    {relationship.suggestions.map((suggestion) => (
+                    {relationship.suggestions.map((suggestion, idx) => (
                       <div
-                        key={suggestion.id}
+                        key={`${relationshipId}-${suggestion.id}-${idx}`}
                         className="flex items-start gap-2 p-2 rounded bg-muted/50 hover:bg-muted transition-colors"
                       >
                         <div className="flex-1 min-w-0">

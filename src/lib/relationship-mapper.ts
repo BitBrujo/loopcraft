@@ -330,16 +330,21 @@ The user just added a ${recentlyAdded.type} with ID: ${recentlyAdded.id}
 2. Suggest 3-5 specific components (tools or resources) that would complement the existing setup
 3. Focus on common patterns like CRUD completeness, data flow, and typical use cases
 
+**IMPORTANT - Available Template IDs:**
+You MUST use these exact IDs from the template library. Examples:
+- Tools: "submit_contact", "create_account", "search_items", "get_by_id", "update_existing", "delete_item"
+- Resources: "contact_form_schema", "user_profile_data", "product_catalog", "settings_config"
+
 **Response Format (JSON only, no markdown):**
 {
   "suggestions": [
     {
-      "id": "template_id_from_library",
+      "id": "EXACT_TEMPLATE_ID_FROM_ABOVE",
       "name": "Suggested Component Name",
       "type": "tool" or "resource",
-      "category": "category_name",
+      "category": "forms" | "search" | "save" | "show" | "process" | "messages" | "security" | "payments" | "files" | "external",
       "reason": "Why this complements the existing setup",
-      "confidence": 0.0-1.0
+      "confidence": 0.5 to 0.9
     }
   ],
   "warnings": [
@@ -351,7 +356,7 @@ The user just added a ${recentlyAdded.type} with ID: ${recentlyAdded.id}
   ]
 }
 
-Only suggest components that exist in the template library. Do not invent new ones.`;
+CRITICAL: The "id" field MUST be a valid template ID that exists in the library, NOT a placeholder like "template_id_from_library".`;
 
   return prompt;
 }
@@ -374,8 +379,34 @@ export function parseAIResponse(
 
     const parsed = JSON.parse(cleanedResponse);
 
+    // Filter out invalid suggestions (placeholder IDs, duplicates)
+    const validSuggestions: RelationshipSuggestion[] = [];
+    const seenIds = new Set<string>();
+
+    (parsed.suggestions || []).forEach((suggestion: RelationshipSuggestion) => {
+      // Skip placeholder IDs
+      if (suggestion.id.includes('template_id') || suggestion.id.includes('placeholder')) {
+        console.warn('Skipping invalid AI suggestion with placeholder ID:', suggestion.id);
+        return;
+      }
+
+      // Skip duplicates
+      if (seenIds.has(suggestion.id)) {
+        console.warn('Skipping duplicate AI suggestion:', suggestion.id);
+        return;
+      }
+
+      // Validate confidence range
+      if (suggestion.confidence < 0 || suggestion.confidence > 1) {
+        suggestion.confidence = 0.5; // Default to 50%
+      }
+
+      seenIds.add(suggestion.id);
+      validSuggestions.push(suggestion);
+    });
+
     return {
-      suggestions: parsed.suggestions || [],
+      suggestions: validSuggestions,
       warnings: parsed.warnings || [],
     };
   } catch (error) {
