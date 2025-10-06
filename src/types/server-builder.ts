@@ -98,6 +98,41 @@ export interface TestResult {
   executionTime: number;
 }
 
+// Component Relationship Mapper types
+export type RelationshipType = 'tool-resource' | 'resource-tool' | 'tool-ui' | 'complementary-tool' | 'complementary-resource';
+
+export interface RelationshipSuggestion {
+  id: string; // Template ID
+  name: string;
+  description: string;
+  category: ToolCategory;
+  reason: string; // AI-generated or rule-based explanation
+  confidence: number; // 0-1 score
+  type: 'tool' | 'resource';
+}
+
+export interface ComponentRelationship {
+  type: RelationshipType;
+  sourceId: string; // ID of the tool/resource that triggered this relationship
+  sourceName: string;
+  suggestions: RelationshipSuggestion[];
+  analysisMethod: 'ai' | 'rule-based';
+  timestamp: Date;
+}
+
+export interface AnalysisContext {
+  existingTools: ToolDefinition[];
+  existingResources: ResourceDefinition[];
+  recentlyAdded?: { type: 'tool' | 'resource'; id: string };
+}
+
+export interface DependencyWarning {
+  type: 'missing-tool' | 'missing-resource' | 'incomplete-pattern';
+  severity: 'warning' | 'info';
+  message: string;
+  suggestion?: RelationshipSuggestion;
+}
+
 export interface ServerBuilderState {
   // Current server configuration
   serverConfig: ServerConfig | null;

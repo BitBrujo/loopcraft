@@ -6,6 +6,7 @@ import { toolTemplates, getCategorizedTemplates, getCategoryInfo } from "@/lib/t
 import { resourceTemplates, getCategorizedResources } from "@/lib/resource-templates";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SuggestionsPanel } from "@/components/mcp-server-builder/SuggestionsPanel";
 import {
   Search,
   ChevronRight,
@@ -557,6 +558,11 @@ export function TemplateGalleryTab() {
             </Button>
           </div>
         )}
+      </div>
+
+      {/* Column 5: Smart Suggestions */}
+      <div className="w-80 flex-shrink-0">
+        <SuggestionsPanel />
       </div>
     </div>
   );

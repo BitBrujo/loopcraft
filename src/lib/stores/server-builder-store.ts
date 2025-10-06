@@ -7,6 +7,9 @@ import type {
   ResourceDefinition,
   TabId,
   TestResult,
+  ComponentRelationship,
+  DependencyWarning,
+  AnalysisContext,
 } from '@/types/server-builder';
 
 interface ServerBuilderStore {
@@ -38,6 +41,11 @@ interface ServerBuilderStore {
   // UI state
   isLoading: boolean;
   error: string | null;
+
+  // Relationship Analysis state
+  relationships: ComponentRelationship[];
+  warnings: DependencyWarning[];
+  isAnalyzing: boolean;
 
   // Actions - Server Config
   setServerConfig: (config: ServerConfig | null) => void;
@@ -80,6 +88,14 @@ interface ServerBuilderStore {
   // Actions - Loading/Error
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+
+  // Actions - Relationship Analysis
+  setRelationships: (relationships: ComponentRelationship[]) => void;
+  setWarnings: (warnings: DependencyWarning[]) => void;
+  setIsAnalyzing: (analyzing: boolean) => void;
+  analyzeDependencies: (useAI?: boolean) => Promise<void>;
+  acceptSuggestion: (relationshipId: string, suggestionId: string) => void;
+  dismissRelationship: (relationshipId: string) => void;
 }
 
 const defaultServerConfig: ServerConfig = {
@@ -106,6 +122,9 @@ export const useServerBuilderStore = create<ServerBuilderStore>()(
       testServerFile: null,
       isLoading: false,
       error: null,
+      relationships: [],
+      warnings: [],
+      isAnalyzing: false,
 
       setServerConfig: (config) =>
         set({ serverConfig: config }),
@@ -319,6 +338,133 @@ export const useServerBuilderStore = create<ServerBuilderStore>()(
 
       setError: (error) =>
         set({ error }),
+
+      setRelationships: (relationships) =>
+        set({ relationships }),
+
+      setWarnings: (warnings) =>
+        set({ warnings }),
+
+      setIsAnalyzing: (analyzing) =>
+        set({ isAnalyzing: analyzing }),
+
+      analyzeDependencies: async (useAI = false) => {
+        const state = useServerBuilderStore.getState();
+        if (!state.serverConfig) return;
+
+        set({ isAnalyzing: true, error: null });
+
+        try {
+          const context: AnalysisContext = {
+            existingTools: state.serverConfig.tools,
+            existingResources: state.serverConfig.resources || [],
+          };
+
+          // Get auth token from localStorage if available
+          const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+          const response = await fetch('/api/relationships/analyze', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+              context,
+              useAI,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Analysis failed');
+          }
+
+          const data = await response.json();
+          set({
+            relationships: data.relationships || [],
+            warnings: data.warnings || [],
+            isAnalyzing: false,
+          });
+        } catch (error) {
+          console.error('Failed to analyze dependencies:', error);
+          set({
+            error: 'Failed to analyze dependencies',
+            isAnalyzing: false,
+          });
+        }
+      },
+
+      acceptSuggestion: (relationshipId, suggestionId) =>
+        set((state) => {
+          if (!state.serverConfig) return state;
+
+          // Find the suggestion
+          const relationship = state.relationships.find((r) =>
+            `${r.type}-${r.sourceId}` === relationshipId
+          );
+
+          if (!relationship) return state;
+
+          const suggestion = relationship.suggestions.find((s) => s.id === suggestionId);
+          if (!suggestion) return state;
+
+          // Import the suggestion as a tool or resource
+          const newServerConfig = { ...state.serverConfig };
+
+          if (suggestion.type === 'tool') {
+            // Find the tool template
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const { toolTemplates } = require('@/lib/tool-templates');
+            const template = toolTemplates.find(
+              (t: { tool: { id: string } }) => t.tool.id === suggestion.id
+            );
+            if (template) {
+              const existingIds = new Set(newServerConfig.tools.map((t) => t.id));
+              const toolToAdd = existingIds.has(template.tool.id)
+                ? { ...template.tool, id: `${template.tool.id}_${generateId().slice(0, 8)}` }
+                : template.tool;
+              newServerConfig.tools = [...newServerConfig.tools, toolToAdd];
+            }
+          } else if (suggestion.type === 'resource') {
+            // Find the resource template
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const { resourceTemplates } = require('@/lib/resource-templates');
+            const template = resourceTemplates.find(
+              (r: { resource: { id: string } }) => r.resource.id === suggestion.id
+            );
+            if (template) {
+              const existingResources = newServerConfig.resources || [];
+              const existingIds = new Set(existingResources.map((r) => r.id));
+              const resourceToAdd = existingIds.has(template.resource.id)
+                ? { ...template.resource, id: `${template.resource.id}_${generateId().slice(0, 8)}` }
+                : template.resource;
+              newServerConfig.resources = [...existingResources, resourceToAdd];
+            }
+          }
+
+          // Remove the accepted suggestion from relationships
+          const updatedRelationships = state.relationships.map((r) => {
+            if (`${r.type}-${r.sourceId}` === relationshipId) {
+              return {
+                ...r,
+                suggestions: r.suggestions.filter((s) => s.id !== suggestionId),
+              };
+            }
+            return r;
+          }).filter((r) => r.suggestions.length > 0); // Remove empty relationships
+
+          return {
+            serverConfig: newServerConfig,
+            relationships: updatedRelationships,
+          };
+        }),
+
+      dismissRelationship: (relationshipId) =>
+        set((state) => ({
+          relationships: state.relationships.filter(
+            (r) => `${r.type}-${r.sourceId}` !== relationshipId
+          ),
+        })),
     }),
     {
       name: 'server-builder-storage',
