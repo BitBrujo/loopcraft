@@ -103,14 +103,22 @@ export const useServerBuilderStore = create<ServerBuilderStore>()(
         }),
 
       addTool: (tool) =>
-        set((state) => ({
-          serverConfig: state.serverConfig
-            ? {
-                ...state.serverConfig,
-                tools: [...state.serverConfig.tools, tool],
-              }
-            : null,
-        })),
+        set((state) => {
+          if (!state.serverConfig) return { serverConfig: null };
+
+          // Generate unique ID if tool with same ID already exists
+          const existingIds = new Set(state.serverConfig.tools.map((t) => t.id));
+          const toolToAdd = existingIds.has(tool.id)
+            ? { ...tool, id: `${tool.id}_${generateId().slice(0, 8)}` }
+            : tool;
+
+          return {
+            serverConfig: {
+              ...state.serverConfig,
+              tools: [...state.serverConfig.tools, toolToAdd],
+            },
+          };
+        }),
 
       updateTool: (id, updates) =>
         set((state) => ({

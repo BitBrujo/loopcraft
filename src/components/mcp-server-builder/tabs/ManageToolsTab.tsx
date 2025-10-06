@@ -118,10 +118,18 @@ export function ManageToolsTab() {
 
         <div className="p-3 space-y-2">
           {tools.map((tool) => (
-            <button
+            <div
               key={tool.id}
+              role="button"
+              tabIndex={0}
               onClick={() => handleSelectTool(tool.id)}
-              className={`w-full text-left p-3 rounded-lg border transition-all ${
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSelectTool(tool.id);
+                }
+              }}
+              className={`w-full text-left p-3 rounded-lg border transition-all cursor-pointer ${
                 activeTool?.id === tool.id
                   ? 'bg-orange-500/10 border-orange-500'
                   : 'hover:bg-muted/50 border-transparent'
@@ -146,7 +154,7 @@ export function ManageToolsTab() {
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       </div>
