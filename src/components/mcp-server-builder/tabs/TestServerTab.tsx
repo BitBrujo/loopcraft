@@ -22,13 +22,14 @@ export function TestServerTab() {
   const [serverName, setServerName] = useState(serverConfig?.name || "my-mcp-server");
 
   const tools = serverConfig?.tools || [];
+  const resources = serverConfig?.resources || [];
 
-  if (!serverConfig || tools.length === 0) {
+  if (!serverConfig || (tools.length === 0 && resources.length === 0)) {
     return (
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">
-            No tools added. Please add and customize tools first.
+            No items added. Please add resources and tools first.
           </p>
           <Button onClick={() => router.push('/mcp-server-builder')}>
             Go Back
@@ -39,7 +40,7 @@ export function TestServerTab() {
   }
 
   const generateServerCode = () => {
-    // Generate MCP server code with ALL tools
+    // Generate MCP server code with ALL tools and resources
     const toolSchemas = tools.map(tool => `      {
         name: '${tool.name}',
         description: '${tool.description}',
@@ -82,12 +83,47 @@ ${tool.parameters
   }
 `).join('\n');
 
+    // Generate resource schemas
+    const resourceSchemas = resources.map(resource => `      {
+        uri: '${resource.uri}',
+        name: '${resource.name}',
+        description: '${resource.description}',
+        mimeType: '${resource.mimeType}',
+      }`).join(',\n');
+
+    // Generate resource read handlers
+    const resourceHandlers = resources.map(resource => {
+      const uriPattern = resource.uri.replace(/\{[^}]+\}/g, '([^/]+)');
+      const hasVariables = resource.isTemplate && (resource.uriVariables || []).length > 0;
+
+      return `  // Handle ${resource.name}
+  const ${resource.id}Pattern = new RegExp('^${uriPattern}$');
+  if (${resource.id}Pattern.test(request.params.uri)) {
+${hasVariables ? `    const match = request.params.uri.match(${resource.id}Pattern);
+    ${(resource.uriVariables || []).map((v, i) => `const ${v.name} = match[${i + 1}];`).join('\n    ')}
+
+    // TODO: Fetch actual data based on variables
+` : '    // TODO: Fetch actual data\n'}    const mockData = ${JSON.stringify(resource.exampleData || {}, null, 6).split('\n').join('\n    ')};
+
+    return {
+      contents: [
+        {
+          uri: request.params.uri,
+          mimeType: '${resource.mimeType}',
+          text: typeof mockData === 'string' ? mockData : JSON.stringify(mockData, null, 2),
+        },
+      ],
+    };
+  }
+`;
+    }).join('\n');
+
     const code = `#!/usr/bin/env node
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { ListToolsRequestSchema, CallToolRequestSchema, ListResourcesRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { ListToolsRequestSchema, CallToolRequestSchema, ListResourcesRequestSchema, ReadResourceRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
-// Create MCP server with ${tools.length} tool${tools.length > 1 ? 's' : ''}
+// Create MCP server with ${tools.length} tool${tools.length !== 1 ? 's' : ''} and ${resources.length} resource${resources.length !== 1 ? 's' : ''}
 const server = new Server(
   {
     name: '${serverConfig.name}',
@@ -101,27 +137,35 @@ const server = new Server(
   }
 );
 
-// List all tools (${tools.length} total)
+${tools.length > 0 ? `// List all tools (${tools.length} total)
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
 ${toolSchemas}
     ],
   };
-});
+});` : ''}
 
-// Resource list handler (empty - this server provides tools only)
+${resources.length > 0 ? `// List all resources (${resources.length} total)
 server.setRequestHandler(ListResourcesRequestSchema, async () => {
   return {
-    resources: [],
+    resources: [
+${resourceSchemas}
+    ],
   };
-});
+});` : ''}
 
-// Tool handler - handles all ${tools.length} tool${tools.length > 1 ? 's' : ''}
+${tools.length > 0 ? `// Tool handler - handles all ${tools.length} tool${tools.length > 1 ? 's' : ''}
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
 ${toolHandlers}
   throw new Error(\`Unknown tool: \${request.params.name}\`);
-});
+});` : ''}
+
+${resources.length > 0 ? `// Resource read handler - handles all ${resources.length} resource${resources.length > 1 ? 's' : ''}
+server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+${resourceHandlers}
+  throw new Error(\`Unknown resource URI: \${request.params.uri}\`);
+});` : ''}
 
 // Start server
 async function main() {
@@ -216,53 +260,121 @@ main().catch(console.error);
         <div className="bg-card rounded-lg border p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-lg">Server Summary</h3>
-            <div className="bg-orange-500 text-white px-3 py-1 rounded-lg text-sm font-medium">
-              {tools.length} Tool{tools.length > 1 ? 's' : ''}
+            <div className="flex items-center gap-2">
+              {resources.length > 0 && (
+                <div className="bg-blue-500 text-white px-3 py-1 rounded-lg text-sm font-medium">
+                  {resources.length} Resource{resources.length !== 1 ? 's' : ''}
+                </div>
+              )}
+              {tools.length > 0 && (
+                <div className="bg-orange-500 text-white px-3 py-1 rounded-lg text-sm font-medium">
+                  {tools.length} Tool{tools.length !== 1 ? 's' : ''}
+                </div>
+              )}
             </div>
           </div>
 
           <div className="space-y-4">
-            {tools.map((tool) => (
-              <div key={tool.id} className="bg-muted/30 rounded-lg p-4 border">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <div className="font-mono font-semibold">{tool.name}</div>
-                    <div className="text-sm text-muted-foreground mt-1">{tool.description}</div>
-                  </div>
-                </div>
-
-                <div className="mt-3">
-                  <div className="text-xs text-muted-foreground mb-1">
-                    Parameters ({tool.parameters.length})
-                  </div>
-                  {tool.parameters.length === 0 ? (
-                    <div className="text-xs italic text-muted-foreground">No parameters</div>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {tool.parameters.map((param, i) => (
-                        <div
-                          key={i}
-                          className="bg-background px-2 py-1 rounded text-xs flex items-center gap-1"
-                        >
-                          <span className="font-mono">{param.name}</span>
-                          <span className="text-muted-foreground">({param.type})</span>
-                          {param.required && (
-                            <span className="text-destructive">*</span>
-                          )}
-                        </div>
-                      ))}
+            {/* Resources Section */}
+            {resources.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-3">RESOURCES</h4>
+                {resources.map((resource) => (
+                  <div key={resource.id} className="bg-blue-500/5 rounded-lg p-4 border border-blue-500/20 mb-3">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <div className="font-mono font-semibold text-sm">{resource.name}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{resource.description}</div>
+                      </div>
                     </div>
-                  )}
-                </div>
 
-                <div className="mt-2">
-                  <div className="text-xs text-muted-foreground">Returns</div>
-                  <div className="text-xs bg-background px-2 py-1 rounded inline-block mt-1">
-                    <span className="font-mono">{tool.returnType}</span>
+                    <div className="mt-2">
+                      <div className="text-xs text-muted-foreground mb-1">URI</div>
+                      <div className="text-xs bg-background px-2 py-1 rounded inline-block font-mono">
+                        {resource.uri}
+                      </div>
+                    </div>
+
+                    <div className="mt-2">
+                      <div className="text-xs text-muted-foreground mb-1">MIME Type</div>
+                      <div className="text-xs bg-background px-2 py-1 rounded inline-block">
+                        {resource.mimeType}
+                      </div>
+                    </div>
+
+                    {resource.isTemplate && resource.uriVariables && resource.uriVariables.length > 0 && (
+                      <div className="mt-2">
+                        <div className="text-xs text-muted-foreground mb-1">
+                          URI Variables ({resource.uriVariables.length})
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {resource.uriVariables.map((variable, i) => (
+                            <div
+                              key={i}
+                              className="bg-background px-2 py-1 rounded text-xs flex items-center gap-1"
+                            >
+                              <span className="font-mono">{variable.name}</span>
+                              <span className="text-muted-foreground">({variable.type})</span>
+                              {variable.required && (
+                                <span className="text-destructive">*</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
+            )}
+
+            {/* Tools Section */}
+            {tools.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-orange-600 dark:text-orange-400 mb-3">TOOLS</h4>
+                {tools.map((tool) => (
+                  <div key={tool.id} className="bg-orange-500/5 rounded-lg p-4 border border-orange-500/20 mb-3">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <div className="font-mono font-semibold text-sm">{tool.name}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{tool.description}</div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3">
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Parameters ({tool.parameters.length})
+                      </div>
+                      {tool.parameters.length === 0 ? (
+                        <div className="text-xs italic text-muted-foreground">No parameters</div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {tool.parameters.map((param, i) => (
+                            <div
+                              key={i}
+                              className="bg-background px-2 py-1 rounded text-xs flex items-center gap-1"
+                            >
+                              <span className="font-mono">{param.name}</span>
+                              <span className="text-muted-foreground">({param.type})</span>
+                              {param.required && (
+                                <span className="text-destructive">*</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-2">
+                      <div className="text-xs text-muted-foreground">Returns</div>
+                      <div className="text-xs bg-background px-2 py-1 rounded inline-block mt-1">
+                        <span className="font-mono">{tool.returnType}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

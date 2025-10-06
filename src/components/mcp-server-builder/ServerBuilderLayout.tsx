@@ -2,14 +2,14 @@
 
 import { useServerBuilderStore } from "@/lib/stores/server-builder-store";
 import { TemplateGalleryTab } from "./tabs/TemplateGalleryTab";
-import { ManageToolsTab } from "./tabs/ManageToolsTab";
+import { ManageItemsTab } from "./tabs/ManageItemsTab";
 import { TestServerTab } from "./tabs/TestServerTab";
 import { ChatLayout } from "@/components/chat/ChatLayout";
 import type { TabId } from "@/types/server-builder";
 
 const tabs: Array<{ id: TabId; label: string }> = [
   { id: 'templates', label: 'Browse Categories' },
-  { id: 'customize', label: 'Manage Tools' },
+  { id: 'customize', label: 'Manage Items' },
   { id: 'test', label: 'Test Server' },
 ];
 
@@ -21,7 +21,7 @@ export function ServerBuilderLayout() {
       case 'templates':
         return <TemplateGalleryTab />;
       case 'customize':
-        return <ManageToolsTab />;
+        return <ManageItemsTab />;
       case 'test':
         return <TestServerTab />;
       default:
@@ -30,6 +30,7 @@ export function ServerBuilderLayout() {
   };
 
   const tools = serverConfig?.tools || [];
+  const resources = serverConfig?.resources || [];
 
   return (
     <ChatLayout>

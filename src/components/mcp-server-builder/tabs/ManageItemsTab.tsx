@@ -100,20 +100,54 @@ export function ManageItemsTab() {
     handleUpdateActiveTool({ parameters: updatedParams });
   };
 
+  // Resource handlers
+  const handleUpdateActiveResource = (updates: Partial<ResourceDefinition>) => {
+    if (!activeResource) return;
+    const updatedResource = { ...activeResource, ...updates } as ResourceDefinition;
+    setActiveResource(updatedResource);
+    updateResource(activeResource.id, updates);
+  };
+
+  const handleAddURIVariable = () => {
+    if (!activeResource) return;
+    const newVariable: ResourceVariable = {
+      name: 'new_variable',
+      type: 'string',
+      description: 'New URI variable',
+      required: false,
+    };
+    handleUpdateActiveResource({
+      uriVariables: [...(activeResource.uriVariables || []), newVariable],
+    });
+  };
+
+  const handleUpdateURIVariable = (index: number, updates: Partial<ResourceVariable>) => {
+    if (!activeResource) return;
+    const updatedVars = [...(activeResource.uriVariables || [])];
+    updatedVars[index] = { ...updatedVars[index], ...updates };
+    handleUpdateActiveResource({ uriVariables: updatedVars });
+  };
+
+  const handleRemoveURIVariable = (index: number) => {
+    if (!activeResource) return;
+    const updatedVars = (activeResource.uriVariables || []).filter((_, i) => i !== index);
+    handleUpdateActiveResource({ uriVariables: updatedVars });
+  };
+
   const handleContinueToTest = () => {
     setActiveTab('test');
   };
 
-  const handleAddMoreTools = () => {
+  const handleAddMoreItems = () => {
     setActiveTab('templates');
   };
 
-  if (tools.length === 0) {
+  if (tools.length === 0 && resources.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">
-            No tools added yet. Browse categories to add tools to your server.
+            No items added yet. Browse categories to add resources and tools to your server.
           </p>
           <Button onClick={() => setActiveTab('templates')}>
             Browse Categories
@@ -130,86 +164,338 @@ export function ManageItemsTab() {
         <div className="flex items-center justify-between px-6 py-3">
           <Button
             variant="outline"
-            onClick={handleAddMoreTools}
+            onClick={handleAddMoreItems}
             size="default"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Add More Tools
+            Add More Items
           </Button>
-          <Button
-            onClick={handleContinueToTest}
-            size="default"
-            className="gap-2"
-          >
-            <CheckCircle className="h-5 w-5" />
-            Continue to Test
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+              <Button
+                variant={viewType === 'resources' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewType('resources')}
+                className="gap-1.5"
+              >
+                <Database className="h-4 w-4" />
+                Resources ({resources.length})
+              </Button>
+              <Button
+                variant={viewType === 'tools' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewType('tools')}
+                className="gap-1.5"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Tools ({tools.length})
+              </Button>
+            </div>
+            <Button
+              onClick={handleContinueToTest}
+              size="default"
+              className="gap-2"
+            >
+              <CheckCircle className="h-5 w-5" />
+              Continue to Test
+            </Button>
+          </div>
         </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar - Tool List */}
+        {/* Left Sidebar - Item List */}
         <div className="w-80 border-r bg-card overflow-y-auto">
         <div className="sticky top-0 bg-card border-b p-4 z-10">
-          <h3 className="font-semibold text-lg mb-2">Server Tools ({tools.length})</h3>
+          <h3 className="font-semibold text-lg mb-2">
+            {viewType === 'tools' ? `Server Tools (${tools.length})` : `Server Resources (${resources.length})`}
+          </h3>
           <p className="text-xs text-muted-foreground">
-            Click a tool to edit its configuration
+            Click {viewType === 'tools' ? 'a tool' : 'a resource'} to edit its configuration
           </p>
         </div>
 
         <div className="p-3 space-y-2">
-          {tools.map((tool) => (
-            <div
-              key={tool.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => handleSelectTool(tool.id)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleSelectTool(tool.id);
-                }
-              }}
-              className={`w-full text-left p-3 rounded-lg border transition-all cursor-pointer ${
-                activeTool?.id === tool.id
-                  ? 'bg-orange-500/10 border-orange-500'
-                  : 'hover:bg-muted/50 border-transparent'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">{tool.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {tool.parameters.length} param{tool.parameters.length !== 1 ? 's' : ''}
+          {viewType === 'tools' ? (
+            tools.map((tool) => (
+              <div
+                key={tool.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => handleSelectTool(tool.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSelectTool(tool.id);
+                  }
+                }}
+                className={`w-full text-left p-3 rounded-lg border transition-all cursor-pointer ${
+                  activeTool?.id === tool.id
+                    ? 'bg-orange-500/10 border-orange-500'
+                    : 'hover:bg-muted/50 border-transparent'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{tool.name}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {tool.parameters.length} param{tool.parameters.length !== 1 ? 's' : ''}
+                    </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveTool(tool.id);
+                    }}
+                    className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveTool(tool.id);
-                  }}
-                  className="text-destructive hover:text-destructive h-8 w-8 p-0"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            resources.map((resource) => (
+              <div
+                key={resource.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => handleSelectResource(resource.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSelectResource(resource.id);
+                  }
+                }}
+                className={`w-full text-left p-3 rounded-lg border transition-all cursor-pointer ${
+                  activeResource?.id === resource.id
+                    ? 'bg-blue-500/10 border-blue-500'
+                    : 'hover:bg-muted/50 border-transparent'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{resource.name}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {resource.uri}
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveResource(resource.id);
+                    }}
+                    className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
-      {/* Right Panel - Tool Editor */}
+      {/* Right Panel - Editor */}
       <div className="flex-1 overflow-y-auto p-6">
-        {!activeTool ? (
+        {!activeTool && !activeResource ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-muted-foreground">
               <Edit className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>Select a tool from the list to edit</p>
+              <p>Select {viewType === 'tools' ? 'a tool' : 'a resource'} from the list to edit</p>
             </div>
           </div>
-        ) : (
+        ) : activeResource ? (
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">Customize Resource</h2>
+                <p className="text-muted-foreground">
+                  Click on any field to edit. Changes are saved automatically.
+                </p>
+              </div>
+            </div>
+
+            {/* Resource Name */}
+            <div className="mb-6">
+              <label className="text-sm font-medium mb-2 block">Resource Name</label>
+              {editingField === 'resource-name' ? (
+                <Input
+                  autoFocus
+                  value={activeResource.name}
+                  onChange={(e) => handleUpdateActiveResource({ name: e.target.value })}
+                  onBlur={() => setEditingField(null)}
+                  onKeyDown={(e) => e.key === 'Enter' && setEditingField(null)}
+                />
+              ) : (
+                <div
+                  onClick={() => setEditingField('resource-name')}
+                  className="p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                >
+                  {activeResource.name}
+                </div>
+              )}
+            </div>
+
+            {/* Resource URI */}
+            <div className="mb-6">
+              <label className="text-sm font-medium mb-2 block">Resource URI</label>
+              {editingField === 'resource-uri' ? (
+                <Input
+                  autoFocus
+                  value={activeResource.uri}
+                  onChange={(e) => handleUpdateActiveResource({ uri: e.target.value })}
+                  onBlur={() => setEditingField(null)}
+                  onKeyDown={(e) => e.key === 'Enter' && setEditingField(null)}
+                  placeholder="e.g., schema://forms/contact or products://{category}"
+                />
+              ) : (
+                <div
+                  onClick={() => setEditingField('resource-uri')}
+                  className="p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors font-mono text-sm"
+                >
+                  {activeResource.uri}
+                </div>
+              )}
+            </div>
+
+            {/* Resource Description */}
+            <div className="mb-6">
+              <label className="text-sm font-medium mb-2 block">Description</label>
+              {editingField === 'resource-description' ? (
+                <Textarea
+                  autoFocus
+                  value={activeResource.description}
+                  onChange={(e) => handleUpdateActiveResource({ description: e.target.value })}
+                  onBlur={() => setEditingField(null)}
+                  rows={3}
+                />
+              ) : (
+                <div
+                  onClick={() => setEditingField('resource-description')}
+                  className="p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors min-h-[80px]"
+                >
+                  {activeResource.description}
+                </div>
+              )}
+            </div>
+
+            {/* MIME Type */}
+            <div className="mb-6">
+              <label className="text-sm font-medium mb-2 block">MIME Type</label>
+              {editingField === 'resource-mime' ? (
+                <Input
+                  autoFocus
+                  value={activeResource.mimeType}
+                  onChange={(e) => handleUpdateActiveResource({ mimeType: e.target.value })}
+                  onBlur={() => setEditingField(null)}
+                  onKeyDown={(e) => e.key === 'Enter' && setEditingField(null)}
+                  placeholder="e.g., application/json, text/plain"
+                />
+              ) : (
+                <div
+                  onClick={() => setEditingField('resource-mime')}
+                  className="p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                >
+                  {activeResource.mimeType}
+                </div>
+              )}
+            </div>
+
+            {/* Template Toggle */}
+            <div className="mb-6">
+              <label className="text-sm font-medium mb-2 block">Template Resource</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={activeResource.isTemplate}
+                  onChange={(e) => handleUpdateActiveResource({ isTemplate: e.target.checked })}
+                  className="h-4 w-4"
+                />
+                <span className="text-sm text-muted-foreground">
+                  URI contains variables like {`{category}`}
+                </span>
+              </div>
+            </div>
+
+            {/* URI Variables (if template) */}
+            {activeResource.isTemplate && (
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-sm font-medium">URI Variables</label>
+                  <Button onClick={handleAddURIVariable} size="sm" variant="outline">
+                    <Plus className="h-4 w-4 mr-1.5" />
+                    Add Variable
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {(activeResource.uriVariables || []).map((variable, index) => (
+                    <div key={index} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">Variable {index + 1}</span>
+                        <Button
+                          onClick={() => handleRemoveURIVariable(index)}
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1 block">Name</label>
+                          <Input
+                            value={variable.name}
+                            onChange={(e) => handleUpdateURIVariable(index, { name: e.target.value })}
+                            placeholder="category"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1 block">Type</label>
+                          <Select
+                            value={variable.type}
+                            onValueChange={(value) => handleUpdateURIVariable(index, { type: value as ResourceVariableType })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="string">String</SelectItem>
+                              <SelectItem value="number">Number</SelectItem>
+                              <SelectItem value="boolean">Boolean</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">Description</label>
+                        <Input
+                          value={variable.description}
+                          onChange={(e) => handleUpdateURIVariable(index, { description: e.target.value })}
+                          placeholder="Product category"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={variable.required}
+                          onChange={(e) => handleUpdateURIVariable(index, { required: e.target.checked })}
+                          className="h-4 w-4"
+                        />
+                        <span className="text-sm">Required</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : activeTool ? (
           <div className="max-w-4xl mx-auto">
             <div className="mb-6 flex items-center justify-between">
               <div>
