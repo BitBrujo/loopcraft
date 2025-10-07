@@ -1,16 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Download, RotateCcw, RefreshCw, FolderOpen, File } from "lucide-react";
+import { Save, RotateCcw, RefreshCw, FolderOpen, File } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { generateId } from "@/lib/utils";
 import { ConfigPanel } from "./ConfigPanel";
-import { ExportDialog } from "./ExportDialog";
 import { SaveDialog } from "./SaveDialog";
 import { LoadDialog } from "./LoadDialog";
-import { ConfigurationTab } from "./tabs/ConfigurationTab";
 import { DesignTab } from "./tabs/DesignTab";
-import { DefineToolsTab } from "./tabs/DefineToolsTab";
 import { ActionsTab } from "./tabs/ActionsTab";
 import { GenerateTab } from "./tabs/GenerateTab";
 import { TestTab } from "./tabs/TestTab";
@@ -33,16 +30,13 @@ import {
 import type { TabId } from "@/types/ui-builder";
 
 const allTabs: Array<{ id: TabId; label: string }> = [
-  { id: 'config', label: 'Config' },
   { id: 'design', label: 'Design' },
-  { id: 'tools', label: 'Define Tools' },
   { id: 'actions', label: 'Actions' },
   { id: 'generate', label: 'Generate' },
   { id: 'test', label: 'Test' },
 ];
 
 export function BuilderLayout() {
-  const [showExportDialog, setShowExportDialog] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showLoadDialog, setShowLoadDialog] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
@@ -61,7 +55,6 @@ export function BuilderLayout() {
     clearActionMappings,
     setTestConfig,
     setValidationStatus,
-    uiMode,
   } = useUIBuilderStore();
 
   // Migration: Fix duplicate mapping IDs on component mount
@@ -123,32 +116,6 @@ export function BuilderLayout() {
     setShowResetConfirmation(false);
   };
 
-  const handleExport = () => {
-    if (!currentResource) {
-      setError("No resource to export");
-      return;
-    }
-
-    // Validate basic requirements
-    if (!currentResource.content || !currentResource.content.trim()) {
-      setError("Resource content is empty");
-      return;
-    }
-
-    if (!currentResource.uri.startsWith("ui://")) {
-      setError("Resource URI must start with 'ui://'");
-      return;
-    }
-
-    // Show warning if validation errors exist but allow export anyway
-    const hasErrors = validationStatus.missingMappings.length > 0 || validationStatus.typeMismatches.length > 0;
-    if (hasErrors) {
-      console.warn("Exporting with validation errors:", validationStatus);
-    }
-
-    setShowExportDialog(true);
-  };
-
   const handleSave = () => {
     if (!currentResource) {
       setError("No resource to save");
@@ -161,14 +128,9 @@ export function BuilderLayout() {
     setShowLoadDialog(true);
   };
 
-  // Filter tabs based on UI mode
-  const tabs = uiMode === 'readonly'
-    ? allTabs.filter((tab) => tab.id !== 'tools' && tab.id !== 'actions')
-    : allTabs;
-
   const getTabProgress = (tabId: TabId): 'completed' | 'current' | 'pending' => {
-    const tabIndex = tabs.findIndex((t) => t.id === tabId);
-    const activeIndex = tabs.findIndex((t) => t.id === activeTab);
+    const tabIndex = allTabs.findIndex((t) => t.id === tabId);
+    const activeIndex = allTabs.findIndex((t) => t.id === activeTab);
 
     if (tabIndex < activeIndex) return 'completed';
     if (tabIndex === activeIndex) return 'current';
@@ -177,12 +139,8 @@ export function BuilderLayout() {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'config':
-        return <ConfigurationTab />;
       case 'design':
         return <DesignTab />;
-      case 'tools':
-        return <DefineToolsTab />;
       case 'actions':
         return <ActionsTab />;
       case 'generate':
@@ -190,7 +148,7 @@ export function BuilderLayout() {
       case 'test':
         return <TestTab />;
       default:
-        return <ConfigurationTab />;
+        return <DesignTab />;
     }
   };
 
@@ -240,11 +198,6 @@ export function BuilderLayout() {
                   <Save className="h-4 w-4 mr-2" />
                   Save Template
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleExport}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Code
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -255,7 +208,7 @@ export function BuilderLayout() {
           <div className="flex items-center justify-center px-4 py-3">
             {/* Centered Tab Container with Brand Outline */}
             <div className="inline-flex items-center gap-1 p-1 rounded-lg ring-2 ring-primary/60 bg-background/50">
-              {tabs.map((tab) => {
+              {allTabs.map((tab) => {
                 const progress = getTabProgress(tab.id);
                 return (
                   <button
@@ -314,16 +267,6 @@ export function BuilderLayout() {
           )}
         </div>
       </div>
-
-      {/* Export Dialog */}
-      {showExportDialog && (
-        <ExportDialog
-          onClose={() => setShowExportDialog(false)}
-          resource={currentResource}
-          actionMappings={actionMappings}
-          mcpContext={mcpContext}
-        />
-      )}
 
       {/* Save Dialog */}
       {showSaveDialog && (

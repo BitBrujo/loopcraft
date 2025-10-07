@@ -18,7 +18,7 @@ export function TestTab() {
     testServerId,
     startTestServer,
     stopTestServer,
-    uiMode,
+    connectedServerName,
   } = useUIBuilderStore();
 
   const [isExporting, setIsExporting] = useState(false);
@@ -47,14 +47,16 @@ export function TestTab() {
 
     try {
       // Generate server code using shared function
-      const serverCode = generateServerCode(currentResource, customTools, actionMappings, uiMode);
+      const serverCode = generateServerCode(currentResource, customTools, actionMappings);
       const timestamp = Date.now();
-      const serverName = `__test_${timestamp}`;
+      const serverName = connectedServerName
+        ? `${connectedServerName}_ui_test`
+        : `__test_${timestamp}`;
       const fileName = `mcp-ui-test-${timestamp}.js`;
 
       setStatus("Creating temporary server file...");
 
-      // Create temp server via API (we'll use /api/ui-builder/test endpoint)
+      // Create temp server via API with duplication support
       const response = await fetch('/api/ui-builder/test', {
         method: 'POST',
         headers: {
@@ -65,6 +67,7 @@ export function TestTab() {
           serverCode,
           fileName,
           serverName,
+          connectedServerName, // For duplication logic
         }),
       });
 
@@ -73,12 +76,12 @@ export function TestTab() {
         throw new Error(data.error || 'Failed to create test server');
       }
 
-      const { serverId, filePath } = await response.json();
+      const { serverId, filePath, originalServerId, originalServerName } = await response.json();
 
       setStatus("Test server created!");
 
-      // Update store
-      startTestServer(serverName, serverId, filePath);
+      // Update store with original server info
+      startTestServer(serverName, serverId, filePath, originalServerId, originalServerName);
 
       // Navigate to chat after a short delay
       setTimeout(() => {

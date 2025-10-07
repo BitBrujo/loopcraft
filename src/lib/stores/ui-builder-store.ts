@@ -10,7 +10,6 @@ import type {
   TestConfig,
   ValidationStatus,
   CustomTool,
-  UIMode,
 } from '@/types/ui-builder';
 
 interface UIBuilderStore {
@@ -30,9 +29,6 @@ interface UIBuilderStore {
 
   // Active tab
   activeTab: TabId;
-
-  // UI Mode (readonly or interactive)
-  uiMode: UIMode;
 
   // MCP Integration context
   mcpContext: MCPContext;
@@ -57,6 +53,8 @@ interface UIBuilderStore {
   testServerName: string | null;
   testServerId: number | null;
   testServerFile: string | null;
+  originalServerId: number | null; // ID of server that was disabled
+  originalServerName: string | null; // Name of server that was disabled
 
   // Actions - Basic
   setCurrentResource: (resource: UIResource | null) => void;
@@ -83,9 +81,6 @@ interface UIBuilderStore {
 
   // Actions - Tabs
   setActiveTab: (tab: TabId) => void;
-
-  // Actions - UI Mode
-  setUIMode: (mode: UIMode) => void;
 
   // Actions - MCP Context
   setMCPContext: (context: Partial<MCPContext>) => void;
@@ -122,7 +117,7 @@ interface UIBuilderStore {
   clearValidationWarnings: () => void;
 
   // Actions - Test Server
-  startTestServer: (name: string, id: number, file: string) => void;
+  startTestServer: (name: string, id: number, file: string, originalServerId?: number | null, originalServerName?: string | null) => void;
   stopTestServer: () => void;
 }
 
@@ -146,8 +141,7 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
       showPreview: true,
       isLoading: false,
       error: null,
-      activeTab: 'config',
-      uiMode: 'interactive',
+      activeTab: 'design',
       mcpContext: {
         selectedServers: [],
         selectedTools: [],
@@ -170,6 +164,8 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
       testServerName: null,
       testServerId: null,
       testServerFile: null,
+      originalServerId: null,
+      originalServerName: null,
 
       setCurrentResource: (resource) =>
         set({ currentResource: resource }),
@@ -212,7 +208,6 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
       loadTemplate: (template) =>
         set({
           currentResource: template.resource,
-          uiMode: template.uiMode || 'interactive', // Default to interactive if not specified
           previewKey: Date.now(),
         }),
 
@@ -231,9 +226,6 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
 
       setActiveTab: (tab) =>
         set({ activeTab: tab }),
-
-      setUIMode: (mode) =>
-        set({ uiMode: mode }),
 
       setMCPContext: (context) =>
         set((state) => ({
@@ -373,12 +365,14 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
           validationStatus: { ...state.validationStatus, warnings: [] },
         })),
 
-      startTestServer: (name, id, file) =>
+      startTestServer: (name, id, file, originalServerId = null, originalServerName = null) =>
         set({
           isTestServerActive: true,
           testServerName: name,
           testServerId: id,
           testServerFile: file,
+          originalServerId,
+          originalServerName,
         }),
 
       stopTestServer: () =>
@@ -387,6 +381,8 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
           testServerName: null,
           testServerId: null,
           testServerFile: null,
+          originalServerId: null,
+          originalServerName: null,
         }),
     }),
     {
@@ -395,7 +391,6 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         currentResource: state.currentResource,
         showPreview: state.showPreview,
         activeTab: state.activeTab,
-        uiMode: state.uiMode,
         mcpContext: state.mcpContext,
         connectedServerName: state.connectedServerName,
         customTools: state.customTools,

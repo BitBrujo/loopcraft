@@ -15,13 +15,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { serverCode, fileName, serverName } = await req.json();
+    const { serverCode, fileName, serverName, connectedServerName } = await req.json();
 
     if (!serverCode || !fileName || !serverName) {
       return NextResponse.json(
         { error: 'Missing required fields: serverCode, fileName, serverName' },
         { status: 400 }
       );
+    }
+
+    // Handle server duplication if connectedServerName is provided
+    let originalServerId: number | null = null;
+    if (connectedServerName) {
+      // Get original server
+      const originalServer = await query<Array<{ id: number; enabled: boolean }>>(
+        `SELECT id, enabled FROM mcp_servers WHERE user_id = ? AND name = ?`,
+        [user.userId, connectedServerName]
+      );
+
+      if (originalServer.length > 0 && originalServer[0].enabled) {
+        originalServerId = originalServer[0].id;
+        // Disable original server
+        await query(
+          `UPDATE mcp_servers SET enabled = 0 WHERE id = ?`,
+          [originalServerId]
+        );
+      }
     }
 
     // Create temp directory if it doesn't exist
@@ -73,6 +92,8 @@ export async function POST(req: NextRequest) {
       serverId,
       filePath,
       serverName,
+      originalServerId, // ID of disabled server (if duplicating)
+      originalServerName: connectedServerName, // Name of disabled server
     });
   } catch (error) {
     console.error('Error creating test server:', error);

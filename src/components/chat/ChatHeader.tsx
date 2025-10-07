@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "./ThemeToggle";
 import { MobileSidebar } from "./MobileSidebar";
-import { MessageSquare, Settings, User, LogOut, Wrench, PencilRuler, MessageCircle, Wand2 } from "lucide-react";
+import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
+import { MessageSquare, Settings, User, LogOut, Wrench, PencilRuler, MessageCircle, Wand2, Beaker, Check, X, ArrowLeft } from "lucide-react";
 
 export function ChatHeader() {
   const router = useRouter();
@@ -24,6 +25,17 @@ export function ChatHeader() {
   const [user, setUser] = useState<{ id: number; email: string } | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [modelName, setModelName] = useState<string>("Ollama");
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Test server state from UI Builder
+  const {
+    isTestServerActive,
+    testServerName,
+    testServerId,
+    originalServerId,
+    originalServerName,
+    stopTestServer,
+  } = useUIBuilderStore();
 
   useEffect(() => {
     // Check if user is logged in
@@ -62,6 +74,64 @@ export function ChatHeader() {
     setUser(null);
     setIsLoggedIn(false);
     router.push("/login");
+  };
+
+  const handleMakePermanent = async () => {
+    if (!testServerId) return;
+    setIsProcessing(true);
+
+    try {
+      // Delete original server if it was duplicated
+      if (originalServerId) {
+        await fetch(`/api/mcp-servers/${originalServerId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+      }
+
+      // Clear test server state (keep the test server in database)
+      stopTestServer();
+    } catch (error) {
+      console.error('Error making permanent:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleStopTest = async () => {
+    if (!testServerId) return;
+    setIsProcessing(true);
+
+    try {
+      // Delete test server
+      await fetch(`/api/mcp-servers/${testServerId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      // Re-enable original server if it was disabled
+      if (originalServerId) {
+        await fetch(`/api/mcp-servers/${originalServerId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify({ enabled: true }),
+        });
+      }
+
+      // Clear test server state
+      stopTestServer();
+    } catch (error) {
+      console.error('Error stopping test:', error);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const navItems = [
@@ -173,6 +243,59 @@ export function ChatHeader() {
           )}
         </div>
       </div>
+
+      {/* Test Server Banner */}
+      {isTestServerActive && (
+        <div className="border-t bg-blue-50 dark:bg-blue-950/30 px-4 py-2">
+          <div className="flex items-center justify-between max-w-screen-xl mx-auto">
+            <div className="flex items-center gap-3">
+              <Beaker className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <div>
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  🧪 Test Server Active: <span className="font-mono">{testServerName}</span>
+                </p>
+                {originalServerName && (
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    Original server &quot;{originalServerName}&quot; temporarily disabled
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/mcp-ui-builder')}
+                disabled={isProcessing}
+                className="h-8 text-xs"
+              >
+                <ArrowLeft className="h-3 w-3 mr-1" />
+                Back to Builder
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleMakePermanent}
+                disabled={isProcessing}
+                className="h-8 text-xs bg-green-600 hover:bg-green-700"
+              >
+                <Check className="h-3 w-3 mr-1" />
+                Make Permanent
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleStopTest}
+                disabled={isProcessing}
+                className="h-8 text-xs"
+              >
+                <X className="h-3 w-3 mr-1" />
+                Stop Test
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

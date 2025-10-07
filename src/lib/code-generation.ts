@@ -4,7 +4,7 @@
  * Functions for generating TypeScript, JSON, server code, etc.
  */
 
-import type { UIResource, CustomTool, ActionMapping, UIMode } from '@/types/ui-builder';
+import type { UIResource, CustomTool, ActionMapping } from '@/types/ui-builder';
 
 export function generateTypeScriptCode(resource: UIResource): string {
   const contentParam =
@@ -48,14 +48,11 @@ export default uiResource;`;
 export function generateServerCode(
   resource: UIResource,
   customTools: CustomTool[] = [],
-  actionMappings: ActionMapping[] = [],
-  uiMode: UIMode = 'interactive'
+  actionMappings: ActionMapping[] = []
 ): string {
   const serverName = resource.uri.split('/')[2] || 'my-ui-server';
   const agentPlaceholders = resource.templatePlaceholders || [];
-  const modeComment = uiMode === 'readonly'
-    ? '// Read-only UI - Display-only content with no user interactions'
-    : `// Interactive UI - Includes ${customTools.length} custom tool${customTools.length !== 1 ? 's' : ''} for user interactions`;
+  const modeComment = `// Interactive UI - Includes ${customTools.length} custom tool${customTools.length !== 1 ? 's' : ''} for user interactions`;
 
   let code = `import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -319,12 +316,9 @@ export { uiTool, handle_${toolName.replace(/[^a-zA-Z0-9]/g, '_')} };`;
 export function generateQuickStartGuide(
   agentSlots: number,
   userActions: number,
-  tools: number,
-  uiMode: UIMode = 'interactive'
+  tools: number
 ): string {
-  const modeDescription = uiMode === 'readonly'
-    ? 'This is a **read-only UI** designed for display purposes only (dashboards, charts, reports). It does not handle user interactions.'
-    : 'This is an **interactive UI** with user interactions (forms, buttons) that trigger MCP tool calls.';
+  const modeDescription = 'This is an **interactive UI** with user interactions (forms, buttons) that trigger MCP tool calls.';
 
   return `# Quick Start Guide
 

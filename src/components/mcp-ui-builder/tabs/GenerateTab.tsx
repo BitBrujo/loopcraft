@@ -13,7 +13,7 @@ import {
 } from "@/lib/code-generation";
 
 export function GenerateTab() {
-  const { currentResource, customTools, actionMappings, setActiveTab, uiMode } = useUIBuilderStore();
+  const { currentResource, customTools, actionMappings, setActiveTab } = useUIBuilderStore();
   const [copiedTab, setCopiedTab] = useState<string | null>(null);
 
   // Calculate statistics
@@ -23,9 +23,9 @@ export function GenerateTab() {
 
   // Generate code using utilities
   const tsCode = currentResource ? generateTypeScriptCode(currentResource) : '// No resource';
-  const serverCode = currentResource ? generateServerCode(currentResource, customTools, actionMappings, uiMode) : '// No resource';
+  const serverCode = currentResource ? generateServerCode(currentResource, customTools, actionMappings) : '// No resource';
   const uiToolCode = currentResource ? generateUIToolCode(currentResource) : '// No resource';
-  const quickStartGuide = generateQuickStartGuide(agentSlots, userActions, tools, uiMode);
+  const quickStartGuide = generateQuickStartGuide(agentSlots, userActions, tools);
 
   const handleCopy = (content: string, tab: string) => {
     navigator.clipboard.writeText(content);
