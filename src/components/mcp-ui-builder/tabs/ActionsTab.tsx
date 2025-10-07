@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, AlertCircle, CheckCircle2, Info } from "lucide-react";
+import { ArrowRight, AlertCircle, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { Button } from "@/components/ui/button";
 import { ActionMapper } from "../actions/ActionMapper";
 import { ParameterBindingEditor } from "../actions/ParameterBindingEditor";
+import { CustomToolsEditor } from "../actions/CustomToolsEditor";
 import { validateActionMappingsDebounced, isValidationValid, getValidationSummary } from "@/lib/validation-engine";
 
 export function ActionsTab() {
@@ -19,6 +20,7 @@ export function ActionsTab() {
   } = useUIBuilderStore();
 
   const [selectedMappingId, setSelectedMappingId] = useState<string | null>(null);
+  const [isToolsExpanded, setIsToolsExpanded] = useState(true);
 
   // Auto-validate on changes
   useEffect(() => {
@@ -74,6 +76,30 @@ export function ActionsTab() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      {/* Custom Tools Section - Collapsible */}
+      <div className="border-b">
+        <button
+          onClick={() => setIsToolsExpanded(!isToolsExpanded)}
+          className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-sm">Custom Tools</h3>
+            <span className="text-xs text-muted-foreground">
+              ({customTools.length} defined)
+            </span>
+          </div>
+          {isToolsExpanded ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </button>
+        {isToolsExpanded && (
+          <div className="max-h-[400px] overflow-auto border-t">
+            <CustomToolsEditor />
+          </div>
+        )}
+      </div>
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col overflow-hidden">

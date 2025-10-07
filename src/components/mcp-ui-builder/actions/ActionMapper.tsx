@@ -115,7 +115,7 @@ export function ActionMapper() {
         <div className="text-center space-y-2">
           <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground/50" />
           <p>No custom tools defined</p>
-          <p className="text-sm">Go to the Define Tools tab to create tools for your server</p>
+          <p className="text-sm">Expand the Custom Tools section above to create tools</p>
         </div>
       </div>
     );
