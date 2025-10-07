@@ -17,7 +17,8 @@ import {
   analyzeRelationships,
   validateDependencies,
 } from '@/lib/relationship-mapper';
-import { SchemaGenerator } from '@/lib/conversational-builder/schema-generator';
+// Schema generator was removed - using inline stub for conversational context
+// TODO: Re-implement template matching for conversational builder
 
 // Simple in-memory cache for analysis results (5 minute TTL)
 const analysisCache = new Map<
@@ -70,15 +71,14 @@ export async function POST(request: Request) {
 
     // Handle conversational context
     if (conversationalContext) {
-      const toolMatches = SchemaGenerator.findMatchingTools(conversationalContext);
-      const resourceMatches = SchemaGenerator.findMatchingResources(conversationalContext);
-
+      // TODO: Re-implement template matching for conversational builder
+      // Returning empty matches for now
       return NextResponse.json({
         relationships: [],
         warnings: [],
         templateMatches: {
-          tools: toolMatches,
-          resources: resourceMatches,
+          tools: [],
+          resources: [],
         },
         cached: false,
       });

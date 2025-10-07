@@ -7,114 +7,120 @@ import {
 } from '@/types/conversational-builder';
 
 /**
- * Generates clarifying questions based on conversation context
+ * Generates clarifying questions for UI building based on conversation context
  */
 export class ClarificationEngine {
   /**
-   * Identify missing information and generate questions
+   * Identify missing UI information and generate questions
    */
   static generateQuestions(context: ConversationalContext): ClarificationQuestion[] {
     const questions: ClarificationQuestion[] = [];
 
-    // Check for authentication needs
-    if (this.needsAuthenticationClarification(context)) {
-      questions.push(this.createAuthQuestion(context));
+    // Check for UI type clarification
+    if (this.needsUITypeClarification(context)) {
+      questions.push(this.createUITypeQuestion(context));
     }
 
-    // Check for data structure details
-    if (this.needsDataStructureClarification(context)) {
-      questions.push(...this.createDataStructureQuestions(context));
+    // Check for layout details
+    if (this.needsLayoutClarification(context)) {
+      questions.push(...this.createLayoutQuestions(context));
     }
 
-    // Check for capability details
-    if (this.needsCapabilityClarification(context)) {
-      questions.push(...this.createCapabilityQuestions(context));
+    // Check for styling preferences
+    if (this.needsStylingClarification(context)) {
+      questions.push(...this.createStylingQuestions(context));
     }
 
-    // Check for UI preferences
-    if (this.needsUIPreferencesClarification(context)) {
-      questions.push(...this.createUIPreferenceQuestions(context));
+    // Check for interaction details
+    if (this.needsInteractionClarification(context)) {
+      questions.push(...this.createInteractionQuestions(context));
     }
 
-    // Check for deployment details
-    if (this.needsDeploymentClarification(context)) {
-      questions.push(...this.createDeploymentQuestions(context));
+    // Check for data binding needs
+    if (this.needsDataBindingClarification(context)) {
+      questions.push(...this.createDataBindingQuestions(context));
+    }
+
+    // Check for agent context needs
+    if (this.needsAgentContextClarification(context)) {
+      questions.push(...this.createAgentContextQuestions(context));
     }
 
     return questions;
   }
 
-  // Authentication questions
+  // UI Type questions
 
-  private static needsAuthenticationClarification(context: ConversationalContext): boolean {
-    const { userIntent, detectedEntities } = context;
-
-    // External services likely need auth
-    if (userIntent?.type === 'api' || userIntent?.type === 'database') {
-      const hasAuthEntity = detectedEntities.some(
-        (e) => e.type === 'requirement' && e.value.toLowerCase().includes('auth')
-      );
-      return !hasAuthEntity;
-    }
-
-    return false;
+  private static needsUITypeClarification(context: ConversationalContext): boolean {
+    const { userIntent } = context;
+    return !userIntent || userIntent.type === 'custom';
   }
 
-  private static createAuthQuestion(context: ConversationalContext): ClarificationQuestion {
+  private static createUITypeQuestion(context: ConversationalContext): ClarificationQuestion {
     return {
-      id: 'auth-method',
-      question: 'What authentication method does this service require?',
-      category: 'authentication',
+      id: 'ui-type',
+      question: 'What type of UI component do you need?',
+      category: 'ui_type',
       suggestedAnswers: [
-        'API Key',
-        'Bearer Token',
-        'OAuth 2.0',
-        'Username/Password',
-        'No authentication needed',
+        'Form (collect user input)',
+        'Dashboard (display metrics)',
+        'Table (show data rows)',
+        'Gallery (display images)',
+        'Custom (describe it)',
       ],
       required: true,
     };
   }
 
-  // Data structure questions
+  // Layout questions
 
-  private static needsDataStructureClarification(context: ConversationalContext): boolean {
-    const { userIntent, currentConfig } = context;
+  private static needsLayoutClarification(context: ConversationalContext): boolean {
+    const { detectedEntities, currentUI } = context;
 
-    if (userIntent?.type === 'database' || userIntent?.type === 'api') {
-      return currentConfig.resources.length === 0;
-    }
+    // If we have a UI intent but no layout pattern detected
+    const hasLayoutPattern = detectedEntities.some((e) => e.type === 'layout_pattern');
+    // Handle both string and object content types for backward compatibility
+    const content = currentUI.content;
+    const htmlString = typeof content === 'string'
+      ? content
+      : (content as { htmlString?: string }).htmlString || '';
+    const hasContent = htmlString.length > 100;
 
-    return false;
+    return !hasLayoutPattern && !hasContent;
   }
 
-  private static createDataStructureQuestions(
-    context: ConversationalContext
-  ): ClarificationQuestion[] {
+  private static createLayoutQuestions(context: ConversationalContext): ClarificationQuestion[] {
     const questions: ClarificationQuestion[] = [];
 
-    if (context.userIntent?.type === 'database') {
+    if (context.userIntent?.type === 'form') {
       questions.push({
-        id: 'db-tables',
-        question: 'Which database tables or collections should be accessible?',
-        category: 'data_structure',
-        required: true,
-      });
-
-      questions.push({
-        id: 'db-operations',
-        question: 'What operations do you need?',
-        category: 'data_structure',
-        suggestedAnswers: ['Read only', 'Read and Write', 'Full CRUD'],
+        id: 'form-layout',
+        question: 'What fields should your form include?',
+        category: 'layout',
         required: true,
       });
     }
 
-    if (context.userIntent?.type === 'api') {
+    if (context.userIntent?.type === 'dashboard') {
       questions.push({
-        id: 'api-endpoints',
-        question: 'Which API endpoints should be exposed?',
-        category: 'data_structure',
+        id: 'dashboard-layout',
+        question: 'What should your dashboard display?',
+        category: 'layout',
+        suggestedAnswers: [
+          'Metric cards (numbers and stats)',
+          'Charts and graphs',
+          'Recent activity feed',
+          'All of the above',
+        ],
+        required: true,
+      });
+    }
+
+    if (context.userIntent?.type === 'table') {
+      questions.push({
+        id: 'table-columns',
+        question: 'What columns should your table have?',
+        category: 'layout',
         required: true,
       });
     }
@@ -122,82 +128,139 @@ export class ClarificationEngine {
     return questions;
   }
 
-  // Capability questions
+  // Styling questions
 
-  private static needsCapabilityClarification(context: ConversationalContext): boolean {
-    const { requiredCapabilities, currentConfig } = context;
+  private static needsStylingClarification(context: ConversationalContext): boolean {
+    const { detectedEntities } = context;
 
-    // If we have detected capabilities but no tools, ask for details
-    return requiredCapabilities.length > 0 && currentConfig.tools.length === 0;
+    // Check if styling preferences have been mentioned
+    const hasStylingPref = detectedEntities.some((e) => e.type === 'styling_preference');
+    return !hasStylingPref;
   }
 
-  private static createCapabilityQuestions(
-    context: ConversationalContext
-  ): ClarificationQuestion[] {
-    const questions: ClarificationQuestion[] = [];
-
-    for (const capability of context.requiredCapabilities) {
-      if (!capability.implemented) {
-        questions.push({
-          id: `capability-${capability.id}`,
-          question: `How should the ${capability.name} capability work?`,
-          category: 'capabilities',
-          required: false,
-        });
-      }
-    }
-
-    return questions;
-  }
-
-  // UI preference questions
-
-  private static needsUIPreferencesClarification(context: ConversationalContext): boolean {
-    const { currentConfig } = context;
-
-    // If we have tools but no UI resource, ask about UI needs
-    return currentConfig.tools.length > 0 && !context.conversationHistory.some(
-      (msg) => msg.content.toLowerCase().includes('ui') || msg.content.toLowerCase().includes('form')
-    );
-  }
-
-  private static createUIPreferenceQuestions(
-    context: ConversationalContext
-  ): ClarificationQuestion[] {
+  private static createStylingQuestions(context: ConversationalContext): ClarificationQuestion[] {
     return [
       {
-        id: 'ui-needed',
-        question: 'Would you like to add a user interface for these tools?',
-        category: 'ui_preferences',
-        suggestedAnswers: [
-          'Yes, create a form',
-          'Yes, create a dashboard',
-          'Yes, create a custom UI',
-          'No, API only',
-        ],
+        id: 'theme-preference',
+        question: 'Should the UI support dark mode?',
+        category: 'styling',
+        suggestedAnswers: ['Yes, include dark mode support', 'No, light mode only'],
         required: false,
       },
     ];
   }
 
-  // Deployment questions
+  // Interaction questions
 
-  private static needsDeploymentClarification(context: ConversationalContext): boolean {
-    const { currentConfig } = context;
+  private static needsInteractionClarification(context: ConversationalContext): boolean {
+    const { userIntent, requiredCapabilities } = context;
 
-    // If we have a complete config, ask about deployment
-    return currentConfig.tools.length > 0 && currentConfig.resources.length > 0;
+    // Forms need interaction clarification
+    if (userIntent?.type === 'form') {
+      const hasToolActions = requiredCapabilities.some((c) => c.type === 'tool_actions');
+      return !hasToolActions;
+    }
+
+    return false;
   }
 
-  private static createDeploymentQuestions(
-    context: ConversationalContext
-  ): ClarificationQuestion[] {
+  private static createInteractionQuestions(context: ConversationalContext): ClarificationQuestion[] {
+    const questions: ClarificationQuestion[] = [];
+
+    if (context.userIntent?.type === 'form') {
+      questions.push({
+        id: 'form-action',
+        question: 'What should happen when the form is submitted?',
+        category: 'interactions',
+        suggestedAnswers: [
+          'Send to an API endpoint',
+          'Save to database',
+          'Send an email',
+          'Just show a confirmation',
+        ],
+        required: false,
+      });
+    }
+
+    return questions;
+  }
+
+  // Data binding questions
+
+  private static needsDataBindingClarification(context: ConversationalContext): boolean {
+    const { userIntent, detectedEntities } = context;
+
+    // Dashboards and tables typically need data
+    if (userIntent?.type === 'dashboard' || userIntent?.type === 'table') {
+      const hasDataSource = detectedEntities.some((e) => e.type === 'data_source');
+      return !hasDataSource;
+    }
+
+    return false;
+  }
+
+  private static createDataBindingQuestions(context: ConversationalContext): ClarificationQuestion[] {
+    const questions: ClarificationQuestion[] = [];
+
+    if (context.userIntent?.type === 'dashboard') {
+      questions.push({
+        id: 'dashboard-data-source',
+        question: 'Where will the dashboard data come from?',
+        category: 'data_binding',
+        suggestedAnswers: [
+          'AI agent will provide it (use placeholders)',
+          'Fetch from an API',
+          'Use static demo data',
+        ],
+        required: true,
+      });
+    }
+
+    if (context.userIntent?.type === 'table') {
+      questions.push({
+        id: 'table-data-source',
+        question: 'Where will the table data come from?',
+        category: 'data_binding',
+        suggestedAnswers: [
+          'AI agent will provide it (use placeholders)',
+          'Fetch from an API',
+          'Use static demo data',
+        ],
+        required: true,
+      });
+    }
+
+    return questions;
+  }
+
+  // Agent context questions
+
+  private static needsAgentContextClarification(context: ConversationalContext): boolean {
+    const { currentUI } = context;
+
+    // If we have placeholders but haven't discussed them
+    const hasPlaceholders = (currentUI.templatePlaceholders?.length || 0) > 0;
+    const discussedPlaceholders = context.conversationHistory.some(
+      (msg) => msg.content.toLowerCase().includes('placeholder') ||
+               msg.content.toLowerCase().includes('agent') ||
+               msg.content.toLowerCase().includes('dynamic')
+    );
+
+    return hasPlaceholders && !discussedPlaceholders;
+  }
+
+  private static createAgentContextQuestions(context: ConversationalContext): ClarificationQuestion[] {
+    const placeholders = context.currentUI.templatePlaceholders || [];
+
+    if (placeholders.length === 0) return [];
+
     return [
       {
-        id: 'server-name',
-        question: 'What should we name this MCP server?',
-        category: 'deployment',
-        required: true,
+        id: 'agent-placeholders',
+        question: `Your UI uses placeholders (${placeholders.slice(0, 3).join(', ')})${placeholders.length > 3 ? '...' : ''}. The AI agent will fill these in when rendering. Is this correct?`,
+        category: 'agent_context',
+        suggestedAnswers: ['Yes, that is what I want', 'No, use static content instead'],
+        required: false,
       },
     ];
   }
@@ -211,51 +274,84 @@ export class ClarificationEngine {
   ): { entities?: DetectedEntity[]; capabilities?: Capability[] } {
     const result: { entities?: DetectedEntity[]; capabilities?: Capability[] } = {};
 
-    // Parse authentication answers
-    if (questionId === 'auth-method') {
-      result.entities = [
-        {
-          type: 'requirement',
-          value: answer,
-          context: 'authentication method',
-        },
-      ];
+    // Parse UI type answers
+    if (questionId === 'ui-type') {
+      if (answer.toLowerCase().includes('form')) {
+        result.entities = [{ type: 'ui_component', value: 'form' }];
+      } else if (answer.toLowerCase().includes('dashboard')) {
+        result.entities = [{ type: 'ui_component', value: 'dashboard' }];
+      } else if (answer.toLowerCase().includes('table')) {
+        result.entities = [{ type: 'ui_component', value: 'table' }];
+      } else if (answer.toLowerCase().includes('gallery')) {
+        result.entities = [{ type: 'ui_component', value: 'gallery' }];
+      }
     }
 
-    // Parse operation type answers
-    if (questionId === 'db-operations') {
+    // Parse layout answers
+    if (questionId === 'form-layout') {
+      const fields: DetectedEntity[] = [];
+      const commonFields = ['name', 'email', 'password', 'phone', 'message', 'subject'];
+
+      for (const field of commonFields) {
+        if (answer.toLowerCase().includes(field)) {
+          fields.push({ type: 'form_field', value: field });
+        }
+      }
+
+      result.entities = fields;
+    }
+
+    // Parse dashboard layout answers
+    if (questionId === 'dashboard-layout') {
+      const entities: DetectedEntity[] = [];
+
+      if (answer.toLowerCase().includes('metric') || answer.toLowerCase().includes('card')) {
+        entities.push({ type: 'ui_component', value: 'card' });
+      }
+      if (answer.toLowerCase().includes('chart') || answer.toLowerCase().includes('graph')) {
+        entities.push({ type: 'ui_component', value: 'chart' });
+      }
+
+      result.entities = entities;
+    }
+
+    // Parse styling answers
+    if (questionId === 'theme-preference') {
+      if (answer.toLowerCase().includes('dark')) {
+        result.entities = [{ type: 'styling_preference', value: 'dark-mode' }];
+      }
+    }
+
+    // Parse interaction answers
+    if (questionId === 'form-action') {
       const capabilities: Capability[] = [];
-      if (answer.toLowerCase().includes('read')) {
+
+      if (answer.toLowerCase().includes('api') ||
+          answer.toLowerCase().includes('database') ||
+          answer.toLowerCase().includes('email')) {
         capabilities.push({
-          id: 'read',
-          name: 'Read Data',
-          type: 'CRUD',
+          id: 'tool-actions',
+          name: 'Tool Integration',
+          type: 'tool_actions',
           implemented: false,
         });
       }
-      if (answer.toLowerCase().includes('write') || answer.toLowerCase().includes('crud')) {
-        capabilities.push(
-          {
-            id: 'create',
-            name: 'Create Data',
-            type: 'CRUD',
-            implemented: false,
-          },
-          {
-            id: 'update',
-            name: 'Update Data',
-            type: 'CRUD',
-            implemented: false,
-          },
-          {
-            id: 'delete',
-            name: 'Delete Data',
-            type: 'CRUD',
-            implemented: false,
-          }
-        );
-      }
+
       result.capabilities = capabilities;
+    }
+
+    // Parse data binding answers
+    if (questionId === 'dashboard-data-source' || questionId === 'table-data-source') {
+      if (answer.toLowerCase().includes('agent') || answer.toLowerCase().includes('placeholder')) {
+        result.capabilities = [
+          {
+            id: 'agent-context',
+            name: 'Dynamic Placeholders',
+            type: 'agent_context',
+            implemented: false,
+          },
+        ];
+      }
     }
 
     return result;

@@ -68,7 +68,7 @@ export function ConversationPanel({
       <div className="p-4 border-b border-border">
         <h2 className="text-lg font-semibold">Conversation</h2>
         <p className="text-sm text-muted-foreground">
-          Describe what your MCP server should do
+          Describe the UI component you want to create
         </p>
       </div>
 
@@ -78,12 +78,13 @@ export function ConversationPanel({
           {messages.length === 0 && (
             <Card className="p-4 bg-muted/50">
               <p className="text-sm text-muted-foreground">
-                👋 Hi! I&apos;ll help you build an MCP server. Tell me what you need:
+                👋 Hi! I&apos;ll help you build MCP-UI components. Tell me what you need:
               </p>
               <ul className="mt-2 text-sm text-muted-foreground space-y-1">
-                <li>• &quot;I need a server for PostgreSQL database access&quot;</li>
-                <li>• &quot;Create a file upload system&quot;</li>
-                <li>• &quot;Build an API wrapper for our REST service&quot;</li>
+                <li>• &quot;Create a contact form with name, email, and message fields&quot;</li>
+                <li>• &quot;Build a dashboard showing user analytics with charts&quot;</li>
+                <li>• &quot;I need a product gallery with image cards&quot;</li>
+                <li>• &quot;Make a login form with username and password&quot;</li>
               </ul>
             </Card>
           )}
@@ -104,14 +105,19 @@ export function ConversationPanel({
                   {message.metadata && (
                     <div className="mt-2 pt-2 border-t border-border/50 text-xs opacity-70">
                       Phase: {message.metadata.phase}
-                      {message.metadata.generatedTools && message.metadata.generatedTools.length > 0 && (
+                      {message.metadata.generatedHTML && (
                         <span className="ml-2">
-                          • {message.metadata.generatedTools.length} tools added
+                          • HTML generated
                         </span>
                       )}
-                      {message.metadata.generatedResources && message.metadata.generatedResources.length > 0 && (
+                      {message.metadata.addedPlaceholders && message.metadata.addedPlaceholders.length > 0 && (
                         <span className="ml-2">
-                          • {message.metadata.generatedResources.length} resources added
+                          • {message.metadata.addedPlaceholders.length} placeholders added
+                        </span>
+                      )}
+                      {message.metadata.addedActions && message.metadata.addedActions.length > 0 && (
+                        <span className="ml-2">
+                          • {message.metadata.addedActions.length} actions added
                         </span>
                       )}
                     </div>

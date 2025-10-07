@@ -35,21 +35,21 @@ export function SuggestionsPanel({
   onDeploy,
   canDeploy = false,
 }: SuggestionsPanelProps) {
-  const phaseConfig = {
+  const phaseConfig: Record<ConversationPhase, { title: string; description: string; color: string }> = {
     discovery: {
       title: '🔍 Discovery',
       description: 'Understanding your needs',
       color: 'bg-blue-500/10 text-blue-500',
     },
-    drafting: {
-      title: '✏️ Drafting',
-      description: 'Building configuration',
-      color: 'bg-yellow-500/10 text-yellow-500',
-    },
-    ui_design: {
+    design: {
       title: '🎨 UI Design',
       description: 'Creating interface',
       color: 'bg-purple-500/10 text-purple-500',
+    },
+    actions: {
+      title: '⚙️ Actions',
+      description: 'Mapping interactions',
+      color: 'bg-indigo-500/10 text-indigo-500',
     },
     refinement: {
       title: '⚡ Refinement',

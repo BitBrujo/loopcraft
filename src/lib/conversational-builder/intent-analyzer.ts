@@ -5,77 +5,104 @@ import {
 } from '@/types/conversational-builder';
 
 /**
- * Analyzes user messages to extract intent, entities, and capabilities
+ * Analyzes user messages to detect UI patterns, extract UI elements, and infer capabilities
  */
 export class IntentAnalyzer {
   /**
-   * Detect user intent from message
+   * Detect UI intent from message
    */
-  static detectIntent(message: string): UserIntent | undefined {
+  static detectUIIntent(message: string): UserIntent | undefined {
     const lowerMessage = message.toLowerCase();
 
-    // Database intent
+    // Form intent
     if (
-      lowerMessage.includes('database') ||
-      lowerMessage.includes('postgresql') ||
-      lowerMessage.includes('mysql') ||
-      lowerMessage.includes('mongo') ||
-      lowerMessage.includes('sql') ||
-      lowerMessage.includes('table')
+      lowerMessage.includes('form') ||
+      lowerMessage.includes('input') ||
+      lowerMessage.includes('submit') ||
+      lowerMessage.includes('field') ||
+      lowerMessage.includes('contact') ||
+      lowerMessage.includes('signup') ||
+      lowerMessage.includes('login') ||
+      lowerMessage.includes('registration') ||
+      lowerMessage.includes('feedback') ||
+      lowerMessage.includes('survey')
     ) {
       return {
-        type: 'database',
-        description: 'Database access and management',
+        type: 'form',
+        description: 'Form for data collection and submission',
         confidence: 0.8,
       };
     }
 
-    // API intent
+    // Dashboard intent
     if (
-      lowerMessage.includes('api') ||
-      lowerMessage.includes('rest') ||
-      lowerMessage.includes('endpoint') ||
-      lowerMessage.includes('http')
+      lowerMessage.includes('dashboard') ||
+      lowerMessage.includes('analytics') ||
+      lowerMessage.includes('metrics') ||
+      lowerMessage.includes('stats') ||
+      lowerMessage.includes('overview') ||
+      lowerMessage.includes('admin panel') ||
+      lowerMessage.includes('control panel')
     ) {
       return {
-        type: 'api',
-        description: 'API integration and access',
+        type: 'dashboard',
+        description: 'Dashboard for data visualization and metrics',
         confidence: 0.8,
       };
     }
 
-    // File system intent
+    // Table intent
     if (
-      lowerMessage.includes('file') ||
-      lowerMessage.includes('upload') ||
-      lowerMessage.includes('download') ||
-      lowerMessage.includes('storage') ||
-      lowerMessage.includes('media')
+      lowerMessage.includes('table') ||
+      lowerMessage.includes('list') ||
+      lowerMessage.includes('directory') ||
+      lowerMessage.includes('grid') ||
+      lowerMessage.includes('rows') ||
+      lowerMessage.includes('data table') ||
+      lowerMessage.includes('user list')
     ) {
       return {
-        type: 'file_system',
-        description: 'File system operations',
+        type: 'table',
+        description: 'Table for displaying structured data',
         confidence: 0.8,
       };
     }
 
-    // Notification intent
+    // Chart intent
     if (
-      lowerMessage.includes('notification') ||
-      lowerMessage.includes('alert') ||
-      lowerMessage.includes('email') ||
-      lowerMessage.includes('message') ||
-      lowerMessage.includes('notify')
+      lowerMessage.includes('chart') ||
+      lowerMessage.includes('graph') ||
+      lowerMessage.includes('visualization') ||
+      lowerMessage.includes('data viz') ||
+      lowerMessage.includes('bar chart') ||
+      lowerMessage.includes('line chart') ||
+      lowerMessage.includes('pie chart')
     ) {
       return {
-        type: 'notification',
-        description: 'Notification and messaging',
+        type: 'chart',
+        description: 'Chart for data visualization',
         confidence: 0.8,
       };
     }
 
-    // Custom/unknown
-    if (lowerMessage.includes('server') || lowerMessage.includes('tool')) {
+    // Gallery intent
+    if (
+      lowerMessage.includes('gallery') ||
+      lowerMessage.includes('images') ||
+      lowerMessage.includes('showcase') ||
+      lowerMessage.includes('portfolio') ||
+      lowerMessage.includes('photo') ||
+      lowerMessage.includes('image grid')
+    ) {
+      return {
+        type: 'gallery',
+        description: 'Gallery for displaying images or media',
+        confidence: 0.8,
+      };
+    }
+
+    // Custom/unknown UI
+    if (lowerMessage.includes('page') || lowerMessage.includes('interface') || lowerMessage.includes('ui')) {
       return {
         type: 'custom',
         description: message,
@@ -87,81 +114,125 @@ export class IntentAnalyzer {
   }
 
   /**
-   * Extract entities from message
+   * Extract UI elements and requirements from message
    */
-  static extractEntities(message: string): DetectedEntity[] {
+  static extractUIElements(message: string): DetectedEntity[] {
     const entities: DetectedEntity[] = [];
     const lowerMessage = message.toLowerCase();
 
-    // Technologies
-    const technologies = [
-      'postgresql',
-      'mysql',
-      'mongodb',
-      'redis',
-      'rest',
-      'graphql',
-      's3',
-      'firebase',
-      'oauth',
+    // UI Components
+    const uiComponents = [
+      'button',
+      'input',
+      'textarea',
+      'select',
+      'checkbox',
+      'radio',
+      'dropdown',
+      'modal',
+      'card',
+      'alert',
+      'badge',
+      'tooltip',
+      'tabs',
+      'accordion',
     ];
-    for (const tech of technologies) {
-      if (lowerMessage.includes(tech)) {
+    for (const component of uiComponents) {
+      if (lowerMessage.includes(component)) {
         entities.push({
-          type: 'technology',
-          value: tech.toUpperCase(),
+          type: 'ui_component',
+          value: component,
         });
       }
     }
 
-    // Data types
-    const dataTypes = ['users', 'orders', 'products', 'customers', 'invoices', 'tasks'];
-    for (const dataType of dataTypes) {
-      if (lowerMessage.includes(dataType)) {
+    // Form Fields
+    const formFields = [
+      'name',
+      'email',
+      'password',
+      'phone',
+      'address',
+      'message',
+      'subject',
+      'date',
+      'time',
+      'file',
+      'image',
+      'username',
+    ];
+    for (const field of formFields) {
+      if (lowerMessage.includes(field)) {
         entities.push({
-          type: 'data_type',
-          value: dataType,
+          type: 'form_field',
+          value: field,
         });
       }
     }
 
-    // Capabilities
-    if (lowerMessage.includes('read') || lowerMessage.includes('get') || lowerMessage.includes('query')) {
+    // Layout Patterns
+    if (lowerMessage.includes('grid') || lowerMessage.includes('columns')) {
       entities.push({
-        type: 'capability',
-        value: 'read',
+        type: 'layout_pattern',
+        value: 'grid',
       });
     }
-    if (lowerMessage.includes('write') || lowerMessage.includes('create') || lowerMessage.includes('insert')) {
+    if (lowerMessage.includes('sidebar')) {
       entities.push({
-        type: 'capability',
-        value: 'write',
+        type: 'layout_pattern',
+        value: 'sidebar',
       });
     }
-    if (lowerMessage.includes('update') || lowerMessage.includes('modify')) {
+    if (lowerMessage.includes('header') || lowerMessage.includes('navbar')) {
       entities.push({
-        type: 'capability',
-        value: 'update',
+        type: 'layout_pattern',
+        value: 'header',
       });
     }
-    if (lowerMessage.includes('delete') || lowerMessage.includes('remove')) {
+    if (lowerMessage.includes('footer')) {
       entities.push({
-        type: 'capability',
-        value: 'delete',
+        type: 'layout_pattern',
+        value: 'footer',
       });
     }
 
-    // Requirements
-    if (lowerMessage.includes('auth') || lowerMessage.includes('authentication')) {
+    // Styling Preferences
+    if (lowerMessage.includes('dark mode') || lowerMessage.includes('dark theme')) {
       entities.push({
-        type: 'requirement',
-        value: 'authentication',
+        type: 'styling_preference',
+        value: 'dark-mode',
       });
     }
-    if (lowerMessage.includes('real-time') || lowerMessage.includes('realtime') || lowerMessage.includes('live')) {
+    if (lowerMessage.includes('responsive') || lowerMessage.includes('mobile')) {
       entities.push({
-        type: 'requirement',
-        value: 'real-time',
+        type: 'styling_preference',
+        value: 'responsive',
+      });
+    }
+    if (lowerMessage.includes('tailwind')) {
+      entities.push({
+        type: 'styling_preference',
+        value: 'tailwind',
+      });
+    }
+
+    // Data Sources (for placeholders)
+    if (lowerMessage.includes('user') || lowerMessage.includes('profile')) {
+      entities.push({
+        type: 'data_source',
+        value: 'user',
+      });
+    }
+    if (lowerMessage.includes('product') || lowerMessage.includes('item')) {
+      entities.push({
+        type: 'data_source',
+        value: 'product',
+      });
+    }
+    if (lowerMessage.includes('metric') || lowerMessage.includes('stat')) {
+      entities.push({
+        type: 'data_source',
+        value: 'metrics',
       });
     }
 
@@ -169,9 +240,9 @@ export class IntentAnalyzer {
   }
 
   /**
-   * Infer required capabilities from intent and entities
+   * Infer required UI capabilities from intent and entities
    */
-  static inferCapabilities(
+  static inferUICapabilities(
     intent: UserIntent | undefined,
     entities: DetectedEntity[]
   ): Capability[] {
@@ -190,61 +261,67 @@ export class IntentAnalyzer {
       }
     };
 
-    // CRUD capabilities from entities
-    for (const entity of entities) {
-      if (entity.type === 'capability') {
-        if (entity.value === 'read') {
-          addCapability('read', 'Read Data', 'CRUD');
-        }
-        if (entity.value === 'write') {
-          addCapability('create', 'Create Data', 'CRUD');
-        }
-        if (entity.value === 'update') {
-          addCapability('update', 'Update Data', 'CRUD');
-        }
-        if (entity.value === 'delete') {
-          addCapability('delete', 'Delete Data', 'CRUD');
-        }
-      }
-      if (entity.type === 'requirement') {
-        if (entity.value === 'authentication') {
-          addCapability('auth', 'Authentication', 'authentication');
-        }
-        if (entity.value === 'real-time') {
-          addCapability('realtime', 'Real-time Updates', 'real_time');
-        }
-      }
+    // Interactive capability from intent
+    if (intent?.type === 'form') {
+      addCapability('interactive', 'Interactive Form', 'interactive');
+      addCapability('tool-actions', 'Form Submission', 'tool_actions');
     }
 
-    // Default capabilities based on intent
-    if (intent?.type === 'database') {
-      addCapability('read', 'Read Data', 'CRUD');
-      addCapability('search', 'Search Data', 'search');
+    // Display-only capability
+    if (intent?.type === 'dashboard' || intent?.type === 'table' || intent?.type === 'gallery') {
+      addCapability('display-only', 'Display Data', 'display_only');
     }
 
-    if (intent?.type === 'file_system') {
-      addCapability('file-upload', 'File Upload', 'file_upload');
-      addCapability('read', 'Read Files', 'CRUD');
+    // Agent context capability from data sources
+    const hasDataSources = entities.some((e) => e.type === 'data_source');
+    if (hasDataSources) {
+      addCapability('agent-context', 'Dynamic Placeholders', 'agent_context');
     }
 
-    if (intent?.type === 'notification') {
-      addCapability('notify', 'Send Notifications', 'custom');
+    // Interactive elements detection
+    const interactiveElements = entities.filter(
+      (e) => e.type === 'ui_component' && ['button', 'input', 'select', 'checkbox'].includes(e.value)
+    );
+    if (interactiveElements.length > 0 && intent?.type !== 'form') {
+      addCapability('interactive', 'Interactive Elements', 'interactive');
+    }
+
+    // Tool actions capability for buttons and forms
+    const hasActionableElements = entities.some(
+      (e) => e.type === 'ui_component' && ['button', 'form'].includes(e.value)
+    );
+    if (hasActionableElements) {
+      addCapability('tool-actions', 'Tool Integration', 'tool_actions');
     }
 
     return Object.values(capabilityMap);
   }
 
   /**
-   * Detect if user is requesting UI
+   * Detect if user wants to add agent placeholders
    */
-  static detectUIRequest(message: string): boolean {
+  static detectPlaceholderRequest(message: string): boolean {
     const lowerMessage = message.toLowerCase();
     return (
-      lowerMessage.includes('ui') ||
-      lowerMessage.includes('interface') ||
-      lowerMessage.includes('form') ||
-      lowerMessage.includes('dashboard') ||
-      lowerMessage.includes('page')
+      lowerMessage.includes('placeholder') ||
+      lowerMessage.includes('dynamic') ||
+      lowerMessage.includes('agent') ||
+      lowerMessage.includes('fill in') ||
+      lowerMessage.includes('populate')
+    );
+  }
+
+  /**
+   * Detect if user wants to add action mappings
+   */
+  static detectActionMappingRequest(message: string): boolean {
+    const lowerMessage = message.toLowerCase();
+    return (
+      lowerMessage.includes('action') ||
+      lowerMessage.includes('submit') ||
+      lowerMessage.includes('click') ||
+      lowerMessage.includes('tool') ||
+      lowerMessage.includes('map')
     );
   }
 

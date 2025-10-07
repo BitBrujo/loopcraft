@@ -6,7 +6,7 @@ import { useConversationState } from '@/lib/stores/conversation-state-store';
 import { ConversationPanel } from '@/components/conversational-builder/ConversationPanel';
 import { LivePreview } from '@/components/conversational-builder/LivePreview';
 import { BuildStatusPanel } from '@/components/conversational-builder/BuildStatusPanel';
-import { SchemaGenerator } from '@/lib/conversational-builder/schema-generator';
+import { UIGenerator } from '@/lib/conversational-builder/ui-generator';
 import { ClarificationEngine } from '@/lib/conversational-builder/clarification-engine';
 import { ConversationalContext } from '@/types/conversational-builder';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,6 @@ export default function ConversationalBuilderPage() {
     capabilities,
     pendingQuestions,
     suggestions,
-    serverConfig,
     uiResource,
     actionMappings,
     customTools,
@@ -40,7 +39,7 @@ export default function ConversationalBuilderPage() {
     clearQuestion,
     setSuggestions,
     acceptSuggestion,
-    updateServerConfig,
+    updateUIResource,
     setUIResource,
     setActionMappings,
     createSnapshot,
@@ -62,8 +61,8 @@ export default function ConversationalBuilderPage() {
       userIntent: intent,
       detectedEntities: entities,
       requiredCapabilities: capabilities,
-      currentConfig: serverConfig,
       currentUI: uiResource,
+      actionMappings: actionMappings,
       conversationHistory: messages,
     };
 
@@ -174,39 +173,37 @@ export default function ConversationalBuilderPage() {
     const suggestion = suggestions.find((s) => s.id === suggestionId);
     if (!suggestion) return;
 
-    // Extract template ID from suggestion ID (format: "tool-{id}" or "resource-{id}")
-    const [type, templateId] = suggestionId.split('-').slice(0, 2);
+    // Extract template ID from suggestion ID (format: "ui_component-{id}")
+    const templateId = suggestionId.replace('ui_component-', '');
 
-    if (type === 'tool') {
-      const tool = SchemaGenerator.templateToTool(templateId);
-      if (tool) {
-        updateServerConfig({
-          tools: [...serverConfig.tools, tool],
-        });
-        // Mark related capabilities as implemented
-        capabilities.forEach((cap) => {
-          if (tool.description.toLowerCase().includes(cap.name.toLowerCase())) {
-            updateCapability(cap.id, { implemented: true });
-          }
-        });
-        createSnapshot();
-      }
-    } else if (type === 'resource') {
-      const resource = SchemaGenerator.templateToResource(templateId);
-      if (resource) {
-        updateServerConfig({
-          resources: [...serverConfig.resources, resource],
-        });
-        createSnapshot();
-      }
+    const newUIResource = UIGenerator.templateToUIResource(templateId);
+    if (newUIResource) {
+      setUIResource(newUIResource);
+
+      // Mark related capabilities as implemented
+      capabilities.forEach((cap) => {
+        const description = newUIResource.metadata?.description;
+        if (typeof description === 'string' && description.toLowerCase().includes(cap.name.toLowerCase())) {
+          updateCapability(cap.id, { implemented: true });
+        }
+      });
+
+      createSnapshot();
     }
 
     acceptSuggestion(suggestionId);
   };
 
   const handleDeploy = async () => {
-    if (!serverConfig.name) {
-      alert('Please name your server first');
+    // Handle both string and object content types for backward compatibility
+    const content = uiResource.content;
+    const htmlContent = typeof content === 'string'
+      ? content
+      : (content as { type?: string; htmlString?: string }).type === 'rawHtml'
+        ? (content as { type?: string; htmlString?: string }).htmlString || ''
+        : '';
+    if (htmlContent.length < 50) {
+      alert('Please create some UI content first');
       return;
     }
 
@@ -221,7 +218,6 @@ export default function ConversationalBuilderPage() {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({
-          serverConfig,
           uiResource,
           actionMappings,
           customTools,
@@ -236,12 +232,12 @@ export default function ConversationalBuilderPage() {
       setDeployedServer(result.serverName);
 
       // Success - redirect to chat or settings
-      alert('Server deployed successfully! You can now test it in chat.');
+      alert('UI deployed successfully! You can now test it in chat.');
       router.push('/');
     } catch (error) {
       console.error('Deployment error:', error);
       setDeploymentError(error instanceof Error ? error.message : 'Deployment failed');
-      alert('Failed to deploy server. Please try again.');
+      alert('Failed to deploy UI. Please try again.');
     } finally {
       setDeploying(false);
     }
@@ -257,10 +253,16 @@ export default function ConversationalBuilderPage() {
     }
   };
 
+  // Handle both string and object content types for backward compatibility
+  const pageContent = uiResource.content;
+  const htmlContent = typeof pageContent === 'string'
+    ? pageContent
+    : (pageContent as { type?: string; htmlString?: string }).type === 'rawHtml'
+      ? (pageContent as { type?: string; htmlString?: string }).htmlString || ''
+      : '';
   const canDeploy =
-    serverConfig.tools.length > 0 &&
-    serverConfig.resources.length > 0 &&
-    serverConfig.name.length > 0 &&
+    htmlContent.length > 50 &&
+    (typeof uiResource.metadata?.title === 'string' ? uiResource.metadata.title.length : 0) > 0 &&
     !isDeploying;
 
   return (
@@ -278,9 +280,9 @@ export default function ConversationalBuilderPage() {
               Back
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">Conversational Builder</h1>
+              <h1 className="text-2xl font-bold">Conversational UI Builder</h1>
               <p className="text-sm text-muted-foreground">
-                Build MCP servers through natural conversation
+                Build MCP-UI components through natural conversation
               </p>
             </div>
           </div>
@@ -311,7 +313,7 @@ export default function ConversationalBuilderPage() {
         />
 
         {/* Center: Live Preview */}
-        <LivePreview serverConfig={serverConfig} uiResource={uiResource} />
+        <LivePreview uiResource={uiResource} />
 
         {/* Right: Build Status */}
         <BuildStatusPanel
@@ -319,7 +321,7 @@ export default function ConversationalBuilderPage() {
           entities={entities}
           capabilities={capabilities}
           suggestions={suggestions}
-          serverConfig={serverConfig}
+          uiResource={uiResource}
           onAcceptSuggestion={handleAcceptSuggestion}
           onDeploy={handleDeploy}
           canDeploy={canDeploy}

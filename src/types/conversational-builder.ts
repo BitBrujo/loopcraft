@@ -1,54 +1,53 @@
-import { ServerConfig, ToolDefinition, ResourceDefinition } from './server-builder';
 import { UIResource, ActionMapping, CustomTool } from './ui-builder';
 
 /**
- * Phase of the conversational building process
+ * Phase of the conversational UI building process
  */
 export type ConversationPhase =
-  | 'discovery'    // Understanding user intent and asking clarifying questions
-  | 'drafting'     // Generating initial tool and resource schemas
-  | 'ui_design'    // Suggesting and creating MCP-UI components
+  | 'discovery'    // Understanding UI requirements and user needs
+  | 'design'       // Generating HTML and UI components
+  | 'actions'      // Mapping interactive elements to tools
   | 'refinement'   // User-requested changes and improvements
   | 'deployment';  // Ready to deploy and test
 
 /**
- * Detected user intent from conversation
+ * Detected UI intent from conversation
  */
 export interface UserIntent {
-  type: 'database' | 'api' | 'file_system' | 'notification' | 'custom';
+  type: 'form' | 'dashboard' | 'table' | 'chart' | 'gallery' | 'custom';
   description: string;
   confidence: number;
 }
 
 /**
- * Extracted entities from user input
+ * Extracted UI elements and requirements from user input
  */
 export interface DetectedEntity {
-  type: 'technology' | 'data_type' | 'capability' | 'requirement';
+  type: 'ui_component' | 'form_field' | 'layout_pattern' | 'styling_preference' | 'data_source';
   value: string;
   context?: string;
 }
 
 /**
- * Required capabilities inferred from conversation
+ * Required UI capabilities inferred from conversation
  */
 export interface Capability {
   id: string;
   name: string;
-  type: 'CRUD' | 'authentication' | 'real_time' | 'file_upload' | 'search' | 'custom';
+  type: 'interactive' | 'display_only' | 'agent_context' | 'tool_actions' | 'custom';
   implemented: boolean;
   suggestions?: string[];
 }
 
 /**
- * Context passed to AI for generating configurations
+ * Context passed to AI for generating UI components
  */
 export interface ConversationalContext {
   userIntent?: UserIntent;
   detectedEntities: DetectedEntity[];
   requiredCapabilities: Capability[];
-  currentConfig: ServerConfig;
-  currentUI?: UIResource;
+  currentUI: UIResource;
+  actionMappings: ActionMapping[];
   conversationHistory: ConversationMessage[];
 }
 
@@ -62,9 +61,9 @@ export interface ConversationMessage {
   timestamp: Date;
   metadata?: {
     phase?: ConversationPhase;
-    generatedTools?: string[];
-    generatedResources?: string[];
-    generatedUI?: boolean;
+    generatedHTML?: boolean;
+    addedPlaceholders?: string[];
+    addedActions?: string[];
     questions?: ClarificationQuestion[]; // Questions embedded in assistant messages
   };
 }
@@ -75,17 +74,17 @@ export interface ConversationMessage {
 export interface ClarificationQuestion {
   id: string;
   question: string;
-  category: 'authentication' | 'data_structure' | 'capabilities' | 'ui_preferences' | 'deployment';
+  category: 'ui_type' | 'layout' | 'styling' | 'interactions' | 'data_binding' | 'agent_context';
   suggestedAnswers?: string[];
   required: boolean;
 }
 
 /**
- * AI-generated suggestion for improving the server
+ * AI-generated suggestion for improving the UI
  */
 export interface BuilderSuggestion {
   id: string;
-  type: 'tool' | 'resource' | 'ui_component' | 'action_mapping' | 'authentication';
+  type: 'ui_component' | 'action_mapping' | 'placeholder' | 'styling' | 'layout';
   title: string;
   description: string;
   confidence: number;
@@ -94,20 +93,19 @@ export interface BuilderSuggestion {
 }
 
 /**
- * Configuration snapshot at a point in the conversation
+ * UI configuration snapshot at a point in the conversation
  */
 export interface ConfigSnapshot {
   id: string;
   timestamp: Date;
   phase: ConversationPhase;
-  serverConfig: ServerConfig;
-  uiResource?: UIResource;
-  actionMappings?: ActionMapping[];
-  customTools?: CustomTool[];
+  uiResource: UIResource;
+  actionMappings: ActionMapping[];
+  customTools: CustomTool[];
 }
 
 /**
- * Complete state of the conversational builder
+ * Complete state of the conversational UI builder
  */
 export interface ConversationState {
   // Conversation tracking
@@ -121,9 +119,8 @@ export interface ConversationState {
   pendingQuestions: ClarificationQuestion[];
   suggestions: BuilderSuggestion[];
 
-  // Generated configuration
-  serverConfig: ServerConfig;
-  uiResource?: UIResource;
+  // Generated UI configuration
+  uiResource: UIResource;
   actionMappings: ActionMapping[];
   customTools: CustomTool[];
 
@@ -147,7 +144,7 @@ export interface ConversationRequest {
 }
 
 /**
- * Response from the conversational builder API
+ * Response from the conversational UI builder API
  */
 export interface ConversationResponse {
   message: string;
@@ -157,18 +154,17 @@ export interface ConversationResponse {
   capabilities?: Capability[];
   questions?: ClarificationQuestion[];
   suggestions?: BuilderSuggestion[];
-  updatedConfig?: ServerConfig;
   updatedUI?: UIResource;
   actionMappings?: ActionMapping[];
 }
 
 /**
- * Template matching result
+ * UI template matching result
  */
 export interface TemplateMatch {
   templateId: string;
   templateName: string;
-  type: 'tool' | 'resource';
+  type: 'ui_component';
   confidence: number;
   reason: string;
 }

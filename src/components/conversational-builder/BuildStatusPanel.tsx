@@ -6,7 +6,7 @@ import {
   DetectedEntity,
   ConversationPhase,
 } from '@/types/conversational-builder';
-import { ServerConfig } from '@/types/server-builder';
+import { UIResource } from '@/types/ui-builder';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,7 @@ interface BuildStatusPanelProps {
   entities: DetectedEntity[];
   capabilities: Capability[];
   suggestions: BuilderSuggestion[];
-  serverConfig: ServerConfig;
+  uiResource: UIResource;
   onAcceptSuggestion: (suggestionId: string) => void;
   onDeploy?: () => void;
   canDeploy?: boolean;
@@ -28,7 +28,7 @@ export function BuildStatusPanel({
   entities,
   capabilities,
   suggestions,
-  serverConfig,
+  uiResource,
   onAcceptSuggestion,
   onDeploy,
   canDeploy = false,
@@ -36,23 +36,23 @@ export function BuildStatusPanel({
   const phaseConfig = {
     discovery: {
       title: '🔍 Discovery',
-      description: 'Understanding your needs',
+      description: 'Understanding your UI needs',
       color: 'bg-blue-500/10 text-blue-500',
     },
-    drafting: {
-      title: '✏️ Drafting',
-      description: 'Building configuration',
-      color: 'bg-yellow-500/10 text-yellow-500',
-    },
-    ui_design: {
-      title: '🎨 UI Design',
-      description: 'Creating interface',
+    design: {
+      title: '🎨 Design',
+      description: 'Generating HTML',
       color: 'bg-purple-500/10 text-purple-500',
     },
-    refinement: {
-      title: '⚡ Refinement',
-      description: 'Improving server',
+    actions: {
+      title: '⚡ Actions',
+      description: 'Mapping interactions',
       color: 'bg-orange-500/10 text-orange-500',
+    },
+    refinement: {
+      title: '✨ Refinement',
+      description: 'Improving UI',
+      color: 'bg-yellow-500/10 text-yellow-500',
     },
     deployment: {
       title: '🚀 Deployment',
@@ -63,12 +63,18 @@ export function BuildStatusPanel({
 
   const currentPhase = phaseConfig[phase];
 
-  // Calculate readiness
-  const hasName = serverConfig.name.length > 0;
-  const hasTools = serverConfig.tools.length > 0;
-  const hasResources = serverConfig.resources.length > 0;
-  const requirementsMet = [hasName, hasTools, hasResources].filter(Boolean).length;
-  const totalRequirements = 3;
+  // Calculate UI readiness
+  // Handle both string and object content types for backward compatibility
+  const content = uiResource.content;
+  const htmlContent = typeof content === 'string'
+    ? content
+    : (content as { type?: string; htmlString?: string }).type === 'rawHtml'
+      ? (content as { type?: string; htmlString?: string }).htmlString || ''
+      : '';
+  const hasHTML = htmlContent.length > 50;
+  const hasTitle = (typeof uiResource.metadata?.title === 'string' ? uiResource.metadata.title.length : 0) > 0;
+  const requirementsMet = [hasHTML, hasTitle].filter(Boolean).length;
+  const totalRequirements = 2;
 
   return (
     <div className="flex flex-col h-full">
@@ -91,7 +97,7 @@ export function BuildStatusPanel({
                 Ready to Deploy! 🎉
               </h3>
               <p className="text-sm text-muted-foreground mb-3">
-                Your MCP server is configured and ready to test.
+                Your UI component is ready to test.
               </p>
               <Button
                 onClick={onDeploy}
@@ -99,7 +105,7 @@ export function BuildStatusPanel({
                 variant="default"
                 size="lg"
               >
-                Deploy & Test Server
+                Deploy & Test UI
               </Button>
             </Card>
           )}
@@ -107,38 +113,27 @@ export function BuildStatusPanel({
           {/* Readiness Checklist */}
           {!canDeploy && (
             <Card className="p-4">
-              <h3 className="font-semibold mb-3">Server Readiness</h3>
+              <h3 className="font-semibold mb-3">UI Readiness</h3>
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
-                  {hasName ? (
+                  {hasTitle ? (
                     <Check className="h-4 w-4 text-green-500" />
                   ) : (
                     <X className="h-4 w-4 text-muted-foreground" />
                   )}
-                  <span className={hasName ? 'text-foreground' : 'text-muted-foreground'}>
-                    Name: {hasName ? `"${serverConfig.name}"` : 'Not set'}
+                  <span className={hasTitle ? 'text-foreground' : 'text-muted-foreground'}>
+                    Title: {hasTitle ? `"${uiResource.metadata?.title}"` : 'Not set'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  {hasTools ? (
+                  {hasHTML ? (
                     <Check className="h-4 w-4 text-green-500" />
                   ) : (
                     <AlertCircle className="h-4 w-4 text-orange-500" />
                   )}
-                  <span className={hasTools ? 'text-foreground' : 'text-muted-foreground'}>
-                    Tools: {serverConfig.tools.length} added
-                    {!hasTools && ' (need at least 1)'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  {hasResources ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4 text-orange-500" />
-                  )}
-                  <span className={hasResources ? 'text-foreground' : 'text-muted-foreground'}>
-                    Resources: {serverConfig.resources.length} added
-                    {!hasResources && ' (need at least 1)'}
+                  <span className={hasHTML ? 'text-foreground' : 'text-muted-foreground'}>
+                    HTML: {hasHTML ? 'Generated' : 'Not yet generated'}
+                    {!hasHTML && ' (need HTML content)'}
                   </span>
                 </div>
               </div>
@@ -160,42 +155,25 @@ export function BuildStatusPanel({
             </Card>
           )}
 
-          {/* Recent Additions */}
-          {(serverConfig.tools.length > 0 || serverConfig.resources.length > 0) && (
+          {/* UI Features */}
+          {hasHTML && (
             <Card className="p-4">
-              <h3 className="font-semibold mb-3 text-sm">Recent Additions</h3>
+              <h3 className="font-semibold mb-3 text-sm">UI Features</h3>
               <div className="space-y-2">
-                {[
-                  ...serverConfig.tools.slice(-3).map((t) => ({
-                    type: 'tool' as const,
-                    name: t.name,
-                    category: t.category,
-                  })),
-                  ...serverConfig.resources.slice(-3).map((r) => ({
-                    type: 'resource' as const,
-                    name: r.name,
-                    category: r.category,
-                  })),
-                ]
-                  .slice(-5)
-                  .reverse()
-                  .map((item, idx) => (
-                    <div
-                      key={`${item.type}-${item.name}-${idx}`}
-                      className="flex items-center justify-between p-2 rounded bg-muted/50 animate-in slide-in-from-right duration-300"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant={item.type === 'tool' ? 'default' : 'secondary'}
-                          className="text-xs"
-                        >
-                          {item.type}
-                        </Badge>
-                        <span className="text-sm">{item.name}</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground">{item.category}</span>
-                    </div>
-                  ))}
+                <div className="flex items-center justify-between p-2 rounded bg-muted/50">
+                  <span className="text-sm">Content Type</span>
+                  <Badge variant="outline" className="text-xs">
+                    {uiResource.contentType}
+                  </Badge>
+                </div>
+                {uiResource.templatePlaceholders && uiResource.templatePlaceholders.length > 0 && (
+                  <div className="flex items-center justify-between p-2 rounded bg-muted/50">
+                    <span className="text-sm">Placeholders</span>
+                    <Badge variant="default" className="text-xs">
+                      {uiResource.templatePlaceholders.length} dynamic
+                    </Badge>
+                  </div>
+                )}
               </div>
             </Card>
           )}
@@ -235,7 +213,7 @@ export function BuildStatusPanel({
             </div>
           )}
 
-          {/* Detected Entities */}
+          {/* Detected Elements */}
           {entities.length > 0 && (
             <div className="space-y-2">
               <h3 className="font-semibold text-sm">Detected</h3>

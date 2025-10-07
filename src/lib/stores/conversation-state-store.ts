@@ -10,7 +10,6 @@ import {
   BuilderSuggestion,
   ConfigSnapshot,
 } from '@/types/conversational-builder';
-import { ServerConfig } from '@/types/server-builder';
 import { UIResource, ActionMapping, CustomTool } from '@/types/ui-builder';
 
 interface ConversationStateStore extends ConversationState {
@@ -32,7 +31,7 @@ interface ConversationStateStore extends ConversationState {
   acceptSuggestion: (id: string) => void;
 
   // Configuration management
-  updateServerConfig: (config: Partial<ServerConfig>) => void;
+  updateUIResource: (updates: Partial<UIResource>) => void;
   setUIResource: (resource: UIResource) => void;
   setActionMappings: (mappings: ActionMapping[]) => void;
   setCustomTools: (tools: CustomTool[]) => void;
@@ -63,12 +62,16 @@ const initialState: ConversationState = {
   capabilities: [],
   pendingQuestions: [],
   suggestions: [],
-  serverConfig: {
-    name: '',
-    description: '',
-    tools: [],
-    resources: [],
-    transportType: 'stdio' as const,
+  uiResource: {
+    uri: 'ui://conversational-builder/initial',
+    contentType: 'rawHtml',
+    content: '',
+    preferredSize: { width: 800, height: 600 },
+    templatePlaceholders: [],
+    metadata: {
+      title: 'New UI Component',
+      description: '',
+    },
   },
   actionMappings: [],
   customTools: [],
@@ -133,9 +136,9 @@ export const useConversationState = create<ConversationStateStore>((set, get) =>
   },
 
   // Configuration management
-  updateServerConfig: (config) =>
+  updateUIResource: (updates) =>
     set((state) => ({
-      serverConfig: { ...state.serverConfig, ...config },
+      uiResource: { ...state.uiResource, ...updates },
     })),
 
   setUIResource: (resource) => set({ uiResource: resource }),
@@ -151,8 +154,7 @@ export const useConversationState = create<ConversationStateStore>((set, get) =>
       id: generateId(),
       timestamp: new Date(),
       phase: state.currentPhase,
-      serverConfig: JSON.parse(JSON.stringify(state.serverConfig)),
-      uiResource: state.uiResource ? JSON.parse(JSON.stringify(state.uiResource)) : undefined,
+      uiResource: JSON.parse(JSON.stringify(state.uiResource)),
       actionMappings: JSON.parse(JSON.stringify(state.actionMappings)),
       customTools: JSON.parse(JSON.stringify(state.customTools)),
     };
@@ -171,8 +173,7 @@ export const useConversationState = create<ConversationStateStore>((set, get) =>
     if (snapshot) {
       set({
         currentPhase: snapshot.phase,
-        serverConfig: JSON.parse(JSON.stringify(snapshot.serverConfig)),
-        uiResource: snapshot.uiResource ? JSON.parse(JSON.stringify(snapshot.uiResource)) : undefined,
+        uiResource: JSON.parse(JSON.stringify(snapshot.uiResource)),
         actionMappings: JSON.parse(JSON.stringify(snapshot.actionMappings)),
         customTools: JSON.parse(JSON.stringify(snapshot.customTools)),
         currentSnapshotIndex: index,
