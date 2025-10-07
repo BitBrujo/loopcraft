@@ -11,6 +11,7 @@ import {
   ConfigSnapshot,
 } from '@/types/conversational-builder';
 import { UIResource, ActionMapping, CustomTool } from '@/types/ui-builder';
+import { PromptFlow, PromptButton } from '@/lib/conversational-builder/prompt-flow';
 
 interface ConversationStateStore extends ConversationState {
   // Message management
@@ -35,6 +36,10 @@ interface ConversationStateStore extends ConversationState {
   setUIResource: (resource: UIResource) => void;
   setActionMappings: (mappings: ActionMapping[]) => void;
   setCustomTools: (tools: CustomTool[]) => void;
+
+  // Prompt flow management
+  setPromptFlow: (flow: PromptFlow | undefined) => void;
+  setFollowUpPrompts: (prompts: PromptButton[]) => void;
 
   // Snapshot management
   createSnapshot: () => void;
@@ -78,6 +83,8 @@ const initialState: ConversationState = {
   snapshots: [],
   currentSnapshotIndex: -1,
   isDeploying: false,
+  currentPromptFlow: undefined,
+  followUpPrompts: [],
 };
 
 export const useConversationState = create<ConversationStateStore>((set, get) => ({
@@ -146,6 +153,11 @@ export const useConversationState = create<ConversationStateStore>((set, get) =>
   setActionMappings: (mappings) => set({ actionMappings: mappings }),
 
   setCustomTools: (tools) => set({ customTools: tools }),
+
+  // Prompt flow management
+  setPromptFlow: (flow) => set({ currentPromptFlow: flow }),
+
+  setFollowUpPrompts: (prompts) => set({ followUpPrompts: prompts }),
 
   // Snapshot management
   createSnapshot: () => {

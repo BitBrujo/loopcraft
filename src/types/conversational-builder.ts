@@ -1,5 +1,22 @@
 import { UIResource, ActionMapping, CustomTool } from './ui-builder';
 
+// Forward declaration for PromptFlow and PromptButton (defined in prompt-flow.ts)
+export interface PromptFlow {
+  id: string;
+  stage: 'category' | 'template' | 'customization';
+  category?: string;
+  templateId?: string;
+  followUpPrompts: PromptButton[];
+}
+
+export interface PromptButton {
+  id: string;
+  label: string;
+  category?: string;
+  templateId?: string;
+  description?: string;
+}
+
 /**
  * Phase of the conversational UI building process
  */
@@ -123,6 +140,10 @@ export interface ConversationState {
   uiResource: UIResource;
   actionMappings: ActionMapping[];
   customTools: CustomTool[];
+
+  // Prompt flow state
+  currentPromptFlow?: PromptFlow;
+  followUpPrompts: PromptButton[];
 
   // History and undo
   snapshots: ConfigSnapshot[];

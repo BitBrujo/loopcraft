@@ -11,6 +11,7 @@ import { ClarificationEngine } from '@/lib/conversational-builder/clarification-
 import { ConversationalContext } from '@/types/conversational-builder';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, RotateCcw } from 'lucide-react';
+import { generateServerCode } from '@/lib/code-generation';
 
 export default function ConversationalBuilderPage() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export default function ConversationalBuilderPage() {
     actionMappings,
     customTools,
     isDeploying,
+    followUpPrompts,
     addMessage,
     setPhase,
     setIntent,
@@ -42,6 +44,8 @@ export default function ConversationalBuilderPage() {
     updateUIResource,
     setUIResource,
     setActionMappings,
+    setPromptFlow,
+    setFollowUpPrompts,
     createSnapshot,
     setDeploying,
     setDeployedServer,
@@ -121,6 +125,14 @@ export default function ConversationalBuilderPage() {
                 if (parsed.suggestions) {
                   // Suggestions are handled by handleAcceptSuggestion
                   setSuggestions(parsed.suggestions as never);
+                }
+                // Handle follow-up prompts
+                if (parsed.followUpPrompts) {
+                  setFollowUpPrompts(parsed.followUpPrompts);
+                }
+                // Handle template application
+                if (parsed.updatedUI) {
+                  setUIResource(parsed.updatedUI);
                 }
               } else if (parsed.type === 'text') {
                 assistantMessage += parsed.content;
@@ -211,6 +223,17 @@ export default function ConversationalBuilderPage() {
     setDeploymentError(undefined);
 
     try {
+      // Generate server code from UIResource
+      const serverCode = generateServerCode(uiResource, customTools, actionMappings, 'interactive');
+
+      // Generate server name from title or use default
+      const serverName = (typeof uiResource.metadata?.title === 'string' ? uiResource.metadata.title : 'UI Component')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '') || 'conversational-ui';
+
+      const fileName = `${serverName}-${Date.now()}.ts`;
+
       const response = await fetch('/api/ui-builder/test', {
         method: 'POST',
         headers: {
@@ -218,14 +241,15 @@ export default function ConversationalBuilderPage() {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({
-          uiResource,
-          actionMappings,
-          customTools,
+          serverCode,
+          fileName,
+          serverName,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Deployment failed');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Deployment failed');
       }
 
       const result = await response.json();
@@ -310,12 +334,10 @@ export default function ConversationalBuilderPage() {
           onSendMessage={handleSendMessage}
           onAnswerQuestion={handleAnswerQuestion}
           isLoading={isLoading}
+          followUpPrompts={followUpPrompts}
         />
 
-        {/* Center: Live Preview */}
-        <LivePreview uiResource={uiResource} />
-
-        {/* Right: Build Status */}
+        {/* Center: Build Status & Insights */}
         <BuildStatusPanel
           phase={currentPhase}
           entities={entities}
@@ -326,6 +348,9 @@ export default function ConversationalBuilderPage() {
           onDeploy={handleDeploy}
           canDeploy={canDeploy}
         />
+
+        {/* Right: Live Preview */}
+        <LivePreview uiResource={uiResource} />
       </div>
     </div>
   );

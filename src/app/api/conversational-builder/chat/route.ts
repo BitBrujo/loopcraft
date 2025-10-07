@@ -12,10 +12,19 @@ import {
   Capability,
   ClarificationQuestion,
   ConversationPhase,
+  PromptButton,
 } from '@/types/conversational-builder';
 import { IntentAnalyzer } from '@/lib/conversational-builder/intent-analyzer';
 import { UIGenerator } from '@/lib/conversational-builder/ui-generator';
 import { ClarificationEngine } from '@/lib/conversational-builder/clarification-engine';
+import {
+  detectTemplateSelection,
+  detectDeploymentIntent,
+  createFlowFromTemplate,
+  getTemplatePrompts,
+  INITIAL_CATEGORY_PROMPTS,
+} from '@/lib/conversational-builder/prompt-flow';
+import { uiTemplates, UICategory } from '@/lib/ui-templates';
 
 const SYSTEM_PROMPT = `You are an expert MCP-UI builder assistant. Your role is to help users create beautiful, functional UI components through natural conversation.
 
@@ -58,6 +67,25 @@ export async function POST(request: NextRequest) {
       message: string;
       context: ConversationalContext;
     };
+
+    // Detect template selection first
+    const selectedTemplateId = detectTemplateSelection(message);
+    let appliedTemplate: typeof uiTemplates[0] | null = null;
+    let followUpPrompts: PromptButton[] = [];
+
+    if (selectedTemplateId) {
+      appliedTemplate = uiTemplates.find((t) => t.id === selectedTemplateId) || null;
+    }
+
+    // Detect category selection
+    let selectedCategory: UICategory | null = null;
+    const lowerMessage = message.toLowerCase();
+    for (const prompt of INITIAL_CATEGORY_PROMPTS) {
+      if (prompt.category && lowerMessage.includes(prompt.category)) {
+        selectedCategory = prompt.category as UICategory;
+        break;
+      }
+    }
 
     // Analyze user message
     const intent = IntentAnalyzer.detectUIIntent(message) || context.userIntent;
@@ -114,6 +142,16 @@ export async function POST(request: NextRequest) {
     // Find matching UI component templates
     const matchingComponents = UIGenerator.findMatchingUIComponents(updatedContext);
 
+    // Generate follow-up prompts based on selection
+    if (selectedCategory && !appliedTemplate) {
+      // User selected a category, show template options
+      followUpPrompts = getTemplatePrompts(selectedCategory);
+    } else if (appliedTemplate) {
+      // User selected a template, show customization options
+      const flow = createFlowFromTemplate(appliedTemplate.id);
+      followUpPrompts = flow.followUpPrompts;
+    }
+
     // Build AI prompt
     const aiConfig = await getAIConfig(request);
     const ollama = createOllama({
@@ -163,7 +201,7 @@ User message: ${message}
     });
 
     // Build response with structured data
-    const response: ConversationResponse = {
+    const response: ConversationResponse & { followUpPrompts?: PromptButton[]; updatedUI?: any } = {
       message: '', // Will be filled by stream
       phase: currentPhase,
       intent,
@@ -181,7 +219,13 @@ User message: ${message}
         actionLabel: 'Use This Template',
         action: () => {}, // Will be handled client-side
       })),
+      followUpPrompts,
     };
+
+    // If template was selected, include the HTML
+    if (appliedTemplate) {
+      response.updatedUI = UIGenerator.templateToUIResource(appliedTemplate.id);
+    }
 
     // Return streaming response with metadata
     return new Response(

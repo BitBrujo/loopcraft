@@ -1,19 +1,21 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { ConversationMessage, ClarificationQuestion } from '@/types/conversational-builder';
+import { ConversationMessage, ClarificationQuestion, PromptButton } from '@/types/conversational-builder';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { INITIAL_CATEGORY_PROMPTS, promptToMessage } from '@/lib/conversational-builder/prompt-flow';
 
 interface ConversationPanelProps {
   messages: ConversationMessage[];
   onSendMessage: (message: string) => void;
   onAnswerQuestion?: (questionId: string, answer: string) => void;
   isLoading?: boolean;
+  followUpPrompts?: PromptButton[];
 }
 
 export function ConversationPanel({
@@ -21,6 +23,7 @@ export function ConversationPanel({
   onSendMessage,
   onAnswerQuestion,
   isLoading = false,
+  followUpPrompts = [],
 }: ConversationPanelProps) {
   const [inputValue, setInputValue] = useState('');
   const [questionInputs, setQuestionInputs] = useState<Record<string, string>>({});
@@ -62,6 +65,11 @@ export function ConversationPanel({
     }
   };
 
+  const handlePromptClick = (prompt: PromptButton) => {
+    const message = promptToMessage(prompt, messages.length === 0 ? 'category' : 'customization');
+    onSendMessage(message);
+  };
+
   return (
     <div className="flex flex-col h-full border-r border-border">
       {/* Header */}
@@ -76,17 +84,32 @@ export function ConversationPanel({
       <ScrollArea className="flex-1 h-0" ref={scrollRef}>
         <div className="p-4 space-y-4">
           {messages.length === 0 && (
-            <Card className="p-4 bg-muted/50">
-              <p className="text-sm text-muted-foreground">
-                👋 Hi! I&apos;ll help you build MCP-UI components. Tell me what you need:
-              </p>
-              <ul className="mt-2 text-sm text-muted-foreground space-y-1">
-                <li>• &quot;Create a contact form with name, email, and message fields&quot;</li>
-                <li>• &quot;Build a dashboard showing user analytics with charts&quot;</li>
-                <li>• &quot;I need a product gallery with image cards&quot;</li>
-                <li>• &quot;Make a login form with username and password&quot;</li>
-              </ul>
-            </Card>
+            <div className="space-y-4">
+              <Card className="p-4 bg-muted/50">
+                <p className="text-sm font-medium text-foreground mb-3">
+                  👋 Hi! I&apos;ll help you build MCP-UI components. What would you like to create?
+                </p>
+              </Card>
+
+              {/* Initial Category Prompts */}
+              <div className="grid grid-cols-2 gap-2">
+                {INITIAL_CATEGORY_PROMPTS.map((prompt) => (
+                  <Button
+                    key={prompt.id}
+                    variant="outline"
+                    className="h-auto flex flex-col items-start p-3 text-left hover:bg-primary/5 hover:border-primary"
+                    onClick={() => handlePromptClick(prompt)}
+                  >
+                    <span className="font-medium text-sm">{prompt.label}</span>
+                    {prompt.description && (
+                      <span className="text-xs text-muted-foreground mt-1">
+                        {prompt.description}
+                      </span>
+                    )}
+                  </Button>
+                ))}
+              </div>
+            </div>
           )}
 
           {messages.map((message) => (
@@ -200,6 +223,26 @@ export function ConversationPanel({
                   Thinking...
                 </div>
               </Card>
+            </div>
+          )}
+
+          {/* Follow-up Prompts */}
+          {!isLoading && followUpPrompts.length > 0 && messages.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground font-medium">Quick actions:</p>
+              <div className="flex flex-wrap gap-2">
+                {followUpPrompts.slice(0, 6).map((prompt) => (
+                  <Button
+                    key={prompt.id}
+                    variant="secondary"
+                    size="sm"
+                    className="text-xs h-auto py-2 px-3 hover:bg-primary/10"
+                    onClick={() => handlePromptClick(prompt)}
+                  >
+                    {prompt.label}
+                  </Button>
+                ))}
+              </div>
             </div>
           )}
         </div>
