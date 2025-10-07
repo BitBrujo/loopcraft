@@ -9,9 +9,10 @@ import {
   ClarificationQuestion,
   BuilderSuggestion,
   ConfigSnapshot,
+  PromptFlow,
+  PromptButton,
 } from '@/types/conversational-builder';
 import { UIResource, ActionMapping, CustomTool } from '@/types/ui-builder';
-import { PromptFlow, PromptButton } from '@/lib/conversational-builder/prompt-flow';
 
 interface ConversationStateStore extends ConversationState {
   // Message management

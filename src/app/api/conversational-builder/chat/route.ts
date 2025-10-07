@@ -4,22 +4,17 @@ import { streamText } from 'ai';
 import { createOllama } from 'ollama-ai-provider-v2';
 import { getAIConfig } from '@/lib/ai-config';
 import {
-  ConversationRequest,
   ConversationResponse,
   ConversationalContext,
-  UserIntent,
-  DetectedEntity,
-  Capability,
-  ClarificationQuestion,
   ConversationPhase,
   PromptButton,
 } from '@/types/conversational-builder';
+import { UIResource } from '@/types/ui-builder';
 import { IntentAnalyzer } from '@/lib/conversational-builder/intent-analyzer';
 import { UIGenerator } from '@/lib/conversational-builder/ui-generator';
 import { ClarificationEngine } from '@/lib/conversational-builder/clarification-engine';
 import {
   detectTemplateSelection,
-  detectDeploymentIntent,
   createFlowFromTemplate,
   getTemplatePrompts,
   INITIAL_CATEGORY_PROMPTS,
@@ -201,7 +196,7 @@ User message: ${message}
     });
 
     // Build response with structured data
-    const response: ConversationResponse & { followUpPrompts?: PromptButton[]; updatedUI?: any } = {
+    const response: ConversationResponse & { followUpPrompts?: PromptButton[]; updatedUI?: UIResource } = {
       message: '', // Will be filled by stream
       phase: currentPhase,
       intent,
@@ -224,7 +219,10 @@ User message: ${message}
 
     // If template was selected, include the HTML
     if (appliedTemplate) {
-      response.updatedUI = UIGenerator.templateToUIResource(appliedTemplate.id);
+      const uiResource = UIGenerator.templateToUIResource(appliedTemplate.id);
+      if (uiResource) {
+        response.updatedUI = uiResource;
+      }
     }
 
     // Return streaming response with metadata
