@@ -119,19 +119,8 @@ export default function ConversationalBuilderPage() {
                 }
                 if (parsed.questions) setPendingQuestions(parsed.questions);
                 if (parsed.suggestions) {
-                  // Map suggestions with actions
-                  const mappedSuggestions = (parsed.suggestions as Array<{
-                    id: string;
-                    type: string;
-                    title: string;
-                    description: string;
-                    confidence: number;
-                    actionLabel: string;
-                  }>).map((s) => ({
-                    ...s,
-                    action: () => handleAcceptSuggestion(s.id),
-                  }));
-                  setSuggestions(mappedSuggestions as never);
+                  // Suggestions are handled by handleAcceptSuggestion
+                  setSuggestions(parsed.suggestions as never);
                 }
               } else if (parsed.type === 'text') {
                 assistantMessage += parsed.content;

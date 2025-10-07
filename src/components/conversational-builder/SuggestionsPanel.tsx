@@ -10,7 +10,6 @@ import {
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 
 interface SuggestionsPanelProps {
@@ -77,7 +76,7 @@ export function SuggestionsPanel({
         <p className="text-sm text-muted-foreground">{currentPhase.description}</p>
       </div>
 
-      <ScrollArea className="flex-1 h-0">
+      <div className="flex-1 overflow-y-auto">
         <div className="p-4 space-y-4">
           {/* Deployment Section */}
         {canDeploy && (
@@ -200,7 +199,7 @@ export function SuggestionsPanel({
           </div>
         )}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }

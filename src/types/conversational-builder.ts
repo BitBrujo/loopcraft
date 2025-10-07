@@ -89,7 +89,7 @@ export interface BuilderSuggestion {
   description: string;
   confidence: number;
   actionLabel: string;
-  action: () => void;
+  action?: () => void; // Optional - handled by parent component
 }
 
 /**

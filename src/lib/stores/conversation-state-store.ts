@@ -127,13 +127,9 @@ export const useConversationState = create<ConversationStateStore>((set, get) =>
   setSuggestions: (suggestions) => set({ suggestions }),
 
   acceptSuggestion: (id) => {
-    const suggestion = get().suggestions.find((s) => s.id === id);
-    if (suggestion) {
-      suggestion.action();
-      set((state) => ({
-        suggestions: state.suggestions.filter((s) => s.id !== id),
-      }));
-    }
+    set((state) => ({
+      suggestions: state.suggestions.filter((s) => s.id !== id),
+    }));
   },
 
   // Configuration management
