@@ -7,7 +7,9 @@ import { generateId } from "@/lib/utils";
 import { ConfigPanel } from "./ConfigPanel";
 import { SaveDialog } from "./SaveDialog";
 import { LoadDialog } from "./LoadDialog";
+import { ConfigurationTab } from "./tabs/ConfigurationTab";
 import { DesignTab } from "./tabs/DesignTab";
+import { DefineToolsTab } from "./tabs/DefineToolsTab";
 import { ActionsTab } from "./tabs/ActionsTab";
 import { GenerateTab } from "./tabs/GenerateTab";
 import { TestTab } from "./tabs/TestTab";
@@ -30,7 +32,9 @@ import {
 import type { TabId } from "@/types/ui-builder";
 
 const allTabs: Array<{ id: TabId; label: string }> = [
+  { id: 'config', label: 'Config' },
   { id: 'design', label: 'Design' },
+  { id: 'tools', label: 'Define Tools' },
   { id: 'actions', label: 'Actions' },
   { id: 'generate', label: 'Generate' },
   { id: 'test', label: 'Test' },
@@ -139,8 +143,12 @@ export function BuilderLayout() {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'config':
+        return <ConfigurationTab />;
       case 'design':
         return <DesignTab />;
+      case 'tools':
+        return <DefineToolsTab />;
       case 'actions':
         return <ActionsTab />;
       case 'generate':
@@ -148,7 +156,7 @@ export function BuilderLayout() {
       case 'test':
         return <TestTab />;
       default:
-        return <DesignTab />;
+        return <ConfigurationTab />;
     }
   };
 
