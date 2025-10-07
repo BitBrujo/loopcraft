@@ -44,12 +44,6 @@ Visual tool for adding UI presentation to MCP servers:
 - Action mapping UI → MCP tool bindings
 - Live preview and one-click testing
 
-### 🔐 Authentication & Database
-- JWT-based authentication with bcrypt password hashing
-- MySQL 8.0 with Docker containerization
-- User-specific prompts, settings, and MCP server configurations
-- Persistent storage with automatic schema initialization
-
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -120,124 +114,6 @@ docker-compose down      # Stop MySQL
 npm run mcp:demo         # Start demo server on port 3001
 ```
 
-## 🏗️ Architecture
-
-### MCP Integration Flow
-
-1. **Server Initialization** (`src/lib/mcp-init.ts`)
-   - User-specific servers loaded from database per request
-   - Managed by `MCPClientManager` singleton
-   - Automatic cleanup of deleted servers
-   - Error tracking for troubleshooting
-
-2. **Tool Registration** (`src/app/api/chat/route.ts`)
-   - MCP tools dynamically fetched from connected servers
-   - Tools prefixed as `mcp_{serverName}_{toolName}`
-   - Support for UI resources with `ui://` URIs
-
-3. **UI Rendering** (`src/components/assistant-ui/mcp-ui-renderer.tsx`)
-   - Interactive MCP UI components with iframe sandboxing
-   - Bidirectional communication via postMessage
-   - Tool execution with authentication
-
-4. **Resource Handling**
-   - Custom `getMCPResource` tool for fetching resources
-   - Standard MCP format without custom wrappers
-   - Support for templates and dynamic URIs
-
-### Key Components
-
-- **MCPClientManager** - Connection management, tool calls, error tracking
-- **Chat API Route** - Streaming LLM responses with MCP integration
-- **Assistant Component** - Main chat interface with sidebar
-- **Builder Components** - Three specialized builder UIs
-- **Database Utilities** - Connection pooling and query helpers
-
-## 📚 API Documentation
-
-### Authentication (Public)
-- `POST /api/auth/register` - Create user account
-- `POST /api/auth/login` - Get JWT token
-
-### AI Configuration
-- `GET /api/ai-config` - Get current AI config
-- `PUT /api/ai-config` - Update user AI settings (auth required)
-
-### MCP Management (Auth Required)
-- `GET /api/mcp/servers` - List connected servers with status
-- `GET /api/mcp/tools` - List available tools
-- `GET /api/mcp/resources` - List available resources
-- `POST /api/mcp/call-tool` - Execute MCP tool
-
-### MCP Server Management (Auth Required)
-- `GET /api/mcp-servers` - List user MCP servers
-- `POST /api/mcp-servers` - Create server config
-- `PUT /api/mcp-servers/:id` - Update server
-- `DELETE /api/mcp-servers/:id` - Delete server
-
-### Builders
-- `POST /api/conversational-builder/chat` - Streaming AI conversation
-- `POST /api/relationships/analyze` - AI relationship analysis
-- `POST /api/ui-builder/test` - Create test server
-- `POST /api/ui-builder/preview` - Preview UI resource
-
-All authenticated endpoints require `Authorization: Bearer <token>` header.
-
-## 🗄️ Database Schema
-
-### Tables
-- **users** - User accounts with email/password
-- **prompts** - User-created prompts
-- **settings** - User settings (key-value pairs)
-- **mcp_servers** - Per-user MCP server configurations
-
-Schema automatically initializes on first Docker run via `docker/mysql/init.sql`.
-
-## 🔧 MCP Server Configuration
-
-All MCP servers are user-specific and managed through Settings UI:
-
-### Transport Types
-- **stdio**: Local process-based servers
-  - Environment variables passed to spawned process
-  - Example: `{ command: ["npx", "-y", "server"], env: { "API_KEY": "xxx" } }`
-
-- **sse**: Remote HTTP servers via Server-Sent Events
-  - Environment variables converted to HTTP headers
-  - Example: `{ url: "https://api.example.com/mcp", env: { "API_KEY": "xxx" } }`
-
-- **http**: HTTP streaming (treated as SSE)
-
-### Authentication Support
-- **App-level**: JWT tokens for database access
-- **MCP-level**: Environment variables for remote server auth
-  - `API_KEY` → `Authorization: Bearer {value}`
-  - `BEARER_TOKEN` → `Authorization: Bearer {value}`
-  - `HEADER_X_Custom` → `X-Custom: {value}`
-
-## 🎯 Use Cases
-
-### Recommended Workflows
-
-1. **Quick Start (Conversational Builder)**
-   - Best for beginners
-   - Natural language server creation
-   - AI-guided configuration
-
-2. **Template-Based (Server Builder)**
-   - Choose from 60+ templates
-   - Customize tools and resources
-   - Export and deploy
-
-3. **UI Enhancement (UI Builder)**
-   - Wrap existing servers with UI
-   - Create standalone dashboards
-   - Interactive form builders
-
-4. **Full Stack (Combined)**
-   - Create server → Add UI → Map actions
-   - End-to-end MCP application development
-
 ## 🛠️ Tech Stack
 
 - **Framework**: Next.js 15 with App Router and Turbopack
@@ -251,10 +127,6 @@ All MCP servers are user-specific and managed through Settings UI:
 ## 📝 License
 
 MIT License
-
-## 🤝 Contributing
-
-Contributions are welcome! Please read the contributing guidelines before submitting PRs.
 
 ## 📞 Support
 
