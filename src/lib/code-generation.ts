@@ -48,7 +48,8 @@ export default uiResource;`;
 export function generateServerCode(
   resource: UIResource,
   customTools: CustomTool[] = [],
-  actionMappings: ActionMapping[] = []
+  actionMappings: ActionMapping[] = [],
+  toolImplementations?: Map<string, string> // AI-generated implementations
 ): string {
   const serverName = resource.uri.split('/')[2] || 'my-ui-server';
   const agentPlaceholders = resource.templatePlaceholders || [];
@@ -189,7 +190,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   // Generate handlers for custom tools
   customTools.forEach(tool => {
-    code += `
+    // Use AI-generated implementation if available, otherwise use stub
+    const aiImplementation = toolImplementations?.get(tool.name);
+
+    if (aiImplementation) {
+      // Use AI-generated code
+      code += `\n  ${aiImplementation}\n`;
+    } else {
+      // Fallback to stub implementation
+      code += `
   // Handle ${tool.name} tool
   if (name === '${tool.name}') {
     // TODO: Implement ${tool.name} logic
@@ -213,6 +222,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     };
   }
 `;
+    }
   });
 
   code += `

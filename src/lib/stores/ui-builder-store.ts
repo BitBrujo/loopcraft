@@ -48,6 +48,9 @@ interface UIBuilderStore {
   // Validation status
   validationStatus: ValidationStatus;
 
+  // AI-generated tool implementations (tool name -> implementation code)
+  toolImplementations: Record<string, string>;
+
   // Test server state
   isTestServerActive: boolean;
   testServerName: string | null;
@@ -116,6 +119,11 @@ interface UIBuilderStore {
   addValidationWarning: (warning: string) => void;
   clearValidationWarnings: () => void;
 
+  // Actions - Tool Implementations
+  setToolImplementation: (toolName: string, implementation: string) => void;
+  setToolImplementations: (implementations: Record<string, string>) => void;
+  clearToolImplementations: () => void;
+
   // Actions - Test Server
   startTestServer: (name: string, id: number, file: string, originalServerId?: number | null, originalServerName?: string | null) => void;
   stopTestServer: () => void;
@@ -160,6 +168,7 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         typeMismatches: [],
         warnings: [],
       },
+      toolImplementations: {},
       isTestServerActive: false,
       testServerName: null,
       testServerId: null,
@@ -364,6 +373,17 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         set((state) => ({
           validationStatus: { ...state.validationStatus, warnings: [] },
         })),
+
+      setToolImplementation: (toolName, implementation) =>
+        set((state) => ({
+          toolImplementations: { ...state.toolImplementations, [toolName]: implementation },
+        })),
+
+      setToolImplementations: (implementations) =>
+        set({ toolImplementations: implementations }),
+
+      clearToolImplementations: () =>
+        set({ toolImplementations: {} }),
 
       startTestServer: (name, id, file, originalServerId = null, originalServerName = null) =>
         set({

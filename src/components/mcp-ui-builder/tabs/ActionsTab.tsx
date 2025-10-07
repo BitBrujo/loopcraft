@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, AlertCircle, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowRight, AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { Button } from "@/components/ui/button";
 import { ActionMapper } from "../actions/ActionMapper";
 import { ParameterBindingEditor } from "../actions/ParameterBindingEditor";
 import { CustomToolsEditor } from "../actions/CustomToolsEditor";
+import { AIAssistantPanel } from "../AIAssistantPanel";
 import { validateActionMappingsDebounced, isValidationValid, getValidationSummary } from "@/lib/validation-engine";
 
 export function ActionsTab() {
@@ -21,6 +22,7 @@ export function ActionsTab() {
 
   const [selectedMappingId, setSelectedMappingId] = useState<string | null>(null);
   const [isToolsExpanded, setIsToolsExpanded] = useState(true);
+  const [isAIAssistantExpanded, setIsAIAssistantExpanded] = useState(false);
 
   // Auto-validate on changes
   useEffect(() => {
@@ -76,6 +78,32 @@ export function ActionsTab() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      {/* AI Assistant Section - Collapsible */}
+      <div className="border-b bg-gradient-to-r from-purple-50/50 to-blue-50/50 dark:from-purple-950/20 dark:to-blue-950/20">
+        <button
+          onClick={() => setIsAIAssistantExpanded(!isAIAssistantExpanded)}
+          className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-purple-600" />
+            <h3 className="font-semibold text-sm">AI Assistant</h3>
+            <span className="text-xs text-muted-foreground">
+              (Auto-detect tools & generate implementations)
+            </span>
+          </div>
+          {isAIAssistantExpanded ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </button>
+        {isAIAssistantExpanded && (
+          <div className="max-h-[600px] overflow-auto border-t">
+            <AIAssistantPanel />
+          </div>
+        )}
+      </div>
+
       {/* Custom Tools Section - Collapsible */}
       <div className="border-b">
         <button
