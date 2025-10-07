@@ -24,10 +24,10 @@ import {
 } from "@/components/ui/dialog";
 
 interface MCPServer {
-  id: number;
   name: string;
-  type: string;
-  enabled: boolean;
+  type: 'stdio' | 'sse' | 'http';
+  status: 'connected' | 'disconnected';
+  error?: string;
 }
 
 const frameSizePresets = [
@@ -68,7 +68,7 @@ export function ConfigurationTab() {
           headers['Authorization'] = `Bearer ${token}`;
         }
 
-        const response = await fetch('/api/mcp-servers', { headers });
+        const response = await fetch('/api/mcp/servers', { headers });
         if (response.ok) {
           const data = await response.json();
           setServers(data.servers || []);
@@ -300,8 +300,8 @@ export function ConfigurationTab() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none__">None (standalone UI)</SelectItem>
-                      {servers.filter(s => s.enabled).map((server) => (
-                        <SelectItem key={server.id} value={server.name}>
+                      {servers.filter(s => s.status === 'connected').map((server) => (
+                        <SelectItem key={server.name} value={server.name}>
                           {server.name} ({server.type})
                         </SelectItem>
                       ))}
@@ -311,6 +311,19 @@ export function ConfigurationTab() {
                     <p className="text-sm text-green-600">
                       ✓ Connected to &quot;{connectedServerName}&quot; - tools will be available in Actions tab
                     </p>
+                  )}
+                  {servers.filter(s => s.status === 'disconnected').length > 0 && (
+                    <div className="text-sm text-amber-600 space-y-1">
+                      <p>⚠ {servers.filter(s => s.status === 'disconnected').length} server(s) failed to connect:</p>
+                      <ul className="list-disc list-inside pl-2 space-y-0.5">
+                        {servers.filter(s => s.status === 'disconnected').map((server) => (
+                          <li key={server.name} className="text-xs">
+                            {server.name}: {server.error || 'Connection failed'}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-xs">Check your server settings or try refreshing.</p>
+                    </div>
                   )}
                 </div>
               </div>
