@@ -5,7 +5,7 @@
  * Provides type checking and completeness validation.
  */
 
-import type { ActionMapping, ValidationStatus, TypeMismatch, MCPTool, UIResource, UIMode } from '@/types/ui-builder';
+import type { ActionMapping, ValidationStatus, TypeMismatch, MCPTool, UIResource } from '@/types/ui-builder';
 import { parseHTMLForInteractiveElements, validateElementId } from './html-parser';
 
 /**
@@ -54,33 +54,22 @@ export function validateActionMappings(
   mappings: ActionMapping[],
   htmlContent: string,
   availableTools: MCPTool[],
-  templatePlaceholders?: string[],
-  uiMode?: UIMode
+  templatePlaceholders?: string[]
 ): ValidationStatus {
   const missingMappings: string[] = [];
   const typeMismatches: TypeMismatch[] = [];
   const warnings: string[] = [];
 
-  // In readonly mode with no mappings, skip validation entirely
-  if (uiMode === 'readonly' && mappings.length === 0) {
-    return { missingMappings, typeMismatches, warnings };
-  }
-
   // Get all interactive elements from HTML
   const interactiveElements = parseHTMLForInteractiveElements(htmlContent);
 
-  // Check for unmapped interactive elements (skip in readonly mode)
-  if (uiMode !== 'readonly') {
-    const mappedElementIds = new Set(mappings.map(m => m.uiElementId));
-    interactiveElements.forEach(element => {
-      if (!mappedElementIds.has(element.id)) {
-        warnings.push(`Interactive element "${element.id}" (${element.type}) is not mapped to any tool`);
-      }
-    });
-  } else if (mappings.length > 0) {
-    // Warn if mappings exist in readonly mode
-    warnings.push('Action mappings will not be used in read-only mode');
-  }
+  // Check for unmapped interactive elements
+  const mappedElementIds = new Set(mappings.map(m => m.uiElementId));
+  interactiveElements.forEach(element => {
+    if (!mappedElementIds.has(element.id)) {
+      warnings.push(`Interactive element "${element.id}" (${element.type}) is not mapped to any tool`);
+    }
+  });
 
   // Validate each mapping
   mappings.forEach(mapping => {
@@ -280,15 +269,14 @@ export function validateActionMappingsDebounced(
   availableTools: MCPTool[],
   callback: (status: ValidationStatus) => void,
   delay: number = 300,
-  templatePlaceholders?: string[],
-  uiMode?: UIMode
+  templatePlaceholders?: string[]
 ): void {
   if (validationTimeout) {
     clearTimeout(validationTimeout);
   }
 
   validationTimeout = setTimeout(() => {
-    const status = validateActionMappings(mappings, htmlContent, availableTools, templatePlaceholders, uiMode);
+    const status = validateActionMappings(mappings, htmlContent, availableTools, templatePlaceholders);
     callback(status);
   }, delay);
 }

@@ -6,7 +6,6 @@ export const builtInTemplates: Template[] = [
     name: 'Blank Canvas',
     category: 'custom',
     description: 'Start from scratch with a blank HTML template',
-    uiMode: 'interactive',
     resource: {
       uri: 'ui://loopcraft/blank',
       contentType: 'rawHtml',
@@ -20,7 +19,6 @@ export const builtInTemplates: Template[] = [
     name: 'Contact Form',
     category: 'forms',
     description: 'A simple contact form with validation',
-    uiMode: 'interactive',
     resource: {
       uri: 'ui://loopcraft/contact-form',
       contentType: 'rawHtml',
@@ -82,7 +80,6 @@ export const builtInTemplates: Template[] = [
     name: 'Metrics Dashboard',
     category: 'dashboards',
     description: 'Display key metrics and statistics',
-    uiMode: 'readonly',
     resource: {
       uri: 'ui://loopcraft/dashboard',
       contentType: 'rawHtml',
@@ -129,7 +126,6 @@ export const builtInTemplates: Template[] = [
     name: 'Data Table',
     category: 'data-display',
     description: 'Sortable table with row selection',
-    uiMode: 'readonly',
     resource: {
       uri: 'ui://loopcraft/data-table',
       contentType: 'rawHtml',
@@ -180,7 +176,6 @@ export const builtInTemplates: Template[] = [
     name: 'Settings Panel',
     category: 'interactive',
     description: 'Configuration panel with toggles and inputs',
-    uiMode: 'interactive',
     resource: {
       uri: 'ui://loopcraft/settings',
       contentType: 'rawHtml',
@@ -228,7 +223,6 @@ export const builtInTemplates: Template[] = [
     name: 'Notification Center',
     category: 'interactive',
     description: 'Display alerts and notifications',
-    uiMode: 'readonly',
     resource: {
       uri: 'ui://loopcraft/notifications',
       contentType: 'rawHtml',
@@ -275,7 +269,6 @@ export const builtInTemplates: Template[] = [
     name: 'Chart Display',
     category: 'data-display',
     description: 'Simple bar chart visualization',
-    uiMode: 'readonly',
     resource: {
       uri: 'ui://loopcraft/chart',
       contentType: 'rawHtml',
@@ -327,7 +320,6 @@ export const builtInTemplates: Template[] = [
     name: 'External Website',
     category: 'media',
     description: 'Embed an external URL',
-    uiMode: 'readonly',
     resource: {
       uri: 'ui://loopcraft/external',
       contentType: 'externalUrl',

@@ -15,7 +15,6 @@ export function ContextSidebar() {
     testServerName,
     stopTestServer,
     setActiveTab,
-    uiMode,
   } = useUIBuilderStore();
 
   const [showTools, setShowTools] = useState(true);
@@ -64,34 +63,15 @@ export function ContextSidebar() {
         {/* UI Mode Section */}
         <div className="border-b bg-muted/20 p-3">
           <div className="flex items-center gap-2 mb-2">
-            {uiMode === 'readonly' ? (
-              <BookOpen className="h-4 w-4 text-blue-600" />
-            ) : (
-              <Zap className="h-4 w-4 text-orange-600" />
-            )}
+            <Zap className="h-4 w-4 text-orange-600" />
             <span className="text-sm font-medium">UI Mode</span>
           </div>
-          <div className={`text-xs px-2.5 py-1.5 rounded-md inline-flex items-center gap-1.5 font-medium ${
-            uiMode === 'readonly'
-              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-              : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
-          }`}>
-            {uiMode === 'readonly' ? (
-              <>
-                <BookOpen className="h-3 w-3" />
-                Read-Only
-              </>
-            ) : (
-              <>
-                <Zap className="h-3 w-3" />
-                Interactive
-              </>
-            )}
+          <div className="text-xs px-2.5 py-1.5 rounded-md inline-flex items-center gap-1.5 font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300">
+            <Zap className="h-3 w-3" />
+            Interactive
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            {uiMode === 'readonly'
-              ? 'Display-only UI. Tools and actions are optional.'
-              : 'Interactive UI. Define tools and map actions.'}
+            Interactive UI. Define tools and map actions.
           </p>
         </div>
 
@@ -120,9 +100,7 @@ export function ContextSidebar() {
             <div className="p-3 pt-0 space-y-2">
               {customTools.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
-                  {uiMode === 'readonly'
-                    ? 'No custom tools defined (optional in read-only mode)'
-                    : 'No tools defined. Go to Define Tools tab to create tools.'}
+                  No tools defined. Add tools in the Actions tab.
                 </p>
               ) : (
                 customTools.map((tool) => (
@@ -210,9 +188,7 @@ export function ContextSidebar() {
             <div className="p-3 pt-0 space-y-2">
               {actionMappingsCount === 0 ? (
                 <p className="text-xs text-muted-foreground">
-                  {uiMode === 'readonly'
-                    ? 'No action mappings (optional in read-only mode)'
-                    : 'No actions configured'}
+                  No actions configured
                 </p>
               ) : (
                 actionMappings.map((mapping) => (

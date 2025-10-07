@@ -224,7 +224,7 @@ export default function ConversationalBuilderPage() {
 
     try {
       // Generate server code from UIResource
-      const serverCode = generateServerCode(uiResource, customTools, actionMappings, 'interactive');
+      const serverCode = generateServerCode(uiResource, customTools, actionMappings);
 
       // Generate server name from title or use default
       const serverName = (typeof uiResource.metadata?.title === 'string' ? uiResource.metadata.title : 'UI Component')
