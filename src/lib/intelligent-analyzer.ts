@@ -317,7 +317,7 @@ function mapHTMLTypeToToolType(htmlType: string): ToolParameter['type'] {
   return typeMap[htmlType] || 'string';
 }
 
-function inferFormPurpose(formId: string, fields: any[]): string {
+function inferFormPurpose(formId: string, fields: { name?: string; id: string; type: string; required: boolean }[]): string {
   const id = formId.toLowerCase();
 
   if (id.includes('contact') || id.includes('inquiry')) {
@@ -345,7 +345,7 @@ function inferFormPurpose(formId: string, fields: any[]): string {
 
 function inferFormImplementationType(
   formId: string,
-  fields: any[]
+  fields: { name?: string; id: string; type: string; required: boolean }[]
 ): 'database' | 'api-call' | 'email' | 'file-operation' | 'calculation' | 'custom' {
   const id = formId.toLowerCase();
 
@@ -362,7 +362,7 @@ function inferFormImplementationType(
 function generateFormImplementationHint(
   purpose: string,
   type: string,
-  fields: any[]
+  fields: { name?: string; id: string; type: string; required: boolean }[]
 ): string {
   const fieldNames = fields.map(f => f.name || f.id).join(', ');
 
