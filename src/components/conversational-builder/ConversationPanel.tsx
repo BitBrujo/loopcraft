@@ -1,24 +1,29 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { ConversationMessage } from '@/types/conversational-builder';
+import { ConversationMessage, ClarificationQuestion } from '@/types/conversational-builder';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 
 interface ConversationPanelProps {
   messages: ConversationMessage[];
   onSendMessage: (message: string) => void;
+  onAnswerQuestion?: (questionId: string, answer: string) => void;
   isLoading?: boolean;
 }
 
 export function ConversationPanel({
   messages,
   onSendMessage,
+  onAnswerQuestion,
   isLoading = false,
 }: ConversationPanelProps) {
   const [inputValue, setInputValue] = useState('');
+  const [questionInputs, setQuestionInputs] = useState<Record<string, string>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom on new messages
@@ -40,6 +45,20 @@ export function ConversationPanel({
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
+    }
+  };
+
+  const handleAnswerClick = (questionId: string, answer: string) => {
+    if (onAnswerQuestion) {
+      onAnswerQuestion(questionId, answer);
+    }
+  };
+
+  const handleQuestionInputSubmit = (questionId: string) => {
+    const answer = questionInputs[questionId];
+    if (answer && answer.trim() && onAnswerQuestion) {
+      onAnswerQuestion(questionId, answer.trim());
+      setQuestionInputs((prev) => ({ ...prev, [questionId]: '' }));
     }
   };
 
@@ -70,34 +89,100 @@ export function ConversationPanel({
           )}
 
           {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <Card
-                className={`p-3 max-w-[80%] ${
-                  message.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted'
-                }`}
+            <div key={message.id}>
+              <div
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div className="text-sm whitespace-pre-wrap">{message.content}</div>
-                {message.metadata && (
-                  <div className="mt-2 pt-2 border-t border-border/50 text-xs opacity-70">
-                    Phase: {message.metadata.phase}
-                    {message.metadata.generatedTools && message.metadata.generatedTools.length > 0 && (
-                      <span className="ml-2">
-                        • {message.metadata.generatedTools.length} tools added
-                      </span>
-                    )}
-                    {message.metadata.generatedResources && message.metadata.generatedResources.length > 0 && (
-                      <span className="ml-2">
-                        • {message.metadata.generatedResources.length} resources added
-                      </span>
-                    )}
-                  </div>
-                )}
-              </Card>
+                <Card
+                  className={`p-3 max-w-[80%] ${
+                    message.role === 'user'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted'
+                  }`}
+                >
+                  <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+                  {message.metadata && (
+                    <div className="mt-2 pt-2 border-t border-border/50 text-xs opacity-70">
+                      Phase: {message.metadata.phase}
+                      {message.metadata.generatedTools && message.metadata.generatedTools.length > 0 && (
+                        <span className="ml-2">
+                          • {message.metadata.generatedTools.length} tools added
+                        </span>
+                      )}
+                      {message.metadata.generatedResources && message.metadata.generatedResources.length > 0 && (
+                        <span className="ml-2">
+                          • {message.metadata.generatedResources.length} resources added
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </Card>
+              </div>
+
+              {/* Inline Questions */}
+              {message.metadata?.questions && message.metadata.questions.length > 0 && (
+                <div className="mt-3 ml-4 space-y-2">
+                  {message.metadata.questions.map((question) => (
+                    <Card
+                      key={question.id}
+                      className="p-3 border-blue-500/30 bg-blue-500/5"
+                    >
+                      <div className="flex items-start gap-2 mb-2">
+                        <Badge variant="outline" className="text-xs bg-blue-500/10">
+                          Question
+                        </Badge>
+                        {question.required && (
+                          <Badge variant="destructive" className="text-xs">
+                            Required
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm font-medium mb-3">{question.question}</p>
+
+                      {question.suggestedAnswers && question.suggestedAnswers.length > 0 ? (
+                        <div className="space-y-1">
+                          {question.suggestedAnswers.map((answer) => (
+                            <Button
+                              key={answer}
+                              variant="outline"
+                              size="sm"
+                              className="w-full justify-start text-left hover:bg-blue-500/10"
+                              onClick={() => handleAnswerClick(question.id, answer)}
+                            >
+                              {answer}
+                            </Button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Type your answer..."
+                            value={questionInputs[question.id] || ''}
+                            onChange={(e) =>
+                              setQuestionInputs((prev) => ({
+                                ...prev,
+                                [question.id]: e.target.value,
+                              }))
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleQuestionInputSubmit(question.id);
+                              }
+                            }}
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => handleQuestionInputSubmit(question.id)}
+                            disabled={!questionInputs[question.id]?.trim()}
+                          >
+                            Answer
+                          </Button>
+                        </div>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
 

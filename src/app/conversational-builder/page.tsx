@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useConversationState } from '@/lib/stores/conversation-state-store';
 import { ConversationPanel } from '@/components/conversational-builder/ConversationPanel';
 import { LivePreview } from '@/components/conversational-builder/LivePreview';
-import { SuggestionsPanel } from '@/components/conversational-builder/SuggestionsPanel';
+import { BuildStatusPanel } from '@/components/conversational-builder/BuildStatusPanel';
 import { SchemaGenerator } from '@/lib/conversational-builder/schema-generator';
 import { ClarificationEngine } from '@/lib/conversational-builder/clarification-engine';
 import { ConversationalContext } from '@/types/conversational-builder';
@@ -117,6 +117,7 @@ export default function ConversationalBuilderPage() {
                 if (parsed.capabilities) {
                   (parsed.capabilities as Array<{ id: string; name: string; type: string; implemented: boolean }>).forEach((c) => addCapability(c as never));
                 }
+                // Keep questions in pendingQuestions state for tracking answered questions
                 if (parsed.questions) setPendingQuestions(parsed.questions);
                 if (parsed.suggestions) {
                   // Suggestions are handled by handleAcceptSuggestion
@@ -133,12 +134,13 @@ export default function ConversationalBuilderPage() {
         }
       }
 
-      // Add assistant message
+      // Add assistant message with embedded questions
       addMessage({
         role: 'assistant',
         content: assistantMessage,
         metadata: {
           phase: metadata?.phase as never,
+          questions: metadata?.questions as never, // Embed questions in message
         },
       });
 
@@ -304,20 +306,20 @@ export default function ConversationalBuilderPage() {
             timestamp: new Date(),
           }] : [])]}
           onSendMessage={handleSendMessage}
+          onAnswerQuestion={handleAnswerQuestion}
           isLoading={isLoading}
         />
 
         {/* Center: Live Preview */}
         <LivePreview serverConfig={serverConfig} uiResource={uiResource} />
 
-        {/* Right: Suggestions */}
-        <SuggestionsPanel
+        {/* Right: Build Status */}
+        <BuildStatusPanel
           phase={currentPhase}
           entities={entities}
           capabilities={capabilities}
-          questions={pendingQuestions}
           suggestions={suggestions}
-          onAnswerQuestion={handleAnswerQuestion}
+          serverConfig={serverConfig}
           onAcceptSuggestion={handleAcceptSuggestion}
           onDeploy={handleDeploy}
           canDeploy={canDeploy}

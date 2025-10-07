@@ -65,6 +65,7 @@ export interface ConversationMessage {
     generatedTools?: string[];
     generatedResources?: string[];
     generatedUI?: boolean;
+    questions?: ClarificationQuestion[]; // Questions embedded in assistant messages
   };
 }
 
