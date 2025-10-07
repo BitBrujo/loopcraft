@@ -77,8 +77,9 @@ export function SuggestionsPanel({
         <p className="text-sm text-muted-foreground">{currentPhase.description}</p>
       </div>
 
-      <ScrollArea className="flex-1 h-0 p-4 space-y-4">
-        {/* Deployment Section */}
+      <ScrollArea className="flex-1 h-0">
+        <div className="p-4 space-y-4">
+          {/* Deployment Section */}
         {canDeploy && (
           <Card className="p-4 bg-green-500/10 border-green-500/20">
             <h3 className="font-semibold mb-2 text-green-700 dark:text-green-400">
@@ -198,6 +199,7 @@ export function SuggestionsPanel({
             </div>
           </div>
         )}
+        </div>
       </ScrollArea>
     </div>
   );

@@ -54,8 +54,8 @@ export function ConversationPanel({
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 h-0 p-4" ref={scrollRef}>
-        <div className="space-y-4">
+      <ScrollArea className="flex-1 h-0" ref={scrollRef}>
+        <div className="p-4 space-y-4">
           {messages.length === 0 && (
             <Card className="p-4 bg-muted/50">
               <p className="text-sm text-muted-foreground">

@@ -29,24 +29,25 @@ export function LivePreview({ serverConfig, uiResource }: LivePreviewProps) {
 
       {/* Preview Content */}
       <ScrollArea className="flex-1 h-0">
-        {!hasTools && !hasResources && !hasUI ? (
-          <div className="p-8 text-center text-muted-foreground">
-            <p>Your server configuration will appear here as we build it together.</p>
-          </div>
-        ) : (
-          <Tabs defaultValue="overview" className="h-full">
-            <TabsList className="w-full justify-start border-b rounded-none px-4">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="tools" disabled={!hasTools}>
-                Tools {hasTools && `(${serverConfig.tools.length})`}
-              </TabsTrigger>
-              <TabsTrigger value="resources" disabled={!hasResources}>
-                Resources {hasResources && `(${serverConfig.resources.length})`}
-              </TabsTrigger>
-              {hasUI && <TabsTrigger value="ui">UI</TabsTrigger>}
-            </TabsList>
+        <div>
+          {!hasTools && !hasResources && !hasUI ? (
+            <div className="p-8 text-center text-muted-foreground">
+              <p>Your server configuration will appear here as we build it together.</p>
+            </div>
+          ) : (
+            <Tabs defaultValue="overview">
+              <TabsList className="w-full justify-start border-b rounded-none px-4">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="tools" disabled={!hasTools}>
+                  Tools {hasTools && `(${serverConfig.tools.length})`}
+                </TabsTrigger>
+                <TabsTrigger value="resources" disabled={!hasResources}>
+                  Resources {hasResources && `(${serverConfig.resources.length})`}
+                </TabsTrigger>
+                {hasUI && <TabsTrigger value="ui">UI</TabsTrigger>}
+              </TabsList>
 
-            <TabsContent value="overview" className="p-4 space-y-4">
+              <TabsContent value="overview" className="p-4 space-y-4">
               <Card className="p-4">
                 <h3 className="font-semibold mb-2">Server Information</h3>
                 <dl className="space-y-2 text-sm">
@@ -165,8 +166,9 @@ export function LivePreview({ serverConfig, uiResource }: LivePreviewProps) {
                 </Card>
               </TabsContent>
             )}
-          </Tabs>
-        )}
+            </Tabs>
+          )}
+        </div>
       </ScrollArea>
     </div>
   );
