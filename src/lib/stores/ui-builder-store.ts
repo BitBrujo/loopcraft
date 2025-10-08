@@ -289,7 +289,20 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         })),
 
       setConnectedServerName: (serverName) =>
-        set({ connectedServerName: serverName }),
+        set((state) => {
+          // Clear HTML when switching servers to avoid stale content
+          if (serverName !== state.connectedServerName) {
+            return {
+              connectedServerName: serverName,
+              currentResource: defaultResource,
+              previewKey: Date.now(),
+              serverTools: [],
+              actionMappings: [],
+              customTools: [],
+            };
+          }
+          return { connectedServerName: serverName };
+        }),
 
       addCustomTool: (tool) =>
         set((state) => ({

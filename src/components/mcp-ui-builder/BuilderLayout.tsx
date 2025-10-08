@@ -115,6 +115,10 @@ export function BuilderLayout() {
     setTestConfig({ mockResponses: [], testHistory: [], useMockData: true });
     setValidationStatus({ missingMappings: [], typeMismatches: [], warnings: [] });
     setActiveTab('design');
+
+    // Clear persisted localStorage to ensure reset actually works
+    localStorage.removeItem('ui-builder-storage');
+
     setShowResetConfirmation(false);
   };
 
