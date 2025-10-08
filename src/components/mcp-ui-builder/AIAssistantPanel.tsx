@@ -15,6 +15,11 @@ interface GeneratedImplementation {
   code: string;
 }
 
+interface FailedTool {
+  error: string;
+  attempts: number;
+}
+
 export function AIAssistantPanel() {
   const {
     currentResource,
@@ -29,6 +34,8 @@ export function AIAssistantPanel() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImplementations, setGeneratedImplementations] = useState<Map<string, string>>(new Map());
+  const [failedTools, setFailedTools] = useState<Map<string, FailedTool>>(new Map());
+  const [retryingTool, setRetryingTool] = useState<string | null>(null);
   const [selectedTools, setSelectedTools] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
 
@@ -67,15 +74,21 @@ export function AIAssistantPanel() {
     setIsGenerating(true);
     setError(null);
 
-    const implementations = new Map<string, string>();
+    const implementations = new Map<string, string>(generatedImplementations);
+    const failures = new Map<string, FailedTool>(failedTools);
 
-    try {
-      // Generate implementations for selected tools
-      const selectedToolInferences = analysis.inferredTools.filter(t =>
-        selectedTools.has(t.toolName)
-      );
+    // Generate implementations for selected tools
+    const selectedToolInferences = analysis.inferredTools.filter(t =>
+      selectedTools.has(t.toolName)
+    );
 
-      for (const toolInference of selectedToolInferences) {
+    for (const toolInference of selectedToolInferences) {
+      // Skip if already generated successfully
+      if (implementations.has(toolInference.toolName)) {
+        continue;
+      }
+
+      try {
         const response = await fetch('/api/builder/generate-implementation', {
           method: 'POST',
           headers: {
@@ -86,18 +99,75 @@ export function AIAssistantPanel() {
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to generate ${toolInference.toolName}`);
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          throw new Error(errorData.error || `Failed to generate ${toolInference.toolName}`);
         }
 
         const data = await response.json();
         implementations.set(toolInference.toolName, data.implementation);
+
+        // Clear failure if it existed
+        failures.delete(toolInference.toolName);
+      } catch (err) {
+        // Track individual failure, continue with other tools
+        const currentFailure = failures.get(toolInference.toolName);
+        failures.set(toolInference.toolName, {
+          error: err instanceof Error ? err.message : 'Generation failed',
+          attempts: currentFailure ? currentFailure.attempts + 1 : 1,
+        });
+      }
+    }
+
+    setGeneratedImplementations(implementations);
+    setFailedTools(failures);
+    setIsGenerating(false);
+  };
+
+  const handleRetryTool = async (toolName: string) => {
+    if (!analysis) return;
+
+    const toolInference = analysis.inferredTools.find(t => t.toolName === toolName);
+    if (!toolInference) return;
+
+    setRetryingTool(toolName);
+
+    try {
+      const response = await fetch('/api/builder/generate-implementation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ toolInference }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `Failed to generate ${toolName}`);
       }
 
-      setGeneratedImplementations(implementations);
+      const data = await response.json();
+
+      // Update implementations
+      const newImplementations = new Map(generatedImplementations);
+      newImplementations.set(toolName, data.implementation);
+      setGeneratedImplementations(newImplementations);
+
+      // Clear failure
+      const newFailures = new Map(failedTools);
+      newFailures.delete(toolName);
+      setFailedTools(newFailures);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Implementation generation failed');
+      // Update failure with new attempt count
+      const currentFailure = failedTools.get(toolName);
+      const newFailures = new Map(failedTools);
+      newFailures.set(toolName, {
+        error: err instanceof Error ? err.message : 'Generation failed',
+        attempts: currentFailure ? currentFailure.attempts + 1 : 1,
+      });
+      setFailedTools(newFailures);
     } finally {
-      setIsGenerating(false);
+      setRetryingTool(null);
     }
   };
 
@@ -134,6 +204,7 @@ export function AIAssistantPanel() {
     // Clear selections
     setSelectedTools(new Set());
     setGeneratedImplementations(new Map());
+    setFailedTools(new Map());
     setAnalysis(null);
   };
 
@@ -252,20 +323,25 @@ export function AIAssistantPanel() {
                   {analysis.inferredTools.map((tool) => {
                     const isSelected = selectedTools.has(tool.toolName);
                     const hasImplementation = generatedImplementations.has(tool.toolName);
+                    const hasFailed = failedTools.has(tool.toolName);
+                    const isRetrying = retryingTool === tool.toolName;
+                    const failureInfo = failedTools.get(tool.toolName);
 
                     return (
                       <div
                         key={tool.toolName}
-                        className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${
-                          isSelected
-                            ? 'border-primary bg-primary/5'
-                            : 'border-transparent bg-muted/50 hover:bg-muted'
+                        className={`p-3 rounded-lg border-2 transition-all ${
+                          hasFailed
+                            ? 'border-red-300 bg-red-50 dark:bg-red-950/20'
+                            : isSelected
+                            ? 'border-primary bg-primary/5 cursor-pointer'
+                            : 'border-transparent bg-muted/50 hover:bg-muted cursor-pointer'
                         }`}
-                        onClick={() => toggleToolSelection(tool.toolName)}
+                        onClick={() => !hasFailed && toggleToolSelection(tool.toolName)}
                       >
                         <div className="flex items-start gap-2 mb-2">
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <code className="text-sm font-mono bg-background px-2 py-0.5 rounded">
                                 {tool.toolName}
                               </code>
@@ -278,11 +354,32 @@ export function AIAssistantPanel() {
                                   Generated
                                 </Badge>
                               )}
+                              {hasFailed && failureInfo && (
+                                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                                  <X className="h-3 w-3 mr-1" />
+                                  Failed (Attempt {failureInfo.attempts})
+                                </Badge>
+                              )}
                             </div>
                             <p className="text-sm text-muted-foreground">{tool.purpose}</p>
+
+                            {/* Error message */}
+                            {hasFailed && failureInfo && (
+                              <div className="mt-2 text-xs text-red-600 bg-red-100 dark:bg-red-900/30 p-2 rounded">
+                                <strong>Error:</strong> {failureInfo.error}
+                              </div>
+                            )}
                           </div>
                           <div className="flex-shrink-0">
-                            {isSelected ? (
+                            {hasImplementation ? (
+                              <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center">
+                                <Check className="h-3 w-3 text-white" />
+                              </div>
+                            ) : hasFailed ? (
+                              <div className="h-5 w-5 rounded-full bg-red-500 flex items-center justify-center">
+                                <X className="h-3 w-3 text-white" />
+                              </div>
+                            ) : isSelected ? (
                               <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
                                 <Check className="h-3 w-3 text-primary-foreground" />
                               </div>
@@ -299,18 +396,48 @@ export function AIAssistantPanel() {
                           </div>
                         )}
 
-                        {/* Confidence */}
-                        <div className="mt-2 flex items-center gap-2">
-                          <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-primary transition-all"
-                              style={{ width: `${tool.confidence * 100}%` }}
-                            />
+                        {/* Retry button for failed tools */}
+                        {hasFailed && (
+                          <div className="mt-3">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRetryTool(tool.toolName);
+                              }}
+                              disabled={isRetrying}
+                              className="w-full gap-2 border-red-300 hover:bg-red-50"
+                            >
+                              {isRetrying ? (
+                                <>
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                  Retrying...
+                                </>
+                              ) : (
+                                <>
+                                  <Wand2 className="h-3 w-3" />
+                                  Try Again
+                                </>
+                              )}
+                            </Button>
                           </div>
-                          <span className="text-xs text-muted-foreground">
-                            {Math.round(tool.confidence * 100)}%
-                          </span>
-                        </div>
+                        )}
+
+                        {/* Confidence */}
+                        {!hasFailed && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-primary transition-all"
+                                style={{ width: `${tool.confidence * 100}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {Math.round(tool.confidence * 100)}%
+                            </span>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -356,21 +483,30 @@ export function AIAssistantPanel() {
               )}
 
               {generatedImplementations.size > 0 && (
-                <Button
-                  onClick={handleAcceptSuggestions}
-                  disabled={selectedTools.size === 0}
-                  className="w-full gap-2"
-                  variant="default"
-                >
-                  <Check className="h-4 w-4" />
-                  Accept & Add to Builder ({selectedTools.size} tools)
-                </Button>
+                <>
+                  {failedTools.size > 0 && (
+                    <div className="text-xs text-yellow-700 bg-yellow-50 dark:bg-yellow-950/30 p-2 rounded border border-yellow-200">
+                      <strong>Note:</strong> {failedTools.size} tool{failedTools.size > 1 ? 's' : ''} failed to generate.
+                      Only {generatedImplementations.size} successful tool{generatedImplementations.size > 1 ? 's' : ''} will be added.
+                    </div>
+                  )}
+                  <Button
+                    onClick={handleAcceptSuggestions}
+                    disabled={generatedImplementations.size === 0}
+                    className="w-full gap-2"
+                    variant="default"
+                  >
+                    <Check className="h-4 w-4" />
+                    Accept & Add to Builder ({generatedImplementations.size} successful)
+                  </Button>
+                </>
               )}
 
               <Button
                 onClick={() => {
                   setAnalysis(null);
                   setGeneratedImplementations(new Map());
+                  setFailedTools(new Map());
                   setSelectedTools(new Set());
                 }}
                 className="w-full gap-2"
