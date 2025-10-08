@@ -34,7 +34,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const { toolInference }: { toolInference: ToolInference } = await request.json();
+    const {
+      toolInference,
+      previousCode,
+      error: previousError
+    }: {
+      toolInference: ToolInference;
+      previousCode?: string;
+      error?: string;
+    } = await request.json();
 
     if (!toolInference) {
       return NextResponse.json(
@@ -46,8 +54,10 @@ export async function POST(request: NextRequest) {
     // Create Ollama client
     const ollama = createOllama({ baseURL });
 
-    // Generate implementation using AI
-    const prompt = generateImplementationPrompt(toolInference);
+    // Generate implementation using AI (with iteration support)
+    const prompt = previousCode
+      ? generateIterationPrompt(toolInference, previousCode, previousError)
+      : generateImplementationPrompt(toolInference);
 
     const { text } = await generateText({
       model: ollama(model),
@@ -194,6 +204,42 @@ Return calculated values.`;
     default:
       return 'Implement the custom logic as described in the purpose.';
   }
+}
+
+/**
+ * Generate prompt for iteration (fixing previous failed code)
+ */
+function generateIterationPrompt(tool: ToolInference, previousCode: string, error?: string): string {
+  const { toolName, description, purpose, implementationType, parameters } = tool;
+
+  return `You are an expert backend developer. The previous implementation failed. Fix the issues and generate an improved version.
+
+**Tool Name**: ${toolName}
+**Description**: ${description}
+**Purpose**: ${purpose}
+**Implementation Type**: ${implementationType}
+
+**Previous Implementation** (that failed):
+\`\`\`javascript
+${previousCode}
+\`\`\`
+
+${error ? `**Error Message**: ${error}\n` : ''}
+
+**Your Task**:
+1. Analyze the previous code and identify the issues
+2. Fix the errors while maintaining the same structure
+3. Ensure proper error handling
+4. Return ONLY the corrected JavaScript code (no explanations)
+5. Use the same template structure: if (name === '${toolName}') { ... }
+
+**Requirements**:
+- Must accept 'args' parameter with: ${parameters.map(p => p.name).join(', ')}
+- Must return: { content: [{ type: 'text', text: JSON.stringify(result) }] }
+- Must include try/catch error handling
+- Must validate required parameters: ${parameters.filter(p => p.required).map(p => p.name).join(', ')}
+
+Generate the corrected implementation now:`;
 }
 
 /**

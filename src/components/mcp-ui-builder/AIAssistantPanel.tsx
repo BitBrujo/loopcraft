@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Wand2, Check, X, Info, Loader2, Sparkles, AlertCircle } from "lucide-react";
+import { Wand2, Check, X, Info, Loader2, Sparkles, AlertCircle, ChevronDown, ChevronUp, Copy } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { analyzeHTMLForTools, type AnalysisResult, type ToolInference } from "@/lib/intelligent-analyzer";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,8 @@ export function AIAssistantPanel() {
   const [retryingTool, setRetryingTool] = useState<string | null>(null);
   const [selectedTools, setSelectedTools] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const [generationProgress, setGenerationProgress] = useState<{ current: number; total: number } | null>(null);
+  const [expandedCode, setExpandedCode] = useState<Set<string>>(new Set());
 
   // Auto-analyze when HTML changes
   useEffect(() => {
@@ -82,13 +84,24 @@ export function AIAssistantPanel() {
       selectedTools.has(t.toolName)
     );
 
+    const total = selectedToolInferences.length;
+    let current = 0;
+
     for (const toolInference of selectedToolInferences) {
       // Skip if already generated successfully
       if (implementations.has(toolInference.toolName)) {
+        current++;
         continue;
       }
 
+      current++;
+      setGenerationProgress({ current, total });
+
       try {
+        // Add timeout to prevent hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
         const response = await fetch('/api/builder/generate-implementation', {
           method: 'POST',
           headers: {
@@ -96,7 +109,10 @@ export function AIAssistantPanel() {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },
           body: JSON.stringify({ toolInference }),
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
@@ -108,11 +124,18 @@ export function AIAssistantPanel() {
 
         // Clear failure if it existed
         failures.delete(toolInference.toolName);
+
+        // Auto-expand newly generated code
+        setExpandedCode(prev => new Set([...prev, toolInference.toolName]));
       } catch (err) {
         // Track individual failure, continue with other tools
         const currentFailure = failures.get(toolInference.toolName);
+        const errorMessage = err instanceof Error
+          ? (err.name === 'AbortError' ? 'Request timed out (30s)' : err.message)
+          : 'Generation failed';
+
         failures.set(toolInference.toolName, {
-          error: err instanceof Error ? err.message : 'Generation failed',
+          error: errorMessage,
           attempts: currentFailure ? currentFailure.attempts + 1 : 1,
         });
       }
@@ -121,6 +144,7 @@ export function AIAssistantPanel() {
     setGeneratedImplementations(implementations);
     setFailedTools(failures);
     setIsGenerating(false);
+    setGenerationProgress(null);
   };
 
   const handleRetryTool = async (toolName: string) => {
@@ -132,14 +156,29 @@ export function AIAssistantPanel() {
     setRetryingTool(toolName);
 
     try {
+      // Get previous code and error for iteration
+      const previousCode = generatedImplementations.get(toolName);
+      const failureInfo = failedTools.get(toolName);
+
+      // Add timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
       const response = await fetch('/api/builder/generate-implementation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({ toolInference }),
+        body: JSON.stringify({
+          toolInference,
+          previousCode, // Pass previous code for iteration
+          error: failureInfo?.error, // Pass error message
+        }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
@@ -157,12 +196,19 @@ export function AIAssistantPanel() {
       const newFailures = new Map(failedTools);
       newFailures.delete(toolName);
       setFailedTools(newFailures);
+
+      // Auto-expand the updated code
+      setExpandedCode(prev => new Set([...prev, toolName]));
     } catch (err) {
       // Update failure with new attempt count
       const currentFailure = failedTools.get(toolName);
+      const errorMessage = err instanceof Error
+        ? (err.name === 'AbortError' ? 'Request timed out (30s)' : err.message)
+        : 'Generation failed';
+
       const newFailures = new Map(failedTools);
       newFailures.set(toolName, {
-        error: err instanceof Error ? err.message : 'Generation failed',
+        error: errorMessage,
         attempts: currentFailure ? currentFailure.attempts + 1 : 1,
       });
       setFailedTools(newFailures);
@@ -228,6 +274,27 @@ export function AIAssistantPanel() {
       'custom': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
     };
     return colors[type] || colors.custom;
+  };
+
+  const toggleCodeExpanded = (toolName: string) => {
+    setExpandedCode(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(toolName)) {
+        newSet.delete(toolName);
+      } else {
+        newSet.add(toolName);
+      }
+      return newSet;
+    });
+  };
+
+  const copyToClipboard = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      // Could add a toast notification here
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
   };
 
   if (!currentResource || currentResource.contentType !== 'rawHtml') {
@@ -417,10 +484,50 @@ export function AIAssistantPanel() {
                               ) : (
                                 <>
                                   <Wand2 className="h-3 w-3" />
-                                  Try Again
+                                  {hasImplementation ? 'Try to Fix' : 'Try Again'}
                                 </>
                               )}
                             </Button>
+                          </div>
+                        )}
+
+                        {/* Generated Code Viewer */}
+                        {hasImplementation && !hasFailed && (
+                          <div className="mt-3 border-t pt-3">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleCodeExpanded(tool.toolName);
+                              }}
+                              className="w-full flex items-center justify-between text-xs font-medium text-muted-foreground hover:text-foreground"
+                            >
+                              <span>View Generated Code</span>
+                              {expandedCode.has(tool.toolName) ? (
+                                <ChevronUp className="h-3 w-3" />
+                              ) : (
+                                <ChevronDown className="h-3 w-3" />
+                              )}
+                            </button>
+
+                            {expandedCode.has(tool.toolName) && (
+                              <div className="mt-2 relative">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    copyToClipboard(generatedImplementations.get(tool.toolName) || '');
+                                  }}
+                                  className="absolute right-2 top-2 h-6 w-6 p-0 z-10"
+                                  title="Copy code"
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                                <pre className="text-xs bg-gray-900 dark:bg-gray-950 text-gray-100 p-3 rounded overflow-x-auto max-h-60">
+                                  <code>{generatedImplementations.get(tool.toolName)}</code>
+                                </pre>
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -462,24 +569,36 @@ export function AIAssistantPanel() {
             {/* Action Buttons */}
             <div className="space-y-2">
               {!generatedImplementations.size && selectedTools.size > 0 && (
-                <Button
-                  onClick={handleGenerateImplementations}
-                  disabled={isGenerating || selectedTools.size === 0}
-                  className="w-full gap-2"
-                  variant="default"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Generating Implementations...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="h-4 w-4" />
-                      Generate Working Code ({selectedTools.size} tools)
-                    </>
+                <>
+                  <Button
+                    onClick={handleGenerateImplementations}
+                    disabled={isGenerating || selectedTools.size === 0}
+                    className="w-full gap-2"
+                    variant="default"
+                  >
+                    {isGenerating && generationProgress ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Generating {generationProgress.current}/{generationProgress.total}...
+                      </>
+                    ) : isGenerating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Generating Implementations...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="h-4 w-4" />
+                        Generate Working Code ({selectedTools.size} tools)
+                      </>
+                    )}
+                  </Button>
+                  {isGenerating && generationProgress && (
+                    <div className="text-xs text-center text-muted-foreground">
+                      Generating code for tool {generationProgress.current} of {generationProgress.total}
+                    </div>
                   )}
-                </Button>
+                </>
               )}
 
               {generatedImplementations.size > 0 && (
