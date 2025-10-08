@@ -14,6 +14,12 @@ export function ActionsTab() {
   const {
     currentResource,
     customTools,
+    serverTools,
+    isLoadingServerTools,
+    serverToolsError,
+    connectedServerName,
+    fetchServerTools,
+    clearServerTools,
     actionMappings,
     validationStatus,
     setValidationStatus,
@@ -21,8 +27,9 @@ export function ActionsTab() {
   } = useUIBuilderStore();
 
   const [selectedMappingId, setSelectedMappingId] = useState<string | null>(null);
-  const [isToolsExpanded, setIsToolsExpanded] = useState(true);
-  const [isAIAssistantExpanded, setIsAIAssistantExpanded] = useState(false);
+  const [isToolsExpanded, setIsToolsExpanded] = useState(false);
+  const [isAIAssistantExpanded, setIsAIAssistantExpanded] = useState(true);
+  const [isServerToolsExpanded, setIsServerToolsExpanded] = useState(true);
 
   // Auto-validate on changes
   useEffect(() => {
@@ -59,6 +66,15 @@ export function ActionsTab() {
       );
     }
   }, [actionMappings, currentResource, customTools, setValidationStatus]);
+
+  // Fetch server tools when connected server changes
+  useEffect(() => {
+    if (connectedServerName) {
+      fetchServerTools(connectedServerName);
+    } else {
+      clearServerTools();
+    }
+  }, [connectedServerName, fetchServerTools, clearServerTools]);
 
   // Auto-select first mapping when mappings change
   useEffect(() => {
@@ -103,6 +119,93 @@ export function ActionsTab() {
           </div>
         )}
       </div>
+
+      {/* Server Tools Section - Collapsible (only shown when server connected) */}
+      {connectedServerName && (
+        <div className="border-b bg-blue-50/30 dark:bg-blue-950/10">
+          <button
+            onClick={() => setIsServerToolsExpanded(!isServerToolsExpanded)}
+            className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-sm">Server Tools</h3>
+              <span className="text-xs text-muted-foreground">
+                (from &quot;{connectedServerName}&quot;)
+              </span>
+              {isLoadingServerTools && (
+                <span className="text-xs text-blue-600">Loading...</span>
+              )}
+              {!isLoadingServerTools && serverTools.length > 0 && (
+                <span className="text-xs text-green-600">
+                  {serverTools.length} available
+                </span>
+              )}
+            </div>
+            {isServerToolsExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </button>
+          {isServerToolsExpanded && (
+            <div className="max-h-[400px] overflow-auto border-t">
+              <div className="p-4 space-y-3">
+                {isLoadingServerTools && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <div className="text-sm">Loading tools from {connectedServerName}...</div>
+                  </div>
+                )}
+                {serverToolsError && (
+                  <div className="text-center py-8">
+                    <div className="text-sm text-red-600">
+                      Error: {serverToolsError}
+                    </div>
+                  </div>
+                )}
+                {!isLoadingServerTools && !serverToolsError && serverTools.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <div className="text-sm">No tools found in {connectedServerName}</div>
+                  </div>
+                )}
+                {!isLoadingServerTools && !serverToolsError && serverTools.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground mb-3">
+                      These tools are from your connected MCP server. Use them in action mappings below.
+                    </p>
+                    {serverTools.map((tool, index) => (
+                      <div
+                        key={`${tool.serverName}-${tool.name}-${index}`}
+                        className="p-3 border rounded-lg bg-white dark:bg-gray-900"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold text-sm">{tool.name}</h4>
+                              <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded">
+                                Read-only
+                              </span>
+                            </div>
+                            {tool.description && (
+                              <p className="text-sm text-muted-foreground mt-1">{tool.description}</p>
+                            )}
+                            {tool.inputSchema && typeof tool.inputSchema === 'object' && 'properties' in tool.inputSchema && (
+                              <div className="mt-2 text-xs">
+                                <span className="text-muted-foreground">
+                                  Parameters: {Object.keys((tool.inputSchema as { properties?: Record<string, unknown> }).properties || {}).join(', ') || 'none'}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Custom Tools Section - Collapsible */}
       <div className="border-b">

@@ -82,7 +82,7 @@ export interface ValidationError {
   message: string;
 }
 
-export type TabId = 'config' | 'design' | 'tools' | 'actions' | 'generate' | 'test';
+export type TabId = 'config' | 'design' | 'actions' | 'generate' | 'test';
 
 export interface MCPTool {
   name: string;

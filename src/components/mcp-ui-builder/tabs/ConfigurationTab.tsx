@@ -35,6 +35,10 @@ export function ConfigurationTab() {
     updateResource,
     connectedServerName,
     setConnectedServerName,
+    serverTools,
+    isLoadingServerTools,
+    serverToolsError,
+    fetchServerTools,
   } = useUIBuilderStore();
 
   const [servers, setServers] = useState<MCPServer[]>([]);
@@ -65,6 +69,13 @@ export function ConfigurationTab() {
 
     loadServers();
   }, []);
+
+  // Fetch tools when server is selected
+  useEffect(() => {
+    if (connectedServerName) {
+      fetchServerTools(connectedServerName);
+    }
+  }, [connectedServerName, fetchServerTools]);
 
   const handleFieldChange = (field: string, value: string | number) => {
     updateResource({ [field]: value });
@@ -210,11 +221,59 @@ export function ConfigurationTab() {
                       ))}
                     </SelectContent>
                   </Select>
+
+                  {/* Tool Preview when server is connected */}
                   {connectedServerName && (
-                    <p className="text-sm text-green-600">
-                      ✓ Connected to &quot;{connectedServerName}&quot; - tools will be available in Actions tab
-                    </p>
+                    <div className="mt-3 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg space-y-2">
+                      <p className="text-sm text-green-700 dark:text-green-300 font-medium flex items-center gap-2">
+                        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Connected to &quot;{connectedServerName}&quot;
+                      </p>
+                      {isLoadingServerTools && (
+                        <p className="text-xs text-green-600 dark:text-green-400">
+                          Loading tools...
+                        </p>
+                      )}
+                      {serverToolsError && (
+                        <p className="text-xs text-red-600 dark:text-red-400">
+                          Error loading tools: {serverToolsError}
+                        </p>
+                      )}
+                      {!isLoadingServerTools && !serverToolsError && serverTools.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="text-xs text-green-600 dark:text-green-400">
+                            {serverTools.length} tool{serverTools.length !== 1 ? 's' : ''} available:
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {serverTools.slice(0, 5).map((tool) => (
+                              <span
+                                key={tool.name}
+                                className="text-xs px-2 py-1 bg-white dark:bg-gray-800 border border-green-300 dark:border-green-700 rounded"
+                              >
+                                {tool.name}
+                              </span>
+                            ))}
+                            {serverTools.length > 5 && (
+                              <span className="text-xs px-2 py-1 text-green-600 dark:text-green-400">
+                                +{serverTools.length - 5} more
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-green-700 dark:text-green-300 mt-2">
+                            These tools will be available in the Actions tab
+                          </p>
+                        </div>
+                      )}
+                      {!isLoadingServerTools && !serverToolsError && serverTools.length === 0 && (
+                        <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                          No tools found in this server
+                        </p>
+                      )}
+                    </div>
                   )}
+
                   {servers.filter(s => s.status === 'disconnected').length > 0 && (
                     <div className="text-sm text-amber-600 space-y-1">
                       <p>⚠ {servers.filter(s => s.status === 'disconnected').length} server(s) failed to connect:</p>

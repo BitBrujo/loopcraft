@@ -6,6 +6,7 @@ import type {
   Template,
   TabId,
   MCPContext,
+  MCPTool,
   ActionMapping,
   TestConfig,
   ValidationStatus,
@@ -38,6 +39,11 @@ interface UIBuilderStore {
 
   // Custom tools
   customTools: CustomTool[];
+
+  // Server tools (from connected MCP server)
+  serverTools: MCPTool[];
+  isLoadingServerTools: boolean;
+  serverToolsError: string | null;
 
   // Action mappings
   actionMappings: ActionMapping[];
@@ -101,6 +107,11 @@ interface UIBuilderStore {
   removeCustomTool: (id: string) => void;
   clearCustomTools: () => void;
 
+  // Actions - Server Tools
+  fetchServerTools: (serverName: string) => Promise<void>;
+  setServerTools: (tools: MCPTool[]) => void;
+  clearServerTools: () => void;
+
   // Actions - Action Mappings
   addActionMapping: (mapping: ActionMapping) => void;
   updateActionMapping: (id: string, updates: Partial<ActionMapping>) => void;
@@ -157,6 +168,9 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
       },
       connectedServerName: null,
       customTools: [],
+      serverTools: [],
+      isLoadingServerTools: false,
+      serverToolsError: null,
       actionMappings: [],
       testConfig: {
         mockResponses: [],
@@ -297,6 +311,41 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
       clearCustomTools: () =>
         set({ customTools: [] }),
 
+      fetchServerTools: async (serverName) => {
+        set({ isLoadingServerTools: true, serverToolsError: null });
+        try {
+          const token = localStorage.getItem('token');
+          const headers: HeadersInit = {};
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+
+          const response = await fetch(`/api/mcp/tools?server=${encodeURIComponent(serverName)}`, { headers });
+          if (!response.ok) {
+            throw new Error(`Failed to fetch tools: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          set({
+            serverTools: data.tools || [],
+            isLoadingServerTools: false,
+            serverToolsError: null,
+          });
+        } catch (error) {
+          set({
+            serverTools: [],
+            isLoadingServerTools: false,
+            serverToolsError: error instanceof Error ? error.message : 'Failed to fetch server tools',
+          });
+        }
+      },
+
+      setServerTools: (tools) =>
+        set({ serverTools: tools }),
+
+      clearServerTools: () =>
+        set({ serverTools: [], serverToolsError: null }),
+
       addActionMapping: (mapping) =>
         set((state) => ({
           actionMappings: [...state.actionMappings, mapping],
@@ -414,6 +463,7 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         mcpContext: state.mcpContext,
         connectedServerName: state.connectedServerName,
         customTools: state.customTools,
+        serverTools: state.serverTools,
         actionMappings: state.actionMappings,
         testConfig: {
           mockResponses: state.testConfig.mockResponses,

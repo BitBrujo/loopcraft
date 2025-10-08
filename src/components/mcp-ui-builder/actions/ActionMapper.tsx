@@ -13,6 +13,8 @@ export function ActionMapper() {
   const {
     currentResource,
     customTools,
+    serverTools,
+    connectedServerName,
     actionMappings,
     addActionMapping,
     updateActionMapping,
@@ -37,16 +39,19 @@ export function ActionMapper() {
     const element = interactiveElements.find(e => e.id === elementId);
     if (!element) return;
 
-    // Create new mapping with first available custom tool
-    const firstTool = customTools[0];
+    // Get first available tool (prefer server tools, fallback to custom)
+    const firstServerTool = serverTools[0];
+    const firstCustomTool = customTools[0];
+    const firstTool = firstServerTool || firstCustomTool;
+
     if (!firstTool) return;
 
     const newMapping: ActionMapping = {
       id: generateId(),
       uiElementId: elementId,
       uiElementType: element.type,
-      toolName: firstTool.name,
-      serverName: 'custom', // Custom tools don't have a server
+      toolName: firstServerTool ? firstServerTool.name : firstCustomTool!.name,
+      serverName: firstServerTool ? (firstServerTool.serverName || connectedServerName || 'custom') : 'custom',
       parameterBindings: {}, // Legacy
       parameterSources: {}, // New: typed parameter sources
       responseHandler: 'show-notification',
@@ -109,13 +114,19 @@ export function ActionMapper() {
     );
   }
 
-  if (customTools.length === 0) {
+  const totalTools = serverTools.length + customTools.length;
+
+  if (totalTools === 0) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         <div className="text-center space-y-2">
           <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground/50" />
-          <p>No custom tools defined</p>
-          <p className="text-sm">Expand the Custom Tools section above to create tools</p>
+          <p>No tools available</p>
+          <p className="text-sm">
+            {connectedServerName
+              ? 'Connect to a server with tools or create custom tools above'
+              : 'Create custom tools in the section above or connect to an MCP server'}
+          </p>
         </div>
       </div>
     );
@@ -193,19 +204,40 @@ export function ActionMapper() {
                         <select
                           value={mapping.toolName}
                           onChange={(e) => {
-                            handleToolChange(mapping.id, e.target.value, 'custom');
+                            const selectedOption = e.target.selectedOptions[0];
+                            const toolName = e.target.value;
+                            const serverName = selectedOption.dataset.serverName || 'custom';
+                            handleToolChange(mapping.id, toolName, serverName);
                           }}
                           className="text-sm border rounded px-2 py-1 bg-background w-full"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          {customTools.map((tool) => (
-                            <option
-                              key={tool.id}
-                              value={tool.name}
-                            >
-                              {tool.name}
-                            </option>
-                          ))}
+                          {serverTools.length > 0 && (
+                            <optgroup label={`Server: ${connectedServerName || 'Unknown'}`}>
+                              {serverTools.map((tool) => (
+                                <option
+                                  key={`server-${tool.name}`}
+                                  value={tool.name}
+                                  data-server-name={tool.serverName || connectedServerName || 'server'}
+                                >
+                                  {tool.name}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
+                          {customTools.length > 0 && (
+                            <optgroup label="Custom Tools">
+                              {customTools.map((tool) => (
+                                <option
+                                  key={`custom-${tool.id}`}
+                                  value={tool.name}
+                                  data-server-name="custom"
+                                >
+                                  {tool.name}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
                         </select>
                       ) : (
                         <span className="text-sm text-muted-foreground">-</span>
@@ -213,8 +245,14 @@ export function ActionMapper() {
                     </td>
                     <td className="p-3">
                       {mapping ? (
-                        <span className="text-sm text-muted-foreground">
-                          Custom
+                        <span className="text-sm">
+                          {mapping.serverName === 'custom' ? (
+                            <span className="text-muted-foreground">Custom</span>
+                          ) : (
+                            <span className="text-blue-600 dark:text-blue-400 font-medium">
+                              {mapping.serverName}
+                            </span>
+                          )}
                         </span>
                       ) : (
                         <span className="text-sm text-muted-foreground">-</span>
