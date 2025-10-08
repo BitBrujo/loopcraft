@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight, AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ActionMapper } from "../actions/ActionMapper";
 import { ParameterBindingEditor } from "../actions/ParameterBindingEditor";
 import { CustomToolsEditor } from "../actions/CustomToolsEditor";
@@ -93,9 +94,10 @@ export function ActionsTab() {
   const validationSummary = getValidationSummary(validationStatus);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* AI Assistant Section - Collapsible */}
-      <div className="border-b bg-gradient-to-r from-purple-50/50 to-blue-50/50 dark:from-purple-950/20 dark:to-blue-950/20">
+    <div className="flex flex-col h-full">
+      <ScrollArea className="flex-1 h-0">
+        {/* AI Assistant Section - Collapsible */}
+        <div className="border-b bg-gradient-to-r from-purple-50/50 to-blue-50/50 dark:from-purple-950/20 dark:to-blue-950/20">
         <button
           onClick={() => setIsAIAssistantExpanded(!isAIAssistantExpanded)}
           className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
@@ -233,14 +235,14 @@ export function ActionsTab() {
       </div>
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Action Mapper (70% height) */}
-        <div className="h-[70%] border-b overflow-hidden">
+      <div className="flex flex-col min-h-[600px]">
+        {/* Action Mapper (420px height) */}
+        <div className="h-[420px] border-b overflow-hidden">
           <ActionMapper />
         </div>
 
         {/* Bottom area split: Parameter binding + Validation */}
-        <div className="h-[30%] flex overflow-hidden">
+        <div className="h-[180px] flex overflow-hidden">
           {/* Parameter Binding Editor (70% width if mapping selected) */}
           {selectedMappingId && (
             <div className="flex-1 border-r overflow-hidden">
@@ -317,6 +319,7 @@ export function ActionsTab() {
           </div>
         </div>
       </div>
+      </ScrollArea>
 
       {/* Footer with navigation */}
       <div className="border-t bg-card p-4">
