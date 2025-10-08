@@ -10,6 +10,7 @@ import { createOllama } from 'ollama-ai-provider-v2';
 import { getUserFromRequest } from '@/lib/auth';
 import { queryOne } from '@/lib/db';
 import type { ToolInference } from '@/lib/intelligent-analyzer';
+import type { Setting } from '@/types/database';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,17 +20,17 @@ export async function POST(request: NextRequest) {
     let model = process.env.OLLAMA_MODEL || 'llama3.2:latest';
 
     if (user) {
-      const aiConfig = await queryOne<{ setting_value: string }>(
-        'SELECT setting_value FROM settings WHERE user_id = ? AND setting_key = ?',
+      const aiConfig = await queryOne<Setting>(
+        'SELECT * FROM settings WHERE user_id = ? AND `key` = ?',
         [user.userId, 'ollama_base_url']
       );
-      if (aiConfig) baseURL = aiConfig.setting_value;
+      if (aiConfig?.value) baseURL = aiConfig.value;
 
-      const modelConfig = await queryOne<{ setting_value: string }>(
-        'SELECT setting_value FROM settings WHERE user_id = ? AND setting_key = ?',
+      const modelConfig = await queryOne<Setting>(
+        'SELECT * FROM settings WHERE user_id = ? AND `key` = ?',
         [user.userId, 'ollama_model']
       );
-      if (modelConfig) model = modelConfig.setting_value;
+      if (modelConfig?.value) model = modelConfig.value;
     }
 
     // Parse request body
