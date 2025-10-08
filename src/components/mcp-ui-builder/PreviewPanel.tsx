@@ -20,6 +20,14 @@ export function PreviewPanel() {
       return;
     }
 
+    // Validate external URL content is not empty
+    if (currentResource.contentType === 'externalUrl' && !currentResource.content.trim()) {
+      setMcpResource(null);
+      setError('Enter a URL to see preview');
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 

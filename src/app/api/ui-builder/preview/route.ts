@@ -48,6 +48,13 @@ export async function POST(request: NextRequest) {
         break;
 
       case 'externalUrl':
+        // Validate URL is not empty
+        if (!resource.content || !resource.content.trim()) {
+          return NextResponse.json(
+            { error: 'URL cannot be empty for external URL resources' },
+            { status: 400 }
+          );
+        }
         mcpResource = createUIResource({
           uri: resource.uri as `ui://${string}`,
           content: { type: 'externalUrl', iframeUrl: resource.content },

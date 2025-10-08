@@ -23,7 +23,7 @@ export function EditorPanel() {
     if (contentType === 'rawHtml') {
       newContent = '<!DOCTYPE html>\n<html>\n<head>\n  <title>New UI Resource</title>\n</head>\n<body>\n  <h1>Hello from MCP-UI!</h1>\n  <p>Edit this HTML to create your custom UI.</p>\n</body>\n</html>';
     } else if (contentType === 'externalUrl') {
-      newContent = '';
+      newContent = 'https://example.com';
     } else if (contentType === 'remoteDom') {
       newContent = '';
     }
@@ -62,8 +62,12 @@ export function EditorPanel() {
               External URL
             </button>
             <button
-              className={`px-3 py-1.5 text-sm rounded opacity-50 cursor-not-allowed`}
-              disabled
+              className={`px-3 py-1.5 text-sm rounded ${
+                currentResource.contentType === "remoteDom"
+                  ? "bg-background shadow-sm font-medium"
+                  : "hover:bg-background/50"
+              }`}
+              onClick={() => handleContentTypeChange("remoteDom")}
             >
               Remote DOM
             </button>
