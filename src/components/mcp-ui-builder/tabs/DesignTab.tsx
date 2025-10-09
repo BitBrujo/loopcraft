@@ -236,6 +236,11 @@ export function DesignTab() {
                               </Badge>
                             )}
                           </div>
+                          {!isExpanded && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                              {template.description}
+                            </p>
+                          )}
                         </div>
 
                         {isExpanded && (
