@@ -136,6 +136,10 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content, serverNam
     return null;
   }
 
+  // Extract metadata from resource
+  const preferredSize = resource._meta?.['mcpui.dev/ui-preferred-frame-size'] as [string, string] | undefined;
+  const initialData = resource._meta?.['mcpui.dev/ui-initial-render-data'] as Record<string, unknown> | undefined;
+
   return (
     <div className="mcp-ui-container border rounded-lg p-4 my-4 bg-card">
       <div className="mcp-ui-header text-sm text-muted-foreground mb-2">
@@ -148,6 +152,13 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content, serverNam
           htmlProps={{
             autoResizeIframe: true,
             sandboxPermissions: 'allow-forms allow-scripts allow-same-origin',
+            // Pass initial render data from metadata
+            iframeRenderData: initialData,
+            // Use preferred size if specified in metadata
+            style: preferredSize ? {
+              width: preferredSize[0],
+              height: preferredSize[1],
+            } : undefined,
           }}
         />
       </div>

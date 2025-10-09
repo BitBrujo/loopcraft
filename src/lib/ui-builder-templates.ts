@@ -10,8 +10,6 @@ export const builtInTemplates: Template[] = [
       uri: 'ui://loopcraft/blank',
       contentType: 'rawHtml',
       content: '<!DOCTYPE html>\n<html>\n<head>\n  <title>Custom UI</title>\n  <style>\n    body { font-family: system-ui, sans-serif; padding: 20px; }\n  </style>\n</head>\n<body>\n  <h1>Your Custom UI</h1>\n  <p>Start building here...</p>\n</body>\n</html>',
-      preferredSize: { width: 800, height: 600 },
-      actions: [],
     },
   },
   {
@@ -65,14 +63,6 @@ export const builtInTemplates: Template[] = [
   </script>
 </body>
 </html>`,
-      preferredSize: { width: 600, height: 500 },
-      actions: [
-        {
-          type: 'tool',
-          toolName: 'submitForm',
-          parameters: { name: '', email: '', message: '' },
-        },
-      ],
     },
   },
   {
@@ -117,8 +107,6 @@ export const builtInTemplates: Template[] = [
   </div>
 </body>
 </html>`,
-      preferredSize: { width: 800, height: 400 },
-      actions: [],
     },
   },
   {
@@ -167,8 +155,6 @@ export const builtInTemplates: Template[] = [
   </script>
 </body>
 </html>`,
-      preferredSize: { width: 900, height: 400 },
-      actions: [],
     },
   },
   {
@@ -214,8 +200,6 @@ export const builtInTemplates: Template[] = [
   <button onclick="alert('Settings saved!')">Save Changes</button>
 </body>
 </html>`,
-      preferredSize: { width: 700, height: 400 },
-      actions: [],
     },
   },
   {
@@ -260,8 +244,6 @@ export const builtInTemplates: Template[] = [
   </div>
 </body>
 </html>`,
-      preferredSize: { width: 700, height: 500 },
-      actions: [],
     },
   },
   {
@@ -311,8 +293,6 @@ export const builtInTemplates: Template[] = [
   </div>
 </body>
 </html>`,
-      preferredSize: { width: 800, height: 450 },
-      actions: [],
     },
   },
   {
@@ -324,8 +304,6 @@ export const builtInTemplates: Template[] = [
       uri: 'ui://loopcraft/external',
       contentType: 'externalUrl',
       content: 'https://example.com',
-      preferredSize: { width: 1000, height: 800 },
-      actions: [],
     },
   },
 ];

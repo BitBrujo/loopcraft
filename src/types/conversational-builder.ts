@@ -1,8 +1,25 @@
-import { UIResource, ActionMapping, CustomTool } from './ui-builder';
+import { UIResource } from './ui-builder';
 import type { PromptFlow, PromptButton } from '@/lib/conversational-builder/prompt-flow';
 
 // Re-export for convenience
 export type { PromptFlow, PromptButton };
+
+/**
+ * Legacy types for conversational builder (removed from simplified UI builder)
+ * These are placeholder types as the conversational builder features are minimal
+ */
+export interface ActionMapping {
+  id: string;
+  uiElementId: string;
+  toolName: string;
+  [key: string]: unknown;
+}
+
+export interface CustomTool {
+  id: string;
+  name: string;
+  [key: string]: unknown;
+}
 
 /**
  * Phase of the conversational UI building process

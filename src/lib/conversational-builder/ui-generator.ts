@@ -20,7 +20,6 @@ export class UIGenerator {
       uri: 'ui://conversational-builder/initial',
       contentType: 'rawHtml',
       content: '<div class="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md"><p class="text-gray-900 dark:text-white">Your UI will appear here...</p></div>',
-      preferredSize: { width: 800, height: 600 },
       templatePlaceholders: [],
       metadata: {
         title: 'New UI Component',
@@ -103,7 +102,6 @@ export class UIGenerator {
       uri: `ui://conversational-builder/${templateId}`,
       contentType: 'rawHtml',
       content: template.htmlContent,
-      preferredSize: { width: 800, height: 600 },
       templatePlaceholders: placeholders,
       metadata: {
         title: template.name,

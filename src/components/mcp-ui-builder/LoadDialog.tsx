@@ -4,18 +4,16 @@ import { useState, useEffect } from "react";
 import { FolderOpen, X, Trash2, Search, Calendar, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
-import type { UIResource, MCPContext, ActionMapping, TestConfig } from "@/types/ui-builder";
+import type { UIResource } from "@/types/ui-builder";
 
 interface SavedTemplate {
   id: number;
   user_id: number;
   name: string;
   category: string;
+  description?: string;
   resource_data: {
-    currentResource: UIResource;
-    mcpContext: MCPContext;
-    actionMappings: ActionMapping[];
-    testConfig?: TestConfig;
+    resource: UIResource;
     savedAt: string;
   };
   created_at: string;
@@ -23,12 +21,12 @@ interface SavedTemplate {
 }
 
 interface LoadDialogProps {
-  onClose: () => void;
-  onLoaded?: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function LoadDialog({ onClose, onLoaded }: LoadDialogProps) {
-  const { loadCompleteState } = useUIBuilderStore();
+export function LoadDialog({ open, onOpenChange }: LoadDialogProps) {
+  const { setCurrentResource } = useUIBuilderStore();
   const [templates, setTemplates] = useState<SavedTemplate[]>([]);
   const [filteredTemplates, setFilteredTemplates] = useState<SavedTemplate[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -39,8 +37,10 @@ export function LoadDialog({ onClose, onLoaded }: LoadDialogProps) {
 
   // Fetch templates on mount
   useEffect(() => {
-    fetchTemplates();
-  }, []);
+    if (open) {
+      fetchTemplates();
+    }
+  }, [open]);
 
   // Filter templates when search/category changes
   useEffect(() => {
@@ -96,18 +96,9 @@ export function LoadDialog({ onClose, onLoaded }: LoadDialogProps) {
   };
 
   const handleLoad = (template: SavedTemplate) => {
-    const { currentResource, mcpContext, actionMappings, testConfig } =
-      template.resource_data;
-
-    loadCompleteState({
-      currentResource,
-      mcpContext,
-      actionMappings,
-      testConfig,
-    });
-
-    onLoaded?.();
-    onClose();
+    const { resource } = template.resource_data;
+    setCurrentResource(resource);
+    onOpenChange(false);
   };
 
   const handleDelete = async (id: number) => {
@@ -141,6 +132,8 @@ export function LoadDialog({ onClose, onLoaded }: LoadDialogProps) {
     return date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  if (!open) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-background border rounded-lg shadow-lg w-full max-w-4xl max-h-[80vh] flex flex-col">
@@ -148,7 +141,7 @@ export function LoadDialog({ onClose, onLoaded }: LoadDialogProps) {
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-semibold">Load Saved Templates</h2>
           <button
-            onClick={onClose}
+            onClick={() => onOpenChange(false)}
             className="text-muted-foreground hover:text-foreground"
           >
             <X className="h-5 w-5" />
@@ -244,15 +237,22 @@ export function LoadDialog({ onClose, onLoaded }: LoadDialogProps) {
                       <span>{template.category}</span>
                     </div>
 
-                    {/* Stats */}
+                    {/* Description */}
+                    {template.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {template.description}
+                      </p>
+                    )}
+
+                    {/* Resource Info */}
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span>
-                        {template.resource_data.actionMappings?.length || 0} actions
-                      </span>
-                      <span>•</span>
-                      <span>
-                        {template.resource_data.mcpContext?.selectedTools?.length || 0} tools
-                      </span>
+                      <span>{template.resource_data.resource.contentType}</span>
+                      {template.resource_data.resource.templatePlaceholders && template.resource_data.resource.templatePlaceholders.length > 0 && (
+                        <>
+                          <span>•</span>
+                          <span>{template.resource_data.resource.templatePlaceholders.length} placeholders</span>
+                        </>
+                      )}
                     </div>
 
                     {/* Date */}
@@ -289,7 +289,7 @@ export function LoadDialog({ onClose, onLoaded }: LoadDialogProps) {
           <p className="text-sm text-muted-foreground">
             {filteredTemplates.length} template(s) found
           </p>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
         </div>

@@ -11,8 +11,10 @@ import {
   ConfigSnapshot,
   PromptFlow,
   PromptButton,
+  ActionMapping,
+  CustomTool,
 } from '@/types/conversational-builder';
-import { UIResource, ActionMapping, CustomTool } from '@/types/ui-builder';
+import { UIResource } from '@/types/ui-builder';
 
 interface ConversationStateStore extends ConversationState {
   // Message management
@@ -72,7 +74,6 @@ const initialState: ConversationState = {
     uri: 'ui://conversational-builder/initial',
     contentType: 'rawHtml',
     content: '',
-    preferredSize: { width: 800, height: 600 },
     templatePlaceholders: [],
     metadata: {
       title: 'New UI Component',

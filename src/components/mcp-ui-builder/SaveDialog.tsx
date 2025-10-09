@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 
 interface SaveDialogProps {
-  onClose: () => void;
-  onSaved?: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 const CATEGORIES = [
@@ -19,8 +19,8 @@ const CATEGORIES = [
   "Media",
 ];
 
-export function SaveDialog({ onClose, onSaved }: SaveDialogProps) {
-  const { currentResource, mcpContext, actionMappings, testConfig } = useUIBuilderStore();
+export function SaveDialog({ open, onOpenChange }: SaveDialogProps) {
+  const { currentResource } = useUIBuilderStore();
   const [name, setName] = useState("");
   const [category, setCategory] = useState("Custom");
   const [description, setDescription] = useState("");
@@ -55,16 +55,9 @@ export function SaveDialog({ onClose, onSaved }: SaveDialogProps) {
     setError(null);
 
     try {
-      // Prepare complete state for saving
+      // Save simplified resource data (just the UIResource)
       const resourceData = {
-        currentResource,
-        mcpContext,
-        actionMappings,
-        testConfig: {
-          mockResponses: testConfig.mockResponses,
-          useMockData: testConfig.useMockData,
-          testHistory: [], // Don't save test history
-        },
+        resource: currentResource,
         savedAt: new Date().toISOString(),
       };
 
@@ -78,6 +71,7 @@ export function SaveDialog({ onClose, onSaved }: SaveDialogProps) {
         body: JSON.stringify({
           name: name.trim(),
           category,
+          description: description.trim() || undefined,
           resource_data: resourceData,
         }),
       });
@@ -87,9 +81,11 @@ export function SaveDialog({ onClose, onSaved }: SaveDialogProps) {
         throw new Error(data.error || "Failed to save template");
       }
 
-      // Success - close dialog and notify parent
-      onSaved?.();
-      onClose();
+      // Success - close dialog
+      onOpenChange(false);
+      setName("");
+      setCategory("Custom");
+      setDescription("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save template");
     } finally {
@@ -97,14 +93,16 @@ export function SaveDialog({ onClose, onSaved }: SaveDialogProps) {
     }
   };
 
+  if (!open) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-background border rounded-lg shadow-lg w-full max-w-md flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Save UI Builder State</h2>
+          <h2 className="text-lg font-semibold">Save Template</h2>
           <button
-            onClick={onClose}
+            onClick={() => onOpenChange(false)}
             className="text-muted-foreground hover:text-foreground"
             disabled={isSaving}
           >
@@ -174,10 +172,12 @@ export function SaveDialog({ onClose, onSaved }: SaveDialogProps) {
           <div className="p-3 bg-muted/50 rounded-md space-y-1 text-sm">
             <p className="font-medium">What will be saved:</p>
             <ul className="list-disc list-inside text-muted-foreground space-y-0.5">
-              <li>UI Resource ({currentResource?.contentType})</li>
-              <li>MCP Context ({mcpContext.selectedTools.length} tools)</li>
-              <li>Action Mappings ({actionMappings.length} mappings)</li>
-              <li>Test Configuration</li>
+              <li>Content Type: {currentResource?.contentType}</li>
+              <li>URI: {currentResource?.uri}</li>
+              <li>Metadata: {currentResource?.metadata?.title || 'Untitled'}</li>
+              {currentResource?.templatePlaceholders && currentResource.templatePlaceholders.length > 0 && (
+                <li>Template Placeholders: {currentResource.templatePlaceholders.length}</li>
+              )}
             </ul>
           </div>
 
@@ -191,7 +191,7 @@ export function SaveDialog({ onClose, onSaved }: SaveDialogProps) {
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-2 p-4 border-t">
-          <Button variant="outline" onClick={onClose} disabled={isSaving}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={isSaving}>

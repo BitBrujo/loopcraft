@@ -1,25 +1,14 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Save, RotateCcw, RefreshCw, FolderOpen, File } from "lucide-react";
-import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
-import { generateId } from "@/lib/utils";
-import { ConfigPanel } from "./ConfigPanel";
-import { SaveDialog } from "./SaveDialog";
-import { LoadDialog } from "./LoadDialog";
-import { ConfigurationTab } from "./tabs/ConfigurationTab";
-import { DesignTab } from "./tabs/DesignTab";
-import { ActionsTab } from "./tabs/ActionsTab";
-import { GenerateTab } from "./tabs/GenerateTab";
-import { TestTab } from "./tabs/TestTab";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { useState } from 'react';
+import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
+import { ConfigureTab } from './tabs/ConfigureTab';
+import { DesignTab } from './tabs/DesignTab';
+import { ExportTab } from './tabs/ExportTab';
+import { Button } from '@/components/ui/button';
+import { SaveDialog } from './SaveDialog';
+import { LoadDialog } from './LoadDialog';
+import { Save, FolderOpen, RotateCcw } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -27,306 +16,157 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import type { TabId } from "@/types/ui-builder";
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import type { TabId } from '@/types/ui-builder';
 
-const allTabs: Array<{ id: TabId; label: string }> = [
-  { id: 'config', label: 'Config' },
-  { id: 'design', label: 'Design' },
-  { id: 'actions', label: 'Actions' },
-  { id: 'generate', label: 'Generate' },
-  { id: 'test', label: 'Test' },
+const tabs: Array<{ id: TabId; label: string; description: string }> = [
+  { id: 'configure', label: 'Configure', description: 'Set resource URI and metadata' },
+  { id: 'design', label: 'Design', description: 'Create your UI content' },
+  { id: 'export', label: 'Export', description: 'Get integration code' },
 ];
 
 export function BuilderLayout() {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showLoadDialog, setShowLoadDialog] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
-  const [showConfig, setShowConfig] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const {
-    currentResource,
-    activeTab,
-    setActiveTab,
-    resetResource,
-    setError,
-    mcpContext,
-    actionMappings,
-    validationStatus,
-    setMCPContext,
-    clearActionMappings,
-    setTestConfig,
-    setValidationStatus,
-  } = useUIBuilderStore();
+  const { activeTab, setActiveTab, resetResource } = useUIBuilderStore();
 
-  // Migration: Fix duplicate mapping IDs on component mount
-  useEffect(() => {
-    const seenIds = new Set<string>();
-    let needsMigration = false;
-
-    const migratedMappings = actionMappings.map((mapping) => {
-      // Check for duplicate or old Date.now() format (mapping-[timestamp])
-      if (seenIds.has(mapping.id) || /^mapping-\d+$/.test(mapping.id)) {
-        needsMigration = true;
-        return { ...mapping, id: generateId() };
-      }
-      seenIds.add(mapping.id);
-      return mapping;
-    });
-
-    if (needsMigration) {
-      // Update all mappings at once using setState
-      useUIBuilderStore.setState({ actionMappings: migratedMappings });
-      console.log('[MCP-UI Builder] Migrated duplicate mapping IDs');
-    }
-  }, []); // Only run once on mount
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      // Re-fetch MCP servers to update connection status
-      const token = localStorage.getItem("token");
-      const headers: HeadersInit = {};
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
-
-      const response = await fetch("/api/mcp/servers", { headers });
-      if (response.ok) {
-        console.log("MCP servers refreshed");
-      }
-
-      // TODO: Could also re-validate action mappings here if needed
-
-      // Success message could be shown via a toast/notification
-      setError(null);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to refresh");
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-  const handleResetAll = () => {
-    // Clear all builder state
+  const handleReset = () => {
     resetResource();
-    setMCPContext({ selectedServers: [], selectedTools: [], purpose: '' });
-    clearActionMappings();
-    setTestConfig({ mockResponses: [], testHistory: [], useMockData: true });
-    setValidationStatus({ missingMappings: [], typeMismatches: [], warnings: [] });
-    setActiveTab('design');
-
-    // Clear persisted localStorage to ensure reset actually works
-    localStorage.removeItem('ui-builder-storage');
-
     setShowResetConfirmation(false);
   };
 
-  const handleSave = () => {
-    if (!currentResource) {
-      setError("No resource to save");
-      return;
-    }
-    setShowSaveDialog(true);
-  };
-
-  const handleLoad = () => {
-    setShowLoadDialog(true);
-  };
-
-  const getTabProgress = (tabId: TabId): 'completed' | 'current' | 'pending' => {
-    const tabIndex = allTabs.findIndex((t) => t.id === tabId);
-    const activeIndex = allTabs.findIndex((t) => t.id === activeTab);
-
-    if (tabIndex < activeIndex) return 'completed';
-    if (tabIndex === activeIndex) return 'current';
-    return 'pending';
-  };
-
-  const renderTabContent = () => {
+  const renderActiveTab = () => {
     switch (activeTab) {
-      case 'config':
-        return <ConfigurationTab />;
+      case 'configure':
+        return <ConfigureTab />;
       case 'design':
         return <DesignTab />;
-      case 'actions':
-        return <ActionsTab />;
-      case 'generate':
-        return <GenerateTab />;
-      case 'test':
-        return <TestTab />;
+      case 'export':
+        return <ExportTab />;
       default:
-        return <ConfigurationTab />;
+        return <ConfigureTab />;
     }
   };
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-background">
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header with actions */}
-        <div className="h-14 border-b bg-card/50 backdrop-blur flex items-center justify-center px-4 relative">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            MCP-UI Function Builder
+    <div className="flex flex-col h-screen overflow-hidden">
+      {/* Header */}
+      <div className="border-b bg-card px-6 py-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            MCP-UI Builder
           </h1>
-          <div className="absolute right-4 flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowResetConfirmation(true)}
-              title="Reset all builder state"
-            >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Reset All
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefresh}
-              title="Refresh servers and validation"
-              disabled={isRefreshing}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <div className="h-6 w-px bg-border" />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="default" size="sm" title="File operations">
-                  <File className="h-4 w-4 mr-2" />
-                  File
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleLoad}>
-                  <FolderOpen className="h-4 w-4 mr-2" />
-                  Load Template
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSave}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Template
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            Create UI resources for your MCP servers
+          </p>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="border-b bg-muted/30">
-          <div className="flex items-center justify-center px-4 py-3">
-            {/* Centered Tab Container with Brand Outline */}
-            <div className="inline-flex items-center gap-1 p-1 rounded-lg ring-2 ring-primary/60 bg-background/50">
-              {allTabs.map((tab) => {
-                const progress = getTabProgress(tab.id);
-                return (
-                  <button
-                    key={tab.id}
-                    className={`px-4 py-2 text-sm rounded-md transition-all ${
-                      activeTab === tab.id
-                        ? 'bg-primary text-primary-foreground shadow-sm font-medium'
-                        : progress === 'completed'
-                        ? 'hover:bg-primary/10 text-muted-foreground'
-                        : 'hover:bg-muted/50 text-muted-foreground'
-                    }`}
-                    onClick={() => setActiveTab(tab.id)}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        <div className="flex-1 overflow-hidden flex">
-          {/* Left Sidebar - Configuration (collapsible, only on design tab) */}
-          {activeTab === 'design' && showConfig && (
-            <div className="w-80 border-r bg-card overflow-y-auto">
-              <div className="sticky top-0 bg-card border-b p-2 flex items-center justify-between">
-                <h3 className="font-semibold text-sm">Configuration</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowConfig(false)}
-                >
-                  &times;
-                </Button>
-              </div>
-              <ConfigPanel />
-            </div>
-          )}
-
-          {/* Active Tab Content */}
-          <div className="flex-1 overflow-hidden">
-            {renderTabContent()}
-          </div>
-
-          {/* Toggle config panel if hidden */}
-          {activeTab === 'design' && !showConfig && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute left-4 top-20"
-              onClick={() => setShowConfig(true)}
-            >
-              Show Config
-            </Button>
-          )}
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Save className="h-4 w-4" />
+                File
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setShowSaveDialog(true)}>
+                <Save className="h-4 w-4 mr-2" />
+                Save Template
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowLoadDialog(true)}>
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Load Template
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setShowResetConfirmation(true)}
+                className="text-destructive"
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Reset All
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
-      {/* Save Dialog */}
-      {showSaveDialog && (
-        <SaveDialog
-          onClose={() => setShowSaveDialog(false)}
-          onSaved={() => {
-            console.log("Template saved successfully");
-          }}
-        />
-      )}
+      {/* Tab Navigation */}
+      <div className="border-b bg-muted/30">
+        <div className="flex items-center px-6">
+          {tabs.map((tab, index) => {
+            const isActive = activeTab === tab.id;
+            const isCompleted = tabs.findIndex(t => t.id === activeTab) > index;
 
-      {/* Load Dialog */}
-      {showLoadDialog && (
-        <LoadDialog
-          onClose={() => setShowLoadDialog(false)}
-          onLoaded={() => {
-            console.log("Template loaded successfully");
-          }}
-        />
-      )}
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`
+                  relative px-6 py-4 transition-colors border-b-2
+                  ${isActive
+                    ? 'border-primary text-primary font-semibold'
+                    : isCompleted
+                    ? 'border-green-500/30 text-muted-foreground hover:text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }
+                `}
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`
+                    flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold
+                    ${isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : isCompleted
+                      ? 'bg-green-500 text-white'
+                      : 'bg-muted text-muted-foreground'
+                    }
+                  `}>
+                    {isCompleted ? '✓' : index + 1}
+                  </span>
+                  <div className="text-left">
+                    <div className="text-sm">{tab.label}</div>
+                    <div className="text-xs opacity-70">{tab.description}</div>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-      {/* Reset Confirmation Dialog */}
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden">
+        {renderActiveTab()}
+      </div>
+
+      {/* Dialogs */}
+      <SaveDialog open={showSaveDialog} onOpenChange={setShowSaveDialog} />
+      <LoadDialog open={showLoadDialog} onOpenChange={setShowLoadDialog} />
+
       <Dialog open={showResetConfirmation} onOpenChange={setShowResetConfirmation}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reset All Builder State?</DialogTitle>
+            <DialogTitle>Reset Builder?</DialogTitle>
             <DialogDescription>
-              This will clear all your work including:
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>UI resource content and configuration</li>
-                <li>Selected MCP servers and tools</li>
-                <li>Action mappings and parameter bindings</li>
-                <li>Test configuration and history</li>
-                <li>Validation status</li>
-              </ul>
-              <p className="mt-3 font-semibold text-destructive">
-                This action cannot be undone. Make sure to save your work first!
-              </p>
+              This will clear all your current work and reset to a blank canvas.
+              This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => setShowResetConfirmation(false)}
-            >
+            <Button variant="outline" onClick={() => setShowResetConfirmation(false)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleResetAll}
-            >
-              Reset All
+            <Button variant="destructive" onClick={handleReset}>
+              Reset Everything
             </Button>
           </DialogFooter>
         </DialogContent>

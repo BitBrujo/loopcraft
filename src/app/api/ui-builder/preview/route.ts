@@ -21,19 +21,16 @@ export async function POST(request: NextRequest) {
 
     // Prepare metadata
     const metadata: Record<string, unknown> = {};
-    if (resource.title) metadata.title = resource.title;
-    if (resource.description) metadata.description = resource.description;
+    if (resource.metadata?.title) metadata.title = resource.metadata.title;
+    if (resource.metadata?.description) metadata.description = resource.metadata.description;
 
-    // Prepare UI metadata
+    // Prepare UI metadata from existing uiMetadata
     const uiMetadata: Record<string, unknown> = {};
-    if (resource.preferredSize) {
-      uiMetadata['preferred-frame-size'] = [
-        `${resource.preferredSize.width}px`,
-        `${resource.preferredSize.height}px`
-      ];
+    if (resource.uiMetadata?.['preferred-frame-size']) {
+      uiMetadata['preferred-frame-size'] = resource.uiMetadata['preferred-frame-size'];
     }
-    if (resource.initialData) {
-      uiMetadata['initial-render-data'] = resource.initialData;
+    if (resource.uiMetadata?.['initial-render-data']) {
+      uiMetadata['initial-render-data'] = resource.uiMetadata['initial-render-data'];
     }
 
     switch (resource.contentType) {
