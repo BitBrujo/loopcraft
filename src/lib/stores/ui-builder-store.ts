@@ -78,6 +78,8 @@ const defaultResource: UIResource = {
     'preferred-frame-size': ['800px', '600px']
   },
   templatePlaceholders: [],
+  selectedServerId: null,
+  selectedServerName: null,
 };
 
 export const useUIBuilderStore = create<UIBuilderStore>()(

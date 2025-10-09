@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Copy, Download, Check, Info, FileCode, Server } from 'lucide-react';
+import { Copy, Download, Check, Info, FileCode, Server, Rocket } from 'lucide-react';
 import { Editor } from '@monaco-editor/react';
 import { generateServerCode, generateTypeScriptCode } from '@/lib/code-generation';
 import type { ExportFormat, ExportLanguage } from '@/types/ui-builder';
@@ -19,6 +19,7 @@ export function ExportTab() {
   const [exportFormat, setExportFormat] = useState<ExportFormat>('integration');
   const [language, setLanguage] = useState<ExportLanguage>('typescript');
   const [copied, setCopied] = useState(false);
+  const [isDeploying, setIsDeploying] = useState(false);
 
   if (!currentResource) {
     return (
@@ -28,6 +29,8 @@ export function ExportTab() {
       </Alert>
     );
   }
+
+  const hasServerSelected = !!currentResource.selectedServerName;
 
   // Generate code based on selected format and language
   const generateCode = (): string => {
@@ -62,18 +65,96 @@ export function ExportTab() {
     URL.revokeObjectURL(url);
   };
 
+  const handleDeploy = async () => {
+    if (!hasServerSelected) return;
+
+    setIsDeploying(true);
+    try {
+      // TODO: Implement deployment to selected server
+      // This will add the tool to the existing MCP server configuration
+      alert('Deployment feature coming soon! For now, use the Integration Snippet to manually add to your server.');
+    } catch (error) {
+      console.error('Deployment failed:', error);
+    } finally {
+      setIsDeploying(false);
+    }
+  };
+
   const getEditorLanguage = () => {
     return language === 'typescript' ? 'typescript' : 'javascript';
   };
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
+      {/* Server Integration Status */}
+      {hasServerSelected && (
+        <Alert>
+          <Server className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>
+              <strong>Target Server:</strong> {currentResource.selectedServerName}
+            </span>
+            <Badge variant="secondary">Ready to deploy</Badge>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!hasServerSelected && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Standalone Resource</strong> - No server selected. You can deploy this as a new server or integrate it later.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Quick Deploy Option - Only if server selected */}
+      {hasServerSelected && (
+        <Card className="border-primary/50 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Rocket className="h-5 w-5" />
+              Quick Deploy
+            </CardTitle>
+            <CardDescription>
+              Deploy this UI resource to <strong>{currentResource.selectedServerName}</strong> server instantly
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                This will add the <code className="bg-muted px-1 rounded">get_ui</code> tool to your server configuration
+              </div>
+              <Button
+                onClick={handleDeploy}
+                disabled={isDeploying}
+                className="gap-2"
+              >
+                <Rocket className="h-4 w-4" />
+                {isDeploying ? 'Deploying...' : 'Deploy Now'}
+              </Button>
+            </div>
+            <Alert className="mt-4">
+              <Info className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                <strong>Note:</strong> Deployment feature coming soon. For now, use the Integration Snippet below to manually add to your server.
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      )}
+
+      <Separator />
+
       {/* Export Options */}
       <Card>
         <CardHeader>
           <CardTitle>Export Options</CardTitle>
           <CardDescription>
-            Choose how you want to use this UI resource
+            {hasServerSelected
+              ? 'Choose how you want to integrate with your server'
+              : 'Choose how you want to use this UI resource'
+            }
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -90,7 +171,10 @@ export function ExportTab() {
                     <Badge variant="secondary">Recommended</Badge>
                   </Label>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Code snippet to add this UI resource to your existing MCP server.
+                    {hasServerSelected
+                      ? `Code snippet to manually add this UI to ${currentResource.selectedServerName} server.`
+                      : 'Code snippet to add this UI resource to any MCP server.'
+                    }
                     Copy and paste into your server&apos;s tool handler.
                   </p>
                 </div>
@@ -105,7 +189,7 @@ export function ExportTab() {
                   </Label>
                   <p className="text-sm text-muted-foreground mt-1">
                     Complete MCP server file ready to run. Great for testing and prototyping.
-                    Deploy immediately, then integrate into your real server later.
+                    {hasServerSelected && ' Test this before deploying to your production server.'}
                   </p>
                 </div>
               </div>
@@ -143,7 +227,9 @@ export function ExportTab() {
           <CardTitle>Generated Code</CardTitle>
           <CardDescription>
             {exportFormat === 'integration'
-              ? 'Add this code to your MCP server'
+              ? hasServerSelected
+                ? `Add this code to ${currentResource.selectedServerName} server`
+                : 'Add this code to your MCP server'
               : 'Save this as a .js/.ts file and run with Node.js'}
           </CardDescription>
         </CardHeader>
@@ -200,10 +286,15 @@ export function ExportTab() {
         <CardContent className="space-y-4">
           {exportFormat === 'integration' ? (
             <div className="space-y-3 text-sm">
-              <h4 className="font-semibold">Integration Steps:</h4>
+              <h4 className="font-semibold">
+                {hasServerSelected
+                  ? `Integration Steps for ${currentResource.selectedServerName}:`
+                  : 'Integration Steps:'
+                }
+              </h4>
               <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
                 <li>Copy the generated code above</li>
-                <li>Open your existing MCP server file</li>
+                <li>Open your {hasServerSelected ? currentResource.selectedServerName : 'MCP'} server file</li>
                 <li>Add the <code className="bg-muted px-1 rounded">createUIResource</code> call</li>
                 <li>Register the tool in your <code className="bg-muted px-1 rounded">ListToolsRequestSchema</code> handler</li>
                 <li>Handle it in your <code className="bg-muted px-1 rounded">CallToolRequestSchema</code> handler</li>
@@ -235,8 +326,13 @@ export function ExportTab() {
               <Alert>
                 <Info className="h-4 w-4" />
                 <AlertDescription>
-                  This standalone server is great for testing. Once you&apos;re happy with it,
-                  integrate the UI resource into your main server using the Integration Snippet format.
+                  This standalone server is great for testing.{' '}
+                  {hasServerSelected && (
+                    <>Once you&apos;re happy with it, use the Integration Snippet format to add it to {currentResource.selectedServerName} server.</>
+                  )}
+                  {!hasServerSelected && (
+                    <>Once you&apos;re happy with it, integrate the UI resource into your main server using the Integration Snippet format.</>
+                  )}
                 </AlertDescription>
               </Alert>
             </div>

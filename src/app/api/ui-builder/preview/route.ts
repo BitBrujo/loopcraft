@@ -82,10 +82,13 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    // Return the MCP resource for preview
+    // Return the MCP resource wrapped in content format for MCPUIRenderer
     return NextResponse.json({
       success: true,
-      mcpResource,
+      mcpResource: {
+        type: 'resource',
+        resource: mcpResource
+      },
       message: 'UI resource generated successfully for preview.',
     });
   } catch (error) {

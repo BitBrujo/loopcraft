@@ -61,7 +61,7 @@ export function BuilderLayout() {
       {/* Header */}
       <div className="border-b bg-card px-6 py-4 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
             MCP-UI Builder
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -144,7 +144,7 @@ export function BuilderLayout() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden w-full">
         {renderActiveTab()}
       </div>
 

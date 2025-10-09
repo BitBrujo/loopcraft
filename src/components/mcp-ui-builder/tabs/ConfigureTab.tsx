@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -8,13 +9,88 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info, Check, AlertCircle } from 'lucide-react';
+import { Info, Check, AlertCircle, Server } from 'lucide-react';
 import type { ContentType } from '@/types/ui-builder';
 import { Badge } from '@/components/ui/badge';
-import { Editor } from '@monaco-editor/react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+interface MCPServer {
+  id: number;
+  name: string;
+  type: string;
+  enabled: boolean;
+}
+
+type SizePreset = 'small' | 'medium' | 'large' | 'full' | 'custom';
+
+const SIZE_PRESETS = {
+  small: { width: '400px', height: '300px', label: 'Small (400×300)' },
+  medium: { width: '800px', height: '600px', label: 'Medium (800×600)' },
+  large: { width: '1200px', height: '800px', label: 'Large (1200×800)' },
+  full: { width: '100%', height: '600px', label: 'Full Width (100%×600)' },
+  custom: { width: '800px', height: '600px', label: 'Custom Size' },
+};
 
 export function ConfigureTab() {
   const { currentResource, updateResource } = useUIBuilderStore();
+  const [mcpServers, setMcpServers] = useState<MCPServer[]>([]);
+  const [isLoadingServers, setIsLoadingServers] = useState(true);
+  const [sizePreset, setSizePreset] = useState<SizePreset>('medium');
+
+  // Fetch MCP servers on mount
+  useEffect(() => {
+    const fetchServers = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setIsLoadingServers(false);
+          return;
+        }
+
+        const response = await fetch('/api/mcp-servers', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setMcpServers(data.servers || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch MCP servers:', error);
+      } finally {
+        setIsLoadingServers(false);
+      }
+    };
+
+    fetchServers();
+  }, []);
+
+  // Detect current size preset from currentResource
+  useEffect(() => {
+    if (!currentResource) return;
+
+    const currentSize = currentResource.uiMetadata?.['preferred-frame-size'] || ['800px', '600px'];
+    const [width, height] = currentSize;
+
+    // Check which preset matches
+    for (const [preset, config] of Object.entries(SIZE_PRESETS)) {
+      if (config.width === width && config.height === height) {
+        setSizePreset(preset as SizePreset);
+        return;
+      }
+    }
+
+    // If no match, it's custom
+    setSizePreset('custom');
+  }, [currentResource]);
 
   if (!currentResource) {
     return (
@@ -29,7 +105,20 @@ export function ConfigureTab() {
     updateResource({ contentType: value });
   };
 
-  const handlePreferredSizeChange = (dimension: 'width' | 'height', value: string) => {
+  const handleSizePresetChange = (preset: SizePreset) => {
+    setSizePreset(preset);
+    if (preset !== 'custom') {
+      const { width, height } = SIZE_PRESETS[preset];
+      updateResource({
+        uiMetadata: {
+          ...currentResource.uiMetadata,
+          'preferred-frame-size': [width, height]
+        }
+      });
+    }
+  };
+
+  const handleCustomSizeChange = (dimension: 'width' | 'height', value: string) => {
     const currentSize = currentResource.uiMetadata?.['preferred-frame-size'] || ['800px', '600px'];
     const newSize: [string, string] = dimension === 'width'
       ? [value, currentSize[1]]
@@ -43,23 +132,25 @@ export function ConfigureTab() {
     });
   };
 
-  const handleInitialDataChange = (value: string) => {
-    try {
-      const parsed = JSON.parse(value);
+  const handleServerChange = (value: string) => {
+    if (value === 'none') {
       updateResource({
-        uiMetadata: {
-          ...currentResource.uiMetadata,
-          'initial-render-data': parsed
-        }
+        selectedServerId: null,
+        selectedServerName: null
       });
-    } catch (e) {
-      // Invalid JSON, don't update
-      console.error('Invalid JSON:', e);
+    } else {
+      const server = mcpServers.find(s => s.id.toString() === value);
+      if (server) {
+        updateResource({
+          selectedServerId: server.id,
+          selectedServerName: server.name
+        });
+      }
     }
   };
 
   const preferredSize = currentResource.uiMetadata?.['preferred-frame-size'] || ['800px', '600px'];
-  const initialData = currentResource.uiMetadata?.['initial-render-data'];
+  const enabledServers = mcpServers.filter(s => s.enabled);
 
   return (
     <div className="space-y-6 p-6 max-w-4xl mx-auto">
@@ -134,6 +225,72 @@ export function ConfigureTab() {
 
       <Separator />
 
+      {/* MCP Server Integration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Server className="h-5 w-5" />
+            MCP Server Integration
+          </CardTitle>
+          <CardDescription>
+            Choose an MCP server to integrate with, or create a standalone resource
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="server">Target MCP Server</Label>
+            {isLoadingServers ? (
+              <div className="text-sm text-muted-foreground">Loading servers...</div>
+            ) : (
+              <Select
+                value={currentResource.selectedServerId?.toString() || 'none'}
+                onValueChange={handleServerChange}
+              >
+                <SelectTrigger id="server">
+                  <SelectValue placeholder="Select a server or create standalone" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">
+                    <span className="font-medium">Standalone Resource</span>
+                  </SelectItem>
+                  {enabledServers.length > 0 && (
+                    <>
+                      <Separator className="my-2" />
+                      {enabledServers.map((server) => (
+                        <SelectItem key={server.id} value={server.id.toString()}>
+                          {server.name} <span className="text-muted-foreground">({server.type})</span>
+                        </SelectItem>
+                      ))}
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            )}
+            {enabledServers.length === 0 && !isLoadingServers && (
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  No MCP servers configured. Go to <strong>Settings</strong> to add servers, or create a standalone resource.
+                </AlertDescription>
+              </Alert>
+            )}
+            {currentResource.selectedServerName && (
+              <div className="flex items-center gap-2 text-sm text-green-600">
+                <Check className="h-4 w-4" />
+                Will integrate with <strong>{currentResource.selectedServerName}</strong> server
+              </div>
+            )}
+            {!currentResource.selectedServerName && (
+              <div className="text-sm text-muted-foreground">
+                Creating standalone resource - you can deploy it as a new server
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Separator />
+
       {/* Standard Metadata */}
       <Card>
         <CardHeader>
@@ -188,58 +345,56 @@ export function ConfigureTab() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Preferred Frame Size</Label>
-            <div className="flex items-center gap-4">
-              <div className="flex-1">
-                <Label htmlFor="width" className="text-sm text-muted-foreground">
-                  Width
-                </Label>
-                <Input
-                  id="width"
-                  value={preferredSize[0]}
-                  onChange={(e) => handlePreferredSizeChange('width', e.target.value)}
-                  placeholder="800px"
-                />
-              </div>
-              <div className="flex-1">
-                <Label htmlFor="height" className="text-sm text-muted-foreground">
-                  Height
-                </Label>
-                <Input
-                  id="height"
-                  value={preferredSize[1]}
-                  onChange={(e) => handlePreferredSizeChange('height', e.target.value)}
-                  placeholder="600px"
-                />
-              </div>
-            </div>
+            <Label htmlFor="sizePreset">Preferred Frame Size</Label>
+            <Select value={sizePreset} onValueChange={handleSizePresetChange}>
+              <SelectTrigger id="sizePreset">
+                <SelectValue placeholder="Choose a size preset" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(SIZE_PRESETS).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>
+                    {config.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <p className="text-sm text-muted-foreground">
-              Initial size for the iframe. Use CSS units (px, %, vh, etc.)
+              Initial size for the iframe when rendered
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="initialData">Initial Render Data (JSON)</Label>
-            <div className="border rounded-md overflow-hidden">
-              <Editor
-                height="200px"
-                defaultLanguage="json"
-                value={initialData ? JSON.stringify(initialData, null, 2) : '{}'}
-                onChange={(value) => value && handleInitialDataChange(value)}
-                theme="vs-dark"
-                options={{
-                  minimap: { enabled: false },
-                  lineNumbers: 'off',
-                  scrollBeyondLastLine: false,
-                  folding: false,
-                  fontSize: 13,
-                }}
-              />
+          {sizePreset === 'custom' && (
+            <div className="space-y-2">
+              <Label>Custom Size</Label>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="width" className="text-sm text-muted-foreground">
+                    Width
+                  </Label>
+                  <Input
+                    id="width"
+                    value={preferredSize[0]}
+                    onChange={(e) => handleCustomSizeChange('width', e.target.value)}
+                    placeholder="800px"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor="height" className="text-sm text-muted-foreground">
+                    Height
+                  </Label>
+                  <Input
+                    id="height"
+                    value={preferredSize[1]}
+                    onChange={(e) => handleCustomSizeChange('height', e.target.value)}
+                    placeholder="600px"
+                  />
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Use CSS units (px, %, vh, vw, etc.)
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Data passed to the iframe on render. Can include template placeholders like <code className="bg-muted px-1 rounded">{'{{user.id}}'}</code>
-            </p>
-          </div>
+          )}
         </CardContent>
       </Card>
 

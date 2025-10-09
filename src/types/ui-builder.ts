@@ -70,6 +70,12 @@ export interface UIResource {
 
   /** Auto-detected template placeholders like {{agent.name}} */
   templatePlaceholders?: string[];
+
+  /** Selected MCP server ID for integration (optional - null means standalone) */
+  selectedServerId?: number | null;
+
+  /** Selected MCP server name for integration (optional - null means standalone) */
+  selectedServerName?: string | null;
 }
 
 export interface Template {
