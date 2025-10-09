@@ -17,7 +17,7 @@ import {
 import { ThemeToggle } from "./ThemeToggle";
 import { MobileSidebar } from "./MobileSidebar";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
-import { MessageSquare, Settings, User, LogOut, Wrench, PencilRuler, MessageCircle, Wand2, Beaker, Check, X, ArrowLeft } from "lucide-react";
+import { MessageSquare, Settings, User, LogOut, PencilRuler, MessageCircle, Server, Beaker, Check, X, ArrowLeft } from "lucide-react";
 
 export function ChatHeader() {
   const router = useRouter();
@@ -136,19 +136,14 @@ export function ChatHeader() {
 
   const navItems = [
     {
-      href: "/mcp-server-builder",
-      label: "Server",
-      icon: Wrench,
-    },
-    {
       href: "/mcp-ui-builder",
-      label: "UI",
+      label: "UI Builder",
       icon: PencilRuler,
     },
     {
-      href: "/conversational-builder",
-      label: "AI Builder",
-      icon: Wand2,
+      href: "/mcp-servers",
+      label: "Servers",
+      icon: Server,
     },
     {
       href: "/chat",

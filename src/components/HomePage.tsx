@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChatLayout } from "@/components/chat/ChatLayout";
-import { Wrench, PencilRuler, Server, MessageCircle } from "lucide-react";
+import { PencilRuler, Server, MessageCircle } from "lucide-react";
 
 export function HomePage() {
   const router = useRouter();
@@ -31,26 +31,20 @@ export function HomePage() {
 
   const features = [
     {
-      title: "MCP Server Builder",
-      description: "Create functional MCP servers from 60+ templates with inline editing and one-click testing",
-      icon: Wrench,
-      href: "/mcp-server-builder",
-    },
-    {
       title: "MCP-UI Builder",
-      description: "Add interactive UI presentation to existing MCP servers or create standalone UIs",
+      description: "Create interactive UIs for your MCP servers with visual drag-and-drop builder",
       icon: PencilRuler,
       href: "/mcp-ui-builder",
     },
     {
-      title: "MCP Server List",
-      description: "Configure and manage your Model Context Protocol server connections",
+      title: "MCP Servers",
+      description: "Manage your Model Context Protocol server connections and configurations",
       icon: Server,
       href: "/mcp-servers",
     },
     {
       title: "Chat",
-      description: "Test your MCP servers with AI-powered chat interface and tool calling",
+      description: "Test your MCP tools with AI-powered chat interface and real-time interactions",
       icon: MessageCircle,
       href: "/chat",
     },
@@ -71,7 +65,7 @@ export function HomePage() {
           </div>
 
           {/* Feature Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {features.map((feature) => {
               const Icon = feature.icon;
               return (
