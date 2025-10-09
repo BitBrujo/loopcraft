@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 import { Info, Check, AlertCircle, Server } from 'lucide-react';
 import type { ContentType } from '@/types/ui-builder';
 import { Badge } from '@/components/ui/badge';
@@ -153,7 +153,8 @@ export function ConfigureTab() {
   const enabledServers = mcpServers.filter(s => s.enabled);
 
   return (
-    <div className="space-y-6 p-6 max-w-4xl mx-auto">
+    <div className="p-6 overflow-y-auto h-full">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl mx-auto">
       {/* Resource Identification */}
       <Card>
         <CardHeader>
@@ -223,8 +224,6 @@ export function ConfigureTab() {
         </CardContent>
       </Card>
 
-      <Separator />
-
       {/* MCP Server Integration */}
       <Card>
         <CardHeader>
@@ -289,8 +288,6 @@ export function ConfigureTab() {
         </CardContent>
       </Card>
 
-      <Separator />
-
       {/* Standard Metadata */}
       <Card>
         <CardHeader>
@@ -332,8 +329,6 @@ export function ConfigureTab() {
           </div>
         </CardContent>
       </Card>
-
-      <Separator />
 
       {/* UI Metadata */}
       <Card>
@@ -398,8 +393,6 @@ export function ConfigureTab() {
         </CardContent>
       </Card>
 
-      <Separator />
-
       {/* Detected Placeholders */}
       {currentResource.templatePlaceholders && currentResource.templatePlaceholders.length > 0 && (
         <Card>
@@ -425,12 +418,13 @@ export function ConfigureTab() {
         </Card>
       )}
 
-      <Alert>
+      <Alert className="lg:col-span-2">
         <Info className="h-4 w-4" />
         <AlertDescription>
           <strong>Next step:</strong> Go to the <strong>Design</strong> tab to create your UI content.
         </AlertDescription>
       </Alert>
+      </div>
     </div>
   );
 }

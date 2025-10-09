@@ -417,7 +417,7 @@ export function DesignTab() {
         </div>
 
         {/* Right: Preview */}
-        <div className="w-1/2 overflow-hidden">
+        <div className="flex-1 overflow-hidden">
           {(currentResource.contentType === 'rawHtml' || currentResource.contentType === 'externalUrl') && (
             <PreviewPanel />
           )}

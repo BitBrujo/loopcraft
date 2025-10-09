@@ -32,7 +32,7 @@ export function RightSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-16 border-l border-border bg-card/30 backdrop-blur-sm flex flex-col items-center py-6 gap-4">
+    <aside className="w-14 border-l border-border bg-card/30 backdrop-blur-sm flex flex-col items-center py-6 gap-4">
       {navigationItems.map((item) => {
         const Icon = item.icon;
         const isActive = pathname === item.href;
