@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowRight, Sparkles, Info, Copy, Code, Tag } from 'lucide-react';
+import { ArrowRight, Sparkles, Info, Copy } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { Button } from '@/components/ui/button';
 import { PreviewPanel } from '../PreviewPanel';
@@ -18,7 +18,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Editor } from '@monaco-editor/react';
-import { uiTemplates, getUICategoryInfo } from '@/lib/ui-templates';
+import { uiTemplates } from '@/lib/ui-templates';
 
 // HTML template library - mapped from ui-templates.ts with enhanced Tailwind CSS
 const HTML_TEMPLATES = [
@@ -139,7 +139,7 @@ export function DesignTab() {
     currentResource,
     updateResource,
   } = useUIBuilderStore();
-  const [showTemplates, setShowTemplates] = useState(false);
+  const [expandedTemplateId, setExpandedTemplateId] = useState<string | null>(null);
 
   // Auto-detect template placeholders when HTML content changes
   useEffect(() => {
@@ -165,7 +165,11 @@ export function DesignTab() {
 
   const handleTemplateSelect = (template: typeof HTML_TEMPLATES[0]) => {
     updateResource({ content: template.html });
-    setShowTemplates(false);
+    setExpandedTemplateId(null);
+  };
+
+  const toggleExpand = (id: string) => {
+    setExpandedTemplateId(expandedTemplateId === id ? null : id);
   };
 
   const handleInitialDataChange = (value: string) => {
@@ -185,81 +189,100 @@ export function DesignTab() {
 
   const initialData = currentResource.uiMetadata?.['initial-render-data'];
 
+  // Group templates by category
+  const templatesByCategory = HTML_TEMPLATES.reduce((acc, template) => {
+    const category = template.category;
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(template);
+    return acc;
+  }, {} as Record<string, typeof HTML_TEMPLATES>);
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Template Library - Only for rawHtml */}
-      {currentResource.contentType === 'rawHtml' && (
-        <div className="border-b p-4 bg-muted/30">
-          <Collapsible open={showTemplates} onOpenChange={setShowTemplates}>
-            <CollapsibleTrigger asChild>
-              <Button variant="outline" className="w-full justify-between">
-                <span className="flex items-center gap-2">
-                  <Code className="h-4 w-4" />
-                  HTML Templates
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  {showTemplates ? 'Hide' : 'Show'} {HTML_TEMPLATES.length} templates
-                </span>
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
-                {HTML_TEMPLATES.map((template) => (
-                  <Card
-                    key={template.id}
-                    className="cursor-pointer hover:border-primary transition-colors"
-                    onClick={() => handleTemplateSelect(template)}
-                  >
-                    <CardHeader className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <CardTitle className="text-sm">{template.name}</CardTitle>
-                        {template.placeholders && template.placeholders.length > 0 && (
-                          <Badge variant="secondary" className="text-xs ml-2">
-                            <Sparkles className="h-3 w-3 mr-1" />
-                            {template.placeholders.length}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          <Tag className="h-3 w-3 mr-1" />
-                          {template.category}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                      <p className="text-xs text-muted-foreground mb-3">{template.description}</p>
-                      {template.placeholders && template.placeholders.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-2">
-                          {template.placeholders.slice(0, 2).map((p) => (
-                            <Badge key={p} variant="secondary" className="text-xs">
-                              {`{{${p}}}`}
-                            </Badge>
-                          ))}
-                          {template.placeholders.length > 2 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{template.placeholders.length - 2} more
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-                      <div className="flex items-center gap-1 text-xs text-primary">
-                        <Copy className="h-3 w-3" />
-                        Click to use
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        </div>
-      )}
-
-      {/* Content Editor - Dynamic based on content type */}
+      {/* 3-Column Layout */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left: Editor */}
-        <div className="w-1/2 border-r overflow-hidden flex flex-col">
+        {/* Left: Templates Column - Only for rawHtml */}
+        {currentResource.contentType === 'rawHtml' && (
+          <div className="w-64 border-r overflow-y-auto p-3 bg-muted/10">
+            <h3 className="font-semibold mb-3 text-sm uppercase tracking-wide">Templates</h3>
+
+            {Object.entries(templatesByCategory).map(([category, templates]) => (
+              <div key={category} className="mb-4">
+                <h4 className="text-xs font-medium uppercase text-muted-foreground mb-2 px-1">
+                  {category}
+                </h4>
+                <div className="space-y-1">
+                  {templates.map((template) => {
+                    const isExpanded = expandedTemplateId === template.id;
+                    return (
+                      <Card
+                        key={template.id}
+                        className={`transition-all ${
+                          isExpanded ? 'border-primary' : 'cursor-pointer hover:border-primary/50'
+                        }`}
+                      >
+                        <div
+                          onClick={() => toggleExpand(template.id)}
+                          className="p-3 cursor-pointer"
+                        >
+                          <div className="flex items-start justify-between mb-1">
+                            <h5 className="text-sm font-medium leading-tight">{template.name}</h5>
+                            {template.placeholders && template.placeholders.length > 0 && (
+                              <Badge variant="secondary" className="text-xs ml-1 h-5">
+                                <Sparkles className="h-3 w-3" />
+                                {template.placeholders.length}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+
+                        {isExpanded && (
+                          <div className="px-3 pb-3 space-y-2 border-t pt-2 mt-1">
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              {template.description}
+                            </p>
+
+                            {template.placeholders && template.placeholders.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {template.placeholders.slice(0, 3).map((p) => (
+                                  <Badge key={p} variant="outline" className="text-xs">
+                                    {`{{${p}}}`}
+                                  </Badge>
+                                ))}
+                                {template.placeholders.length > 3 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    +{template.placeholders.length - 3}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+
+                            <Button
+                              size="sm"
+                              className="w-full mt-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleTemplateSelect(template);
+                              }}
+                            >
+                              <Copy className="h-3 w-3 mr-1" />
+                              Use Template
+                            </Button>
+                          </div>
+                        )}
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Middle: Editor */}
+        <div className="flex-1 border-r overflow-hidden flex flex-col">
           {currentResource.contentType === 'rawHtml' && (
             <>
               <div className="flex-1 overflow-hidden">
