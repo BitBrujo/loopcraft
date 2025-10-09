@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowRight, Sparkles, Info, Copy, Code } from 'lucide-react';
+import { ArrowRight, Sparkles, Info, Copy, Code, Tag } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { Button } from '@/components/ui/button';
 import { PreviewPanel } from '../PreviewPanel';
@@ -11,188 +11,73 @@ import { URLInput } from '../editors/URLInput';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Editor } from '@monaco-editor/react';
+import { uiTemplates, getUICategoryInfo } from '@/lib/ui-templates';
 
-// HTML template library
+// HTML template library - mapped from ui-templates.ts with enhanced Tailwind CSS
 const HTML_TEMPLATES = [
-  {
-    id: 'contact-form',
-    name: 'Contact Form',
-    category: 'Forms',
-    description: 'Simple contact form with name, email, and message fields',
-    html: `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contact Form</title>
-  <style>
-    body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; }
-    .form-group { margin-bottom: 1.5rem; }
-    label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
-    input, textarea { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; }
-    button { background: #2563eb; color: white; padding: 0.75rem 2rem; border: none; border-radius: 4px; cursor: pointer; }
-    button:hover { background: #1d4ed8; }
-  </style>
-</head>
-<body>
-  <h1>Contact Us</h1>
-  <form>
-    <div class="form-group">
-      <label for="name">Name</label>
-      <input type="text" id="name" required>
-    </div>
-    <div class="form-group">
-      <label for="email">Email</label>
-      <input type="email" id="email" required>
-    </div>
-    <div class="form-group">
-      <label for="message">Message</label>
-      <textarea id="message" rows="5" required></textarea>
-    </div>
-    <button type="submit">Send Message</button>
-  </form>
-</body>
-</html>`
-  },
-  {
-    id: 'dashboard-card',
-    name: 'Dashboard Card',
-    category: 'Dashboards',
-    description: 'Metric dashboard card with icon and stats',
-    html: `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard</title>
-  <style>
-    body { font-family: system-ui, sans-serif; padding: 2rem; background: #f9fafb; }
-    .card { background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .metric { font-size: 2.5rem; font-weight: bold; color: #2563eb; margin: 1rem 0; }
-    .label { color: #6b7280; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; }
-    .change { color: #10b981; font-size: 0.875rem; margin-top: 0.5rem; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="label">Total Revenue</div>
-    <div class="metric">$45,231</div>
-    <div class="change">↑ 12% from last month</div>
-  </div>
-</body>
-</html>`
-  },
-  {
-    id: 'data-table',
-    name: 'Data Table',
-    category: 'Tables',
-    description: 'Simple data table with sortable columns',
-    html: `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Data Table</title>
-  <style>
-    body { font-family: system-ui, sans-serif; padding: 2rem; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #e5e7eb; }
-    th { background: #f9fafb; font-weight: 600; cursor: pointer; }
-    th:hover { background: #f3f4f6; }
-    tr:hover { background: #fafafa; }
-  </style>
-</head>
-<body>
-  <h2>User List</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Status</th>
-        <th>Role</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>John Doe</td>
-        <td>john@example.com</td>
-        <td>Active</td>
-        <td>Admin</td>
-      </tr>
-      <tr>
-        <td>Jane Smith</td>
-        <td>jane@example.com</td>
-        <td>Active</td>
-        <td>User</td>
-      </tr>
-    </tbody>
-  </table>
-</body>
-</html>`
-  },
-  {
-    id: 'image-gallery',
-    name: 'Image Gallery',
-    category: 'Galleries',
-    description: 'Responsive grid image gallery',
-    html: `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gallery</title>
-  <style>
-    body { font-family: system-ui, sans-serif; padding: 2rem; }
-    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
-    .gallery-item { aspect-ratio: 1; background: #e5e7eb; border-radius: 8px; overflow: hidden; cursor: pointer; }
-    .gallery-item:hover { transform: scale(1.05); transition: transform 0.2s; }
-    .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
-  </style>
-</head>
-<body>
-  <h2>Photo Gallery</h2>
-  <div class="gallery">
-    <div class="gallery-item"></div>
-    <div class="gallery-item"></div>
-    <div class="gallery-item"></div>
-    <div class="gallery-item"></div>
-  </div>
-</body>
-</html>`
-  },
-  {
-    id: 'chart-container',
-    name: 'Chart Container',
-    category: 'Charts',
-    description: 'Container for embedding charts',
-    html: `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chart</title>
-  <style>
-    body { font-family: system-ui, sans-serif; padding: 2rem; }
-    .chart-container { background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .chart-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; }
-    .chart { min-height: 300px; border: 2px dashed #e5e7eb; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #9ca3af; }
-  </style>
-</head>
-<body>
-  <div class="chart-container">
-    <div class="chart-title">Monthly Sales</div>
-    <div class="chart">Chart will render here</div>
-  </div>
-</body>
-</html>`
-  },
+  // Forms
+  ...uiTemplates
+    .filter(t => t.category === 'forms')
+    .map(t => ({
+      id: t.id,
+      name: t.name,
+      category: t.category.charAt(0).toUpperCase() + t.category.slice(1),
+      description: t.description,
+      html: wrapWithTailwind(t.htmlContent),
+      placeholders: t.templatePlaceholders || [],
+    })),
+  // Dashboards
+  ...uiTemplates
+    .filter(t => t.category === 'dashboards')
+    .map(t => ({
+      id: t.id,
+      name: t.name,
+      category: t.category.charAt(0).toUpperCase() + t.category.slice(1),
+      description: t.description,
+      html: wrapWithTailwind(t.htmlContent),
+      placeholders: t.templatePlaceholders || [],
+    })),
+  // Tables
+  ...uiTemplates
+    .filter(t => t.category === 'tables')
+    .map(t => ({
+      id: t.id,
+      name: t.name,
+      category: t.category.charAt(0).toUpperCase() + t.category.slice(1),
+      description: t.description,
+      html: wrapWithTailwind(t.htmlContent),
+      placeholders: t.templatePlaceholders || [],
+    })),
+  // Galleries
+  ...uiTemplates
+    .filter(t => t.category === 'galleries')
+    .map(t => ({
+      id: t.id,
+      name: t.name,
+      category: t.category.charAt(0).toUpperCase() + t.category.slice(1),
+      description: t.description,
+      html: wrapWithTailwind(t.htmlContent),
+      placeholders: t.templatePlaceholders || [],
+    })),
+  // Custom
+  ...uiTemplates
+    .filter(t => t.category === 'custom')
+    .map(t => ({
+      id: t.id,
+      name: t.name,
+      category: t.category.charAt(0).toUpperCase() + t.category.slice(1),
+      description: t.description,
+      html: wrapWithTailwind(t.htmlContent),
+      placeholders: t.templatePlaceholders || [],
+    })),
+  // Blank template
   {
     id: 'blank',
     name: 'Blank Template',
@@ -204,22 +89,49 @@ const HTML_TEMPLATES = [
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My UI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
       font-family: system-ui, -apple-system, sans-serif;
-      padding: 2rem;
-      max-width: 800px;
-      margin: 0 auto;
     }
   </style>
 </head>
-<body>
-  <h1>Hello World!</h1>
-  <p>Start building your custom UI here.</p>
+<body class="p-8 max-w-4xl mx-auto">
+  <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">Hello World!</h1>
+  <p class="text-gray-600 dark:text-gray-400">Start building your custom UI here.</p>
 </body>
-</html>`
+</html>`,
+    placeholders: [],
   },
 ];
+
+// Helper function to wrap HTML content with Tailwind CDN
+function wrapWithTailwind(htmlContent: string): string {
+  if (htmlContent.includes('<!DOCTYPE html>')) {
+    // Already has full HTML structure, just add Tailwind CDN if not present
+    if (!htmlContent.includes('tailwindcss.com')) {
+      return htmlContent.replace(
+        '</head>',
+        '  <script src="https://cdn.tailwindcss.com"></script>\n</head>'
+      );
+    }
+    return htmlContent;
+  }
+
+  // Wrap content in full HTML structure with Tailwind
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UI Template</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+${htmlContent}
+</body>
+</html>`;
+}
 
 export function DesignTab() {
   const {
@@ -299,12 +211,39 @@ export function DesignTab() {
                     onClick={() => handleTemplateSelect(template)}
                   >
                     <CardHeader className="p-4">
-                      <CardTitle className="text-sm">{template.name}</CardTitle>
-                      <CardDescription className="text-xs">{template.category}</CardDescription>
+                      <div className="flex items-start justify-between mb-2">
+                        <CardTitle className="text-sm">{template.name}</CardTitle>
+                        {template.placeholders && template.placeholders.length > 0 && (
+                          <Badge variant="secondary" className="text-xs ml-2">
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            {template.placeholders.length}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          <Tag className="h-3 w-3 mr-1" />
+                          {template.category}
+                        </Badge>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-4 pt-0">
-                      <p className="text-xs text-muted-foreground">{template.description}</p>
-                      <div className="flex items-center gap-1 text-xs text-primary mt-2">
+                      <p className="text-xs text-muted-foreground mb-3">{template.description}</p>
+                      {template.placeholders && template.placeholders.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {template.placeholders.slice(0, 2).map((p) => (
+                            <Badge key={p} variant="secondary" className="text-xs">
+                              {`{{${p}}}`}
+                            </Badge>
+                          ))}
+                          {template.placeholders.length > 2 && (
+                            <Badge variant="secondary" className="text-xs">
+                              +{template.placeholders.length - 2} more
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1 text-xs text-primary">
                         <Copy className="h-3 w-3" />
                         Click to use
                       </div>
