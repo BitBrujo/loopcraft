@@ -35,14 +35,26 @@ export async function POST(request: NextRequest) {
     }
 
     switch (resource.contentType) {
-      case 'rawHtml':
+      case 'rawHtml': {
+        // Replace placeholders with test values for preview
+        let htmlContent = resource.content;
+        if (resource.placeholderTestData) {
+          Object.entries(resource.placeholderTestData).forEach(([placeholder, value]) => {
+            // Escape special regex characters in placeholder name
+            const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`\\{\\{${escapedPlaceholder}\\}\\}`, 'g');
+            htmlContent = htmlContent.replace(regex, value);
+          });
+        }
+
         mcpResource = createUIResource({
           uri: resource.uri as `ui://${string}`,
-          content: { type: 'rawHtml', htmlString: resource.content },
+          content: { type: 'rawHtml', htmlString: htmlContent },
           encoding: 'text',
           metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
         });
         break;
+      }
 
       case 'externalUrl':
         // Validate URL is not empty

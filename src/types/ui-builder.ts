@@ -77,6 +77,9 @@ export interface UIResource {
   /** Auto-detected template placeholders like {{agent.name}} */
   templatePlaceholders?: string[];
 
+  /** Test data for placeholders (preview only, not used in export) */
+  placeholderTestData?: Record<string, string>;
+
   /** Selected MCP server ID for integration (optional - null means standalone) */
   selectedServerId?: number | null;
 

@@ -430,6 +430,91 @@ export function DesignTab() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Initial Render Data - Only for rawHtml */}
+            <div className="flex-shrink-0">
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-full justify-between mb-2">
+                    <span className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      Initial Render Data
+                    </span>
+                    <span className="text-xs text-muted-foreground">Optional</span>
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="space-y-2 p-2">
+                    <Label className="text-xs text-muted-foreground">
+                      Data passed to iframe on first render
+                    </Label>
+                    <div className="border rounded-md overflow-hidden">
+                      <Editor
+                        height="120px"
+                        defaultLanguage="json"
+                        value={initialData ? JSON.stringify(initialData, null, 2) : '{}'}
+                        onChange={(value) => value && handleInitialDataChange(value)}
+                        theme="vs-dark"
+                        options={{
+                          minimap: { enabled: false },
+                          lineNumbers: 'off',
+                          scrollBeyondLastLine: false,
+                          folding: false,
+                          fontSize: 11,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+
+            {/* Placeholder Test Data - Only show if placeholders exist */}
+            {currentResource.templatePlaceholders && currentResource.templatePlaceholders.length > 0 && (
+              <div className="flex-shrink-0">
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="w-full justify-between mb-2">
+                      <span className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4" />
+                        Placeholder Test Data
+                      </span>
+                      <Badge variant="secondary" className="text-xs">
+                        {currentResource.templatePlaceholders.length}
+                      </Badge>
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="space-y-3 p-2">
+                      <Label className="text-xs text-muted-foreground">
+                        Test values for preview (not exported)
+                      </Label>
+                      {currentResource.templatePlaceholders.map((placeholder) => (
+                        <div key={placeholder} className="space-y-1">
+                          <Label className="text-xs font-mono text-blue-600">
+                            {`{{${placeholder}}}`}
+                          </Label>
+                          <input
+                            type="text"
+                            className="w-full px-2 py-1 text-sm border rounded-md bg-background"
+                            placeholder={`Test value for ${placeholder}`}
+                            value={currentResource.placeholderTestData?.[placeholder] || ''}
+                            onChange={(e) => {
+                              updateResource({
+                                placeholderTestData: {
+                                  ...currentResource.placeholderTestData,
+                                  [placeholder]: e.target.value
+                                }
+                              });
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+            )}
           </div>
         )}
 
@@ -445,43 +530,6 @@ export function DesignTab() {
                     editorRef.current = editor;
                   }}
                 />
-              </div>
-              {/* Initial Render Data - Only for rawHtml */}
-              <div className="border-t p-4 bg-muted/10">
-                <Collapsible>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="w-full justify-between mb-2">
-                      <span className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4" />
-                        Initial Render Data (JSON)
-                      </span>
-                      <span className="text-xs text-muted-foreground">Optional</span>
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">
-                        Data passed to the iframe on first render. Example: <code className="bg-muted px-1 rounded">{'{"userName": "Alice", "theme": "dark"}'}</code>
-                      </Label>
-                      <div className="border rounded-md overflow-hidden">
-                        <Editor
-                          height="150px"
-                          defaultLanguage="json"
-                          value={initialData ? JSON.stringify(initialData, null, 2) : '{}'}
-                          onChange={(value) => value && handleInitialDataChange(value)}
-                          theme="vs-dark"
-                          options={{
-                            minimap: { enabled: false },
-                            lineNumbers: 'off',
-                            scrollBeyondLastLine: false,
-                            folding: false,
-                            fontSize: 12,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
               </div>
 
               {/* Detected Template Placeholders */}
