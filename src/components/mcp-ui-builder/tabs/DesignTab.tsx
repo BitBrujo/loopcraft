@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { ArrowRight, Sparkles, Info, Copy } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,8 @@ import {
 } from '@/components/ui/collapsible';
 import { Editor } from '@monaco-editor/react';
 import { uiTemplates } from '@/lib/ui-templates';
+import { ActionSnippets } from '../ActionSnippets';
+import type { editor as MonacoEditor } from 'monaco-editor';
 
 // HTML template library - mapped from ui-templates.ts with enhanced Tailwind CSS
 const HTML_TEMPLATES = [
@@ -140,6 +142,7 @@ export function DesignTab() {
     updateResource,
   } = useUIBuilderStore();
   const [expandedTemplateId, setExpandedTemplateId] = useState<string | null>(null);
+  const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
 
   // Auto-detect template placeholders when HTML content changes
   useEffect(() => {
@@ -189,6 +192,36 @@ export function DesignTab() {
 
   const initialData = currentResource.uiMetadata?.['initial-render-data'];
 
+  // Handle code insertion at cursor position in Monaco editor
+  const handleInsertCode = (code: string) => {
+    if (!editorRef.current) return;
+
+    const editor = editorRef.current;
+    const selection = editor.getSelection();
+    const position = selection ? selection.getStartPosition() : editor.getPosition();
+
+    if (position) {
+      editor.executeEdits('insert-snippet', [
+        {
+          range: {
+            startLineNumber: position.lineNumber,
+            startColumn: position.column,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+          },
+          text: '\n' + code + '\n',
+        },
+      ]);
+
+      // Update the resource with the new content
+      const newContent = editor.getValue();
+      updateResource({ content: newContent });
+
+      // Focus editor after insertion
+      editor.focus();
+    }
+  };
+
   // Group templates by category
   const templatesByCategory = HTML_TEMPLATES.reduce((acc, template) => {
     const category = template.category;
@@ -203,12 +236,14 @@ export function DesignTab() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* 3-Column Layout */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left: Templates Column - Only for rawHtml */}
+        {/* Left: Templates & Actions Column - Only for rawHtml */}
         {currentResource.contentType === 'rawHtml' && (
-          <div className="w-64 border-r overflow-y-auto p-3 bg-muted/10">
-            <h3 className="font-semibold mb-3 text-sm uppercase tracking-wide">Templates</h3>
+          <div className="w-64 border-r overflow-y-auto p-3 bg-muted/10 flex flex-col gap-4">
+            {/* Templates Section */}
+            <div>
+              <h3 className="font-semibold mb-3 text-sm uppercase tracking-wide">Templates</h3>
 
-            {Object.entries(templatesByCategory).map(([category, templates]) => (
+              {Object.entries(templatesByCategory).map(([category, templates]) => (
               <div key={category} className="mb-4">
                 <h4 className="text-xs font-medium uppercase text-muted-foreground mb-2 px-1">
                   {category}
@@ -277,6 +312,12 @@ export function DesignTab() {
                 </div>
               </div>
             ))}
+            </div>
+
+            {/* Action Snippets Section */}
+            <div className="border-t pt-4">
+              <ActionSnippets onInsert={handleInsertCode} />
+            </div>
           </div>
         )}
 
@@ -288,6 +329,9 @@ export function DesignTab() {
                 <HTMLEditor
                   value={currentResource.content}
                   onChange={(value) => updateResource({ content: value })}
+                  onMount={(editor) => {
+                    editorRef.current = editor;
+                  }}
                 />
               </div>
               {/* Initial Render Data - Only for rawHtml */}

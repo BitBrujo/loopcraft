@@ -393,6 +393,93 @@ export function ConfigureTab() {
         </CardContent>
       </Card>
 
+      {/* Advanced Renderer Options */}
+      <Card className="lg:col-span-2">
+        <CardHeader>
+          <CardTitle>Advanced Renderer Options</CardTitle>
+          <CardDescription>
+            Fine-tune how the UI resource is rendered in the client
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Auto-Resize Iframe */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="autoResize"
+                  checked={!!currentResource.uiMetadata?.['auto-resize-iframe']}
+                  onChange={(e) => updateResource({
+                    uiMetadata: {
+                      ...currentResource.uiMetadata,
+                      'auto-resize-iframe': e.target.checked
+                    }
+                  })}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="autoResize" className="font-normal cursor-pointer">
+                  Auto-resize iframe to content
+                </Label>
+              </div>
+              <p className="text-xs text-muted-foreground ml-6">
+                Automatically adjusts iframe dimensions to fit content
+              </p>
+            </div>
+
+            {/* Sandbox Permissions */}
+            <div className="space-y-2">
+              <Label htmlFor="sandbox">Sandbox Permissions</Label>
+              <Input
+                id="sandbox"
+                value={currentResource.uiMetadata?.['sandbox-permissions'] || 'allow-forms allow-scripts allow-same-origin'}
+                onChange={(e) => updateResource({
+                  uiMetadata: {
+                    ...currentResource.uiMetadata,
+                    'sandbox-permissions': e.target.value
+                  }
+                })}
+                placeholder="allow-forms allow-scripts"
+              />
+              <p className="text-xs text-muted-foreground">
+                Space-separated iframe sandbox attributes
+              </p>
+            </div>
+          </div>
+
+          {/* Custom Iframe Props */}
+          <div className="space-y-2">
+            <Label htmlFor="customProps">Custom Iframe Attributes (JSON)</Label>
+            <Textarea
+              id="customProps"
+              value={currentResource.uiMetadata?.['custom-iframe-props']
+                ? JSON.stringify(currentResource.uiMetadata['custom-iframe-props'], null, 2)
+                : '{}'}
+              onChange={(e) => {
+                try {
+                  const parsed = JSON.parse(e.target.value);
+                  updateResource({
+                    uiMetadata: {
+                      ...currentResource.uiMetadata,
+                      'custom-iframe-props': parsed
+                    }
+                  });
+                } catch (err) {
+                  // Invalid JSON, don't update
+                  console.error('Invalid JSON:', err);
+                }
+              }}
+              placeholder='{ "data-theme": "dark", "loading": "lazy" }'
+              rows={3}
+              className="font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              Additional HTML attributes for the iframe element
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       <Alert className="lg:col-span-2">
         <Info className="h-4 w-4" />
         <AlertDescription>

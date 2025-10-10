@@ -1,14 +1,15 @@
 "use client";
 
-import Editor from "@monaco-editor/react";
+import Editor, { type OnMount } from "@monaco-editor/react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 
 interface HTMLEditorProps {
   value: string;
   onChange: (value: string) => void;
+  onMount?: OnMount;
 }
 
-export function HTMLEditor({ value, onChange }: HTMLEditorProps) {
+export function HTMLEditor({ value, onChange, onMount }: HTMLEditorProps) {
   const { refreshPreview } = useUIBuilderStore();
 
   const handleChange = (value: string | undefined) => {
@@ -27,6 +28,7 @@ export function HTMLEditor({ value, onChange }: HTMLEditorProps) {
         theme="vs-dark"
         value={value}
         onChange={handleChange}
+        onMount={onMount}
         options={{
           minimap: { enabled: false },
           fontSize: 14,

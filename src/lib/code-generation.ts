@@ -36,14 +36,30 @@ export function generateTypeScriptCode(resource: UIResource): string {
 
   // Generate UI metadata (prefixed with mcpui.dev/ui-)
   const hasUiMetadata = resource.uiMetadata?.['preferred-frame-size'] ||
-                        resource.uiMetadata?.['initial-render-data'];
+                        resource.uiMetadata?.['initial-render-data'] ||
+                        resource.uiMetadata?.['auto-resize-iframe'] ||
+                        resource.uiMetadata?.['sandbox-permissions'] ||
+                        resource.uiMetadata?.['custom-iframe-props'];
+
+  const uiMetadataParams: string[] = [];
+  if (resource.uiMetadata?.['preferred-frame-size']) {
+    uiMetadataParams.push(`'preferred-frame-size': ['${resource.uiMetadata['preferred-frame-size'][0]}', '${resource.uiMetadata['preferred-frame-size'][1]}']`);
+  }
+  if (resource.uiMetadata?.['initial-render-data']) {
+    uiMetadataParams.push(`'initial-render-data': ${JSON.stringify(resource.uiMetadata['initial-render-data'])}`);
+  }
+  if (resource.uiMetadata?.['auto-resize-iframe'] !== undefined) {
+    uiMetadataParams.push(`'auto-resize-iframe': ${JSON.stringify(resource.uiMetadata['auto-resize-iframe'])}`);
+  }
+  if (resource.uiMetadata?.['sandbox-permissions']) {
+    uiMetadataParams.push(`'sandbox-permissions': '${resource.uiMetadata['sandbox-permissions']}'`);
+  }
+  if (resource.uiMetadata?.['custom-iframe-props']) {
+    uiMetadataParams.push(`'custom-iframe-props': ${JSON.stringify(resource.uiMetadata['custom-iframe-props'])}`);
+  }
+
   const uiMetadataParam = hasUiMetadata
-    ? `uiMetadata: {
-    ${resource.uiMetadata?.['preferred-frame-size'] ?
-      `'preferred-frame-size': ['${resource.uiMetadata['preferred-frame-size'][0]}', '${resource.uiMetadata['preferred-frame-size'][1]}'],` : ""}
-    ${resource.uiMetadata?.['initial-render-data'] ?
-      `'initial-render-data': ${JSON.stringify(resource.uiMetadata['initial-render-data'])}` : ""}
-  }`
+    ? `uiMetadata: {\n    ${uiMetadataParams.join(',\n    ')}\n  }`
     : "";
 
   return `import { createUIResource } from '@mcp-ui/server';
@@ -168,7 +184,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   // Build createUIResource call
   const hasMetadata = resource.metadata?.title || resource.metadata?.description;
   const hasUiMetadata = resource.uiMetadata?.['preferred-frame-size'] ||
-                        resource.uiMetadata?.['initial-render-data'];
+                        resource.uiMetadata?.['initial-render-data'] ||
+                        resource.uiMetadata?.['auto-resize-iframe'] ||
+                        resource.uiMetadata?.['sandbox-permissions'] ||
+                        resource.uiMetadata?.['custom-iframe-props'];
 
   code += `
     const uiResource = createUIResource({
@@ -187,12 +206,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (hasUiMetadata) {
     code += `,
       uiMetadata: {`;
+    const uiMetadataParts: string[] = [];
     if (resource.uiMetadata?.['preferred-frame-size']) {
-      code += `\n        'preferred-frame-size': ['${resource.uiMetadata['preferred-frame-size'][0]}', '${resource.uiMetadata['preferred-frame-size'][1]}'],`;
+      uiMetadataParts.push(`'preferred-frame-size': ['${resource.uiMetadata['preferred-frame-size'][0]}', '${resource.uiMetadata['preferred-frame-size'][1]}']`);
     }
     if (resource.uiMetadata?.['initial-render-data']) {
-      code += `\n        'initial-render-data': ${JSON.stringify(resource.uiMetadata['initial-render-data'])}`;
+      uiMetadataParts.push(`'initial-render-data': ${JSON.stringify(resource.uiMetadata['initial-render-data'])}`);
     }
+    if (resource.uiMetadata?.['auto-resize-iframe'] !== undefined) {
+      uiMetadataParts.push(`'auto-resize-iframe': ${JSON.stringify(resource.uiMetadata['auto-resize-iframe'])}`);
+    }
+    if (resource.uiMetadata?.['sandbox-permissions']) {
+      uiMetadataParts.push(`'sandbox-permissions': '${resource.uiMetadata['sandbox-permissions']}'`);
+    }
+    if (resource.uiMetadata?.['custom-iframe-props']) {
+      uiMetadataParts.push(`'custom-iframe-props': ${JSON.stringify(resource.uiMetadata['custom-iframe-props'])}`);
+    }
+    code += `\n        ${uiMetadataParts.join(',\n        ')}`;
     code += `\n      }`;
   }
 
@@ -319,7 +349,10 @@ server.addTool({
   // Build createUIResource call
   const hasMetadata = resource.metadata?.title || resource.metadata?.description;
   const hasUiMetadata = resource.uiMetadata?.['preferred-frame-size'] ||
-                        resource.uiMetadata?.['initial-render-data'];
+                        resource.uiMetadata?.['initial-render-data'] ||
+                        resource.uiMetadata?.['auto-resize-iframe'] ||
+                        resource.uiMetadata?.['sandbox-permissions'] ||
+                        resource.uiMetadata?.['custom-iframe-props'];
 
   code += `
     const uiResource = createUIResource({
@@ -338,12 +371,23 @@ server.addTool({
   if (hasUiMetadata) {
     code += `,
       uiMetadata: {`;
+    const uiMetadataParts: string[] = [];
     if (resource.uiMetadata?.['preferred-frame-size']) {
-      code += `\n        'preferred-frame-size': ['${resource.uiMetadata['preferred-frame-size'][0]}', '${resource.uiMetadata['preferred-frame-size'][1]}'],`;
+      uiMetadataParts.push(`'preferred-frame-size': ['${resource.uiMetadata['preferred-frame-size'][0]}', '${resource.uiMetadata['preferred-frame-size'][1]}']`);
     }
     if (resource.uiMetadata?.['initial-render-data']) {
-      code += `\n        'initial-render-data': ${JSON.stringify(resource.uiMetadata['initial-render-data'])}`;
+      uiMetadataParts.push(`'initial-render-data': ${JSON.stringify(resource.uiMetadata['initial-render-data'])}`);
     }
+    if (resource.uiMetadata?.['auto-resize-iframe'] !== undefined) {
+      uiMetadataParts.push(`'auto-resize-iframe': ${JSON.stringify(resource.uiMetadata['auto-resize-iframe'])}`);
+    }
+    if (resource.uiMetadata?.['sandbox-permissions']) {
+      uiMetadataParts.push(`'sandbox-permissions': '${resource.uiMetadata['sandbox-permissions']}'`);
+    }
+    if (resource.uiMetadata?.['custom-iframe-props']) {
+      uiMetadataParts.push(`'custom-iframe-props': ${JSON.stringify(resource.uiMetadata['custom-iframe-props'])}`);
+    }
+    code += `\n        ${uiMetadataParts.join(',\n        ')}`;
     code += `\n      }`;
   }
 
