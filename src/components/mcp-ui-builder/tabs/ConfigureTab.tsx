@@ -324,7 +324,12 @@ export function ConfigureTab() {
                   <CollapsibleTrigger asChild>
                     <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2">
                       <span className="flex items-center gap-2 font-semibold">
-                        Advanced Content Options
+                        <span
+                          className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
+                          style={{ backgroundColor: '#6d8d96' }}
+                        >
+                          Advanced Content Options
+                        </span>
                       </span>
                       <ChevronDown className={`h-4 w-4 transition-transform ${showAdvancedOptions ? '' : '-rotate-90'}`} />
                     </Button>
@@ -335,7 +340,7 @@ export function ConfigureTab() {
                       <TooltipProvider>
                         {/* MIME Type (Read-only) */}
                         <div className="space-y-2">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 mb-2">
                             <Label>MIME Type</Label>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -561,7 +566,12 @@ export function ConfigureTab() {
                 <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-4">
                   <span className="flex items-center gap-2 font-semibold">
                     <Settings className="h-4 w-4" />
-                    Renderer Options
+                    <span
+                      className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
+                      style={{ backgroundColor: '#6d8d96' }}
+                    >
+                      Renderer Options
+                    </span>
                   </span>
                   <ChevronDown className={`h-4 w-4 transition-transform ${showRendererOptions ? '' : '-rotate-90'}`} />
                 </Button>
@@ -784,14 +794,6 @@ export function ConfigureTab() {
             </Collapsible>
           </CardContent>
         </Card>
-
-        {/* Next Steps Alert */}
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Next step:</strong> Go to the <strong>Design</strong> tab to create your UI content.
-          </AlertDescription>
-        </Alert>
       </div>
     </div>
   );

@@ -257,17 +257,15 @@ export function ExportTab() {
         <Card>
           <CardHeader>
             <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                <CardTitle className="text-lg font-semibold">
-                  <span
-                    className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
-                    style={{ backgroundColor: '#6d8d96' }}
-                  >
-                    Quick Start Guide
-                  </span>
-                </CardTitle>
-              </div>
+              <CardTitle className="text-lg font-semibold">
+                <span
+                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium text-white"
+                  style={{ backgroundColor: '#6d8d96' }}
+                >
+                  <BookOpen className="h-5 w-5" />
+                  Quick Start Guide
+                </span>
+              </CardTitle>
               <ChevronDown className={`h-4 w-4 transition-transform ${showQuickStart ? '' : '-rotate-90'}`} />
             </CollapsibleTrigger>
           </CardHeader>
