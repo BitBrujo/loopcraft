@@ -16,6 +16,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Helper function to get default MIME type
+    const getDefaultMimeType = (contentType: string): string => {
+      switch (contentType) {
+        case 'rawHtml': return 'text/html';
+        case 'externalUrl': return 'text/uri-list';
+        case 'remoteDom': return 'application/vnd.mcp-ui.remote-dom';
+        default: return 'text/html';
+      }
+    };
+
     // Convert UI resource to MCP UI resource format
     let mcpResource;
 
@@ -71,16 +81,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    // Helper function to get default MIME type
-    const getDefaultMimeType = (contentType: string): string => {
-      switch (contentType) {
-        case 'rawHtml': return 'text/html';
-        case 'externalUrl': return 'text/uri-list';
-        case 'remoteDom': return 'application/vnd.mcp-ui.remote-dom';
-        default: return 'text/html';
-      }
-    };
 
     switch (resource.contentType) {
       case 'rawHtml': {
