@@ -5,7 +5,23 @@
  * Functions for generating TypeScript, JSON, server code, etc.
  */
 
-import type { UIResource } from '@/types/ui-builder';
+import type { UIResource, ContentType } from '@/types/ui-builder';
+
+/**
+ * Get default MIME type for a content type
+ */
+function getDefaultMimeType(contentType: ContentType): string {
+  switch (contentType) {
+    case 'rawHtml':
+      return 'text/html';
+    case 'externalUrl':
+      return 'text/uri-list';
+    case 'remoteDom':
+      return 'application/vnd.mcp-ui.remote-dom';
+    default:
+      return 'text/html';
+  }
+}
 
 export function generateTypeScriptCode(resource: UIResource): string {
   // Generate content configuration based on type
@@ -26,12 +42,26 @@ export function generateTypeScriptCode(resource: UIResource): string {
   }
 
   // Generate standard metadata (maps to _meta)
-  const hasMetadata = resource.metadata?.title || resource.metadata?.description;
+  const hasMetadata = resource.metadata?.title || resource.metadata?.description ||
+                      resource.audience || resource.priority !== undefined || resource.lastModified;
+
+  const metadataParts: string[] = [];
+  if (resource.metadata?.title) metadataParts.push(`title: "${resource.metadata.title}"`);
+  if (resource.metadata?.description) metadataParts.push(`description: "${resource.metadata.description}"`);
+
+  // Add resource annotations if configured
+  if (resource.audience) {
+    metadataParts.push(`audience: ${JSON.stringify(resource.audience)} // Audience: Only visible to ${resource.audience.join(' and ')}`);
+  }
+  if (resource.priority !== undefined) {
+    metadataParts.push(`priority: ${resource.priority} // Priority: ${resource.priority} (higher priority UIs display first)`);
+  }
+  if (resource.lastModified) {
+    metadataParts.push(`lastModified: "${resource.lastModified}"`);
+  }
+
   const metadataParam = hasMetadata
-    ? `metadata: {
-    ${resource.metadata?.title ? `title: "${resource.metadata.title}",` : ""}
-    ${resource.metadata?.description ? `description: "${resource.metadata.description}"` : ""}
-  },`
+    ? `metadata: {\n    ${metadataParts.join(',\n    ')}\n  },`
     : "";
 
   // Generate UI metadata (prefixed with mcpui.dev/ui-)
@@ -66,12 +96,18 @@ export function generateTypeScriptCode(resource: UIResource): string {
     ? `uiMetadata: {\n    ${uiMetadataParams.join(',\n    ')}\n  }`
     : "";
 
+  // Determine encoding and MIME type
+  const encoding = resource.encoding || 'text';
+  const mimeType = resource.mimeType || getDefaultMimeType(resource.contentType);
+  const useCustomMimeType = resource.mimeType && resource.mimeType !== getDefaultMimeType(resource.contentType);
+
   return `import { createUIResource } from '@mcp-ui/server';
 
 const uiResource = createUIResource({
   uri: "${resource.uri}",
   ${contentParam},
-  encoding: 'text',${hasMetadata ? `\n  ${metadataParam}` : ""}${hasUiMetadata ? `\n  ${uiMetadataParam}` : ""}
+  ${useCustomMimeType ? `mimeType: '${mimeType}', // Custom MIME type` : `// mimeType: '${mimeType}' (default)`}
+  encoding: '${encoding}'${encoding === 'base64' ? ' // Encoding: base64 (binary-safe encoding)' : ''},${hasMetadata ? `\n  ${metadataParam}` : ""}${hasUiMetadata ? `\n  ${uiMetadataParam}` : ""}
 });
 
 export default uiResource;`;
@@ -186,7 +222,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 
   // Build createUIResource call
-  const hasMetadata = resource.metadata?.title || resource.metadata?.description;
+  const hasMetadata = resource.metadata?.title || resource.metadata?.description ||
+                      resource.audience || resource.priority !== undefined || resource.lastModified;
   const hasUiMetadata = resource.uiMetadata?.['preferred-frame-size'] ||
                         resource.uiMetadata?.['initial-render-data'] ||
                         resource.uiMetadata?.['auto-resize-iframe'] ||
@@ -194,17 +231,28 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                         resource.uiMetadata?.['iframe-title'] ||
                         resource.uiMetadata?.['container-style'];
 
+  // Determine encoding and MIME type
+  const encoding = resource.encoding || 'text';
+  const mimeType = resource.mimeType || getDefaultMimeType(resource.contentType);
+  const useCustomMimeType = resource.mimeType && resource.mimeType !== getDefaultMimeType(resource.contentType);
+
   code += `
     const uiResource = createUIResource({
       uri: '${resource.uri}',
       content: ${resource.contentType === 'rawHtml' ? `{ type: 'rawHtml', htmlString: ${contentVariable} }` : contentVariable},
-      encoding: 'text'`;
+      ${useCustomMimeType ? `mimeType: '${mimeType}',` : `// mimeType: '${mimeType}' (default)`}
+      encoding: '${encoding}'`;
 
   if (hasMetadata) {
     code += `,
       metadata: {`;
-    if (resource.metadata?.title) code += `\n        title: '${resource.metadata.title}',`;
-    if (resource.metadata?.description) code += `\n        description: '${resource.metadata.description}'`;
+    const metadataParts: string[] = [];
+    if (resource.metadata?.title) metadataParts.push(`title: '${resource.metadata.title}'`);
+    if (resource.metadata?.description) metadataParts.push(`description: '${resource.metadata.description}'`);
+    if (resource.audience) metadataParts.push(`audience: ${JSON.stringify(resource.audience)}`);
+    if (resource.priority !== undefined) metadataParts.push(`priority: ${resource.priority}`);
+    if (resource.lastModified) metadataParts.push(`lastModified: '${resource.lastModified}'`);
+    code += `\n        ${metadataParts.join(',\n        ')}`;
     code += `\n      }`;
   }
 
@@ -355,7 +403,8 @@ server.addTool({
   }
 
   // Build createUIResource call
-  const hasMetadata = resource.metadata?.title || resource.metadata?.description;
+  const hasMetadata = resource.metadata?.title || resource.metadata?.description ||
+                      resource.audience || resource.priority !== undefined || resource.lastModified;
   const hasUiMetadata = resource.uiMetadata?.['preferred-frame-size'] ||
                         resource.uiMetadata?.['initial-render-data'] ||
                         resource.uiMetadata?.['auto-resize-iframe'] ||
@@ -363,17 +412,28 @@ server.addTool({
                         resource.uiMetadata?.['iframe-title'] ||
                         resource.uiMetadata?.['container-style'];
 
+  // Determine encoding and MIME type
+  const encoding = resource.encoding || 'text';
+  const mimeType = resource.mimeType || getDefaultMimeType(resource.contentType);
+  const useCustomMimeType = resource.mimeType && resource.mimeType !== getDefaultMimeType(resource.contentType);
+
   code += `
     const uiResource = createUIResource({
       uri: '${resource.uri}',
       content: ${resource.contentType === 'rawHtml' ? `{ type: 'rawHtml', htmlString: ${contentVariable} }` : contentVariable},
-      encoding: 'text'`;
+      ${useCustomMimeType ? `mimeType: '${mimeType}',` : `// mimeType: '${mimeType}' (default)`}
+      encoding: '${encoding}'`;
 
   if (hasMetadata) {
     code += `,
       metadata: {`;
-    if (resource.metadata?.title) code += `\n        title: '${resource.metadata.title}',`;
-    if (resource.metadata?.description) code += `\n        description: '${resource.metadata.description}'`;
+    const metadataParts: string[] = [];
+    if (resource.metadata?.title) metadataParts.push(`title: '${resource.metadata.title}'`);
+    if (resource.metadata?.description) metadataParts.push(`description: '${resource.metadata.description}'`);
+    if (resource.audience) metadataParts.push(`audience: ${JSON.stringify(resource.audience)}`);
+    if (resource.priority !== undefined) metadataParts.push(`priority: ${resource.priority}`);
+    if (resource.lastModified) metadataParts.push(`lastModified: '${resource.lastModified}'`);
+    code += `\n        ${metadataParts.join(',\n        ')}`;
     code += `\n      }`;
   }
 

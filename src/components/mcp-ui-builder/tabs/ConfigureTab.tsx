@@ -9,9 +9,17 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { Info, Check, AlertCircle, Server, Sparkles } from 'lucide-react';
+import { Info, Check, AlertCircle, Server, Sparkles, ChevronDown, ChevronRight } from 'lucide-react';
 import type { ContentType } from '@/types/ui-builder';
 import { Badge } from '@/components/ui/badge';
+import { Slider } from '@/components/ui/slider';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   Select,
   SelectContent,
@@ -42,6 +50,8 @@ export function ConfigureTab() {
   const [mcpServers, setMcpServers] = useState<MCPServer[]>([]);
   const [isLoadingServers, setIsLoadingServers] = useState(true);
   const [sizePreset, setSizePreset] = useState<SizePreset>('medium');
+  const [showAdvancedAnnotations, setShowAdvancedAnnotations] = useState(false);
+  const [showAdvancedContentOptions, setShowAdvancedContentOptions] = useState(false);
 
   // Fetch MCP servers on mount
   useEffect(() => {
@@ -153,6 +163,34 @@ export function ConfigureTab() {
     }
   };
 
+  const handleAudienceChange = (value: string) => {
+    if (value === 'both') {
+      updateResource({ audience: undefined });
+    } else if (value === 'user') {
+      updateResource({ audience: ['user'] });
+    } else if (value === 'assistant') {
+      updateResource({ audience: ['assistant'] });
+    }
+  };
+
+  const getAudienceValue = () => {
+    if (!currentResource.audience) return 'both';
+    if (currentResource.audience.includes('user') && !currentResource.audience.includes('assistant')) {
+      return 'user';
+    }
+    if (currentResource.audience.includes('assistant') && !currentResource.audience.includes('user')) {
+      return 'assistant';
+    }
+    return 'both';
+  };
+
+  const getConfiguredOptionsCount = () => {
+    let count = 0;
+    if (currentResource.audience) count++;
+    if (currentResource.priority !== undefined) count++;
+    return count;
+  };
+
   const preferredSize = currentResource.uiMetadata?.['preferred-frame-size'] || ['800px', '600px'];
   const enabledServers = mcpServers.filter(s => s.enabled);
 
@@ -225,6 +263,127 @@ export function ConfigureTab() {
               </p>
             </RadioGroup>
           </div>
+
+          {/* Advanced Content Options */}
+          <Collapsible open={showAdvancedContentOptions} onOpenChange={setShowAdvancedContentOptions}>
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+              <div className="flex items-center gap-2">
+                {showAdvancedContentOptions ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+                <span className="text-sm font-medium">Advanced Content Options</span>
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-4 space-y-4 animate-in slide-in-from-top-1 duration-150">
+              <TooltipProvider>
+                {/* MIME Type */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="mimeType">MIME Type</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p>Override the default MIME type for specialized content handling</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <Input
+                    id="mimeType"
+                    value={currentResource.mimeType || ''}
+                    onChange={(e) => updateResource({ mimeType: e.target.value || undefined })}
+                    placeholder={
+                      currentResource.contentType === 'rawHtml' ? 'text/html' :
+                      currentResource.contentType === 'externalUrl' ? 'text/uri-list' :
+                      'application/vnd.mcp-ui.remote-dom'
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Leave empty to use default for content type
+                  </p>
+                </div>
+
+                {/* Encoding (only for rawHtml) */}
+                {currentResource.contentType === 'rawHtml' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="encoding">Encoding</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Text encoding is standard. Use Base64 for embedding binary data or images.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Select
+                      value={currentResource.encoding || 'text'}
+                      onValueChange={(value: 'text' | 'base64') => updateResource({ encoding: value === 'text' ? undefined : value })}
+                    >
+                      <SelectTrigger id="encoding">
+                        <SelectValue placeholder="Select encoding" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="text">Text (UTF-8)</SelectItem>
+                        <SelectItem value="base64">Base64</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Supported Content Types */}
+                {currentResource.contentType === 'rawHtml' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="supportedContentTypes">Supported Content Types</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Restrict which rendering modes are allowed for security/policy enforcement</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(['rawHtml', 'externalUrl', 'remoteDom'] as const).map((type) => (
+                        <Badge
+                          key={type}
+                          variant={
+                            !currentResource.supportedContentTypes ||
+                            currentResource.supportedContentTypes.includes(type)
+                              ? 'default'
+                              : 'outline'
+                          }
+                          className="cursor-pointer"
+                          onClick={() => {
+                            const current = currentResource.supportedContentTypes || ['rawHtml', 'externalUrl', 'remoteDom'];
+                            const updated = current.includes(type)
+                              ? current.filter(t => t !== type)
+                              : [...current, type];
+                            updateResource({
+                              supportedContentTypes: updated.length === 3 ? undefined : updated as ('rawHtml' | 'externalUrl' | 'remoteDom')[]
+                            });
+                          }}
+                        >
+                          {type === 'rawHtml' && 'Raw HTML'}
+                          {type === 'externalUrl' && 'External URL'}
+                          {type === 'remoteDom' && 'Remote DOM'}
+                        </Badge>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Click to toggle. All types enabled by default.
+                    </p>
+                  </div>
+                )}
+              </TooltipProvider>
+            </CollapsibleContent>
+          </Collapsible>
         </CardContent>
       </Card>
 
@@ -342,6 +501,118 @@ export function ConfigureTab() {
               </div>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Resource Annotations */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Resource Annotations</CardTitle>
+          <CardDescription>
+            Optional annotations for audience targeting and priority ordering
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Collapsible open={showAdvancedAnnotations} onOpenChange={setShowAdvancedAnnotations}>
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+              <div className="flex items-center gap-2">
+                {showAdvancedAnnotations ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+                <span className="text-sm font-medium">Advanced Options</span>
+                {!showAdvancedAnnotations && getConfiguredOptionsCount() > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {getConfiguredOptionsCount()} configured
+                  </Badge>
+                )}
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-4 space-y-4 animate-in slide-in-from-top-1 duration-150">
+              <TooltipProvider>
+                {/* Audience */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="audience">Audience</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p>Control who sees this UI. User-only UIs appear in end-user interfaces. Assistant-only UIs are hidden from users and only visible to the AI.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <Select value={getAudienceValue()} onValueChange={handleAudienceChange}>
+                    <SelectTrigger id="audience">
+                      <SelectValue placeholder="Select audience" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="both">Both (user and assistant)</SelectItem>
+                      <SelectItem value="user">User only</SelectItem>
+                      <SelectItem value="assistant">Assistant only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Priority */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 justify-between">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="priority">Priority</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Higher priority UIs are displayed first. Range: 0.0 (low) to 1.0 (high)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    {currentResource.priority !== undefined && (
+                      <span className="text-sm font-mono text-muted-foreground">
+                        {currentResource.priority.toFixed(1)}
+                      </span>
+                    )}
+                  </div>
+                  <Slider
+                    id="priority"
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    value={[currentResource.priority ?? 0.5]}
+                    onValueChange={(values: number[]) => updateResource({ priority: values[0] })}
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Low (0.0)</span>
+                    <span>High (1.0)</span>
+                  </div>
+                </div>
+
+                {/* Last Modified (Read-only) */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="lastModified">Last Modified</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p>Automatically tracked for versioning and cache invalidation</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <Input
+                    id="lastModified"
+                    value={currentResource.lastModified || 'Not yet saved'}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+              </TooltipProvider>
+            </CollapsibleContent>
+          </Collapsible>
         </CardContent>
       </Card>
 

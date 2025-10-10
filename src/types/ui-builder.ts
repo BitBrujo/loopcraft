@@ -4,6 +4,27 @@
 export type ContentType = 'rawHtml' | 'externalUrl' | 'remoteDom';
 
 /**
+ * Resource audience targeting
+ * Controls who can see and interact with the UI resource
+ * - 'user': End-users in production interfaces
+ * - 'assistant': AI assistants only (hidden from end-users)
+ */
+export type Audience = 'user' | 'assistant' | 'all';
+
+/**
+ * Content encoding format
+ * - 'text': UTF-8 text encoding (default)
+ * - 'base64': Base64-encoded binary data (for images, binary files)
+ */
+export type Encoding = 'text' | 'base64';
+
+/**
+ * Supported content types for rendering
+ * Used to restrict which rendering modes are allowed for security/policy enforcement
+ */
+export type SupportedContentType = 'rawHtml' | 'externalUrl' | 'remoteDom';
+
+/**
  * Remote DOM configuration
  * Used when contentType is 'remoteDom'
  * Framework options per official MCP-UI specification
@@ -115,6 +136,62 @@ export interface UIResource {
 
   /** Selected MCP server name for integration (optional - null means standalone) */
   selectedServerName?: string | null;
+
+  // ==================== Advanced Resource Options ====================
+
+  /**
+   * Target audience for this UI resource
+   * Controls visibility and access:
+   * - ['user']: Only visible to end-users in production interfaces
+   * - ['assistant']: Only visible to AI assistants (hidden from end-users)
+   * - undefined: Visible to both (default behavior)
+   */
+  audience?: ('user' | 'assistant')[];
+
+  /**
+   * Display priority for this resource (0.0 to 1.0)
+   * Higher priority resources are displayed first when multiple UIs are available
+   * - 0.0: Lowest priority
+   * - 0.5: Medium priority
+   * - 1.0: Highest priority
+   * - undefined: Default priority (no preference)
+   */
+  priority?: number;
+
+  /**
+   * Last modification timestamp (ISO 8601 format)
+   * Automatically updated when resource is modified
+   * Used for versioning and cache invalidation
+   * Example: "2025-10-10T12:34:56Z"
+   */
+  lastModified?: string;
+
+  /**
+   * MIME type override for specialized content handling
+   * Default values if not specified:
+   * - rawHtml: "text/html"
+   * - externalUrl: "text/uri-list"
+   * - remoteDom: "application/vnd.mcp-ui.remote-dom"
+   */
+  mimeType?: string;
+
+  /**
+   * Content encoding format
+   * - 'text': UTF-8 text encoding (default, standard HTML)
+   * - 'base64': Base64-encoded binary data (for embedding images, binary files)
+   * Only applies to rawHtml content type
+   */
+  encoding?: 'text' | 'base64';
+
+  /**
+   * Supported content types for rendering
+   * Restricts which rendering modes are allowed for security/policy enforcement
+   * - undefined: All content types allowed (default)
+   * - ['rawHtml']: Only raw HTML rendering
+   * - ['externalUrl']: Only external URL embeds
+   * - ['rawHtml', 'externalUrl']: Both HTML and URL, but not Remote DOM
+   */
+  supportedContentTypes?: ('rawHtml' | 'externalUrl' | 'remoteDom')[];
 }
 
 export interface Template {

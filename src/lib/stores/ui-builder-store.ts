@@ -80,6 +80,13 @@ const defaultResource: UIResource = {
   templatePlaceholders: [],
   selectedServerId: null,
   selectedServerName: null,
+  // Advanced Resource Options (all undefined by default)
+  audience: undefined,
+  priority: undefined,
+  lastModified: undefined,
+  mimeType: undefined,
+  encoding: undefined,
+  supportedContentTypes: undefined,
 };
 
 export const useUIBuilderStore = create<UIBuilderStore>()(
@@ -101,7 +108,11 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
       updateResource: (updates) =>
         set((state) => ({
           currentResource: state.currentResource
-            ? { ...state.currentResource, ...updates }
+            ? {
+                ...state.currentResource,
+                ...updates,
+                lastModified: new Date().toISOString(),
+              }
             : null,
         })),
 
