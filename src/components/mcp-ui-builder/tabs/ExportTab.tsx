@@ -120,9 +120,14 @@ export function ExportTab() {
       {hasServerSelected && (
         <Card className="border-primary/50 bg-primary/5">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <Rocket className="h-5 w-5" />
-              Quick Deploy
+            <CardTitle className="text-lg font-semibold">
+              <span
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium text-white"
+                style={{ backgroundColor: '#6d8d96' }}
+              >
+                <Rocket className="h-4 w-4" />
+                Quick Deploy
+              </span>
             </CardTitle>
             <CardDescription>
               Deploy this UI resource to <strong>{currentResource.selectedServerName}</strong> server instantly
@@ -155,7 +160,14 @@ export function ExportTab() {
       {/* Export Options */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Export Options</CardTitle>
+          <CardTitle className="text-lg font-semibold">
+            <span
+              className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
+              style={{ backgroundColor: '#6d8d96' }}
+            >
+              Export Options
+            </span>
+          </CardTitle>
           <CardDescription>
             {hasServerSelected
               ? 'Choose how you want to integrate with your server'
@@ -247,7 +259,14 @@ export function ExportTab() {
             <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
               <div className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5" />
-                <CardTitle className="text-lg font-semibold">Quick Start Guide</CardTitle>
+                <CardTitle className="text-lg font-semibold">
+                  <span
+                    className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
+                    style={{ backgroundColor: '#6d8d96' }}
+                  >
+                    Quick Start Guide
+                  </span>
+                </CardTitle>
               </div>
               <ChevronDown className={`h-4 w-4 transition-transform ${showQuickStart ? '' : '-rotate-90'}`} />
             </CollapsibleTrigger>
@@ -369,7 +388,14 @@ export function ExportTab() {
       {/* Generated Code */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Generated Code</CardTitle>
+          <CardTitle className="text-lg font-semibold">
+            <span
+              className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
+              style={{ backgroundColor: '#6d8d96' }}
+            >
+              Generated Code
+            </span>
+          </CardTitle>
           <CardDescription>
             {exportFormat === 'integration'
               ? hasServerSelected

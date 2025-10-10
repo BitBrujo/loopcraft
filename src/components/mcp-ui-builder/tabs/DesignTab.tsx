@@ -803,9 +803,14 @@ export function DesignTab() {
             <div className="border-b bg-card">
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" className="w-full justify-between px-4 py-2 rounded-none hover:bg-accent">
-                  <span className="flex items-center gap-2 font-semibold text-sm">
+                  <span className="flex items-center gap-2">
                     <Info className="h-4 w-4" />
-                    Resource Metadata
+                    <span
+                      className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
+                      style={{ backgroundColor: '#6d8d96' }}
+                    >
+                      Resource Metadata
+                    </span>
                   </span>
                   <ChevronDown className={`h-4 w-4 transition-transform ${showAdvancedOptions ? '' : '-rotate-90'}`} />
                 </Button>

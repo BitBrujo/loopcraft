@@ -187,14 +187,26 @@ export function ConfigureTab() {
         {/* Section 1: Basic Configuration */}
         <Card className="border-primary/30">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Basic Configuration</CardTitle>
-            <CardDescription>Core resource settings</CardDescription>
+            <CardTitle className="text-lg font-semibold">
+              <span
+                className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
+                style={{ backgroundColor: '#6d8d96' }}
+              >
+                Basic Configuration
+              </span>
+            </CardTitle>
+            <CardDescription>
+              Core resource settings
+              <span className="block mt-1 text-xs">
+                Fields marked with <abbr title="required" className="text-destructive ml-0.5 no-underline" aria-label="required">*</abbr> are required
+              </span>
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Resource URI */}
             <div className="space-y-2">
-              <Label htmlFor="uri">
-                Resource URI <span className="text-destructive">*</span>
+              <Label htmlFor="uri" className="text-sm font-medium">
+                Resource URI <abbr title="required" className="text-destructive ml-0.5 no-underline" aria-label="required">*</abbr>
               </Label>
               <Input
                 id="uri"
@@ -217,7 +229,9 @@ export function ConfigureTab() {
 
             {/* Content Type */}
             <div className="space-y-2">
-              <Label>Content Type <span className="text-destructive">*</span></Label>
+              <Label className="text-sm font-medium">
+                Content Type <abbr title="required" className="text-destructive ml-0.5 no-underline" aria-label="required">*</abbr>
+              </Label>
               <RadioGroup value={currentResource.contentType} onValueChange={handleContentTypeChange}>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="rawHtml" id="rawHtml" />
@@ -474,7 +488,14 @@ export function ConfigureTab() {
         {/* Section 2: UI Metadata */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">UI Metadata</CardTitle>
+            <CardTitle className="text-lg font-semibold">
+              <span
+                className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
+                style={{ backgroundColor: '#6d8d96' }}
+              >
+                UI Metadata
+              </span>
+            </CardTitle>
             <CardDescription>Display and rendering configuration</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
