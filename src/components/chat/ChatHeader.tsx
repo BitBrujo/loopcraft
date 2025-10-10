@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,11 +16,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "./ThemeToggle";
 import { MobileSidebar } from "./MobileSidebar";
-import { MessageSquare, Settings, User, LogOut, PencilRuler, MessageCircle, Server } from "lucide-react";
+import { MessageSquare, Settings, User, LogOut } from "lucide-react";
 
 export function ChatHeader() {
   const router = useRouter();
-  const pathname = usePathname();
   const [user, setUser] = useState<{ id: number; email: string } | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [modelName, setModelName] = useState<string>("Ollama");
@@ -64,26 +63,6 @@ export function ChatHeader() {
     router.push("/login");
   };
 
-  // Test server functions removed with MCP-UI Builder simplification
-
-  const navItems = [
-    {
-      href: "/mcp-ui-builder",
-      label: "UI Builder",
-      icon: PencilRuler,
-    },
-    {
-      href: "/mcp-servers",
-      label: "Servers",
-      icon: Server,
-    },
-    {
-      href: "/chat",
-      label: "Chat",
-      icon: MessageCircle,
-    },
-  ];
-
   return (
     <header className="border-b border-border bg-card/50 backdrop-blur-sm">
       <div className="flex h-14 items-center justify-between px-4">
@@ -102,31 +81,6 @@ export function ChatHeader() {
           </Badge>
         </div>
 
-        {/* Center: Navigation */}
-        <div className="absolute left-1/2 -translate-x-1/2 hidden md:block">
-          <div className="inline-flex gap-1 p-1 rounded-lg ring-2 ring-border bg-background/50">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href));
-              return (
-                <Link key={item.href} href={item.href}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`h-8 gap-2 ${
-                      isActive
-                        ? "bg-foreground/10 font-medium shadow-sm"
-                        : "text-muted-foreground hover:bg-muted/50"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </Button>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
 
         {/* Right: Theme & Account */}
         <div className="flex items-center space-x-2 flex-1 justify-end">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { ArrowRight, Sparkles, Info, Copy, Check, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowRight, Sparkles, Info, Copy, Check, X, Eye, Wrench, MessageSquare, Link as LinkIcon, Target, Bell, ChevronDown, ChevronRight } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { Button } from '@/components/ui/button';
 import { PreviewPanel } from '../PreviewPanel';
@@ -348,19 +348,17 @@ export default document.createElement('my-component');`,
 // Combine all templates
 const ALL_TEMPLATES = [...HTML_TEMPLATES, ...REMOTE_DOM_TEMPLATES];
 
-// Common MIME types for dropdown
-const COMMON_MIME_TYPES = [
-  { value: 'text/html', label: 'text/html' },
-  { value: 'application/json', label: 'application/json' },
-  { value: 'text/xml', label: 'text/xml' },
-  { value: 'text/plain', label: 'text/plain' },
-  { value: 'text/uri-list', label: 'text/uri-list' },
-  { value: 'application/vnd.mcp-ui.remote-dom', label: 'application/vnd.mcp-ui.remote-dom' },
-  { value: 'custom', label: 'Custom' },
-] as const;
+// Map icon names to Lucide components
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  'wrench': Wrench,
+  'message-square': MessageSquare,
+  'link': LinkIcon,
+  'target': Target,
+  'bell': Bell,
+};
 
-// Helper function to get default MIME type based on content type
-function getMimeTypeDefault(contentType: ContentType): string {
+// Helper function to get display MIME type based on content type
+function getDisplayMimeType(contentType: ContentType): string {
   switch (contentType) {
     case 'rawHtml':
       return 'text/html';
@@ -412,8 +410,8 @@ export function DesignTab() {
   const [selectedActionId, setSelectedActionId] = useState<string>('');
   const [selectedAction, setSelectedAction] = useState<ActionSnippet | null>(null);
   const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
-  const [customMimeType, setCustomMimeType] = useState<string>('');
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
 
   // Auto-detect template placeholders when HTML content changes
@@ -548,162 +546,335 @@ export function DesignTab() {
   // Get snippets for selected category
   const categorySnippets = selectedCategory ? getSnippetsByCategory(selectedCategory as ActionSnippet['category']) : [];
 
+  // Get display MIME type
+  const displayMimeType = getDisplayMimeType(currentResource.contentType);
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* 3-Column Layout */}
+      {/* 2-Column Layout */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left: Templates & Actions Column - For rawHtml and remoteDom */}
-        {(currentResource.contentType === 'rawHtml' || currentResource.contentType === 'remoteDom') && (
-          <div className="w-72 border-r p-4 flex flex-col gap-4 bg-muted/10 overflow-y-auto">
-            {/* Dropdowns Section */}
-            <div className="space-y-3 flex-shrink-0">
-              {/* Templates Dropdown */}
-              <div>
-                <Label className="text-sm font-semibold mb-2 block">Templates</Label>
-                <Select value={selectedTemplateId} onValueChange={handleTemplateSelect}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a template..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(templatesByCategory).map(([category, templates]) => (
-                      <SelectGroup key={category}>
-                        <SelectLabel>{category}</SelectLabel>
-                        {templates.map((template) => (
-                          <SelectItem key={template.id} value={template.id}>
-                            <div className="flex items-center gap-2">
-                              <span>{template.name}</span>
-                              {/* Framework badge for Remote DOM templates */}
-                              {template.resource.contentType === 'remoteDom' && template.resource.remoteDomConfig && (
-                                <Badge variant="secondary" className="text-xs h-4">
-                                  {template.resource.remoteDomConfig.framework === 'react' ? '⚛️' : '🧩'}
-                                </Badge>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
 
-              {/* Action Category Dropdown */}
-              <div>
-                <Label className="text-sm font-semibold mb-2 block">Actions</Label>
-                <Select value={selectedCategory} onValueChange={handleCategorySelect}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select action type..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {actionCategories.map((category) => {
-                      const meta = categoryMetadata[category];
-                      return (
-                        <SelectItem key={category} value={category}>
+        {/* Left Column: All Options (400px fixed) */}
+        <div className="w-[400px] border-r p-4 flex flex-col gap-4 bg-muted/10 overflow-y-auto">
+          {/* Templates Dropdown - Only for rawHtml and remoteDom */}
+          {(currentResource.contentType === 'rawHtml' || currentResource.contentType === 'remoteDom') && (
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">Templates</Label>
+              <Select value={selectedTemplateId} onValueChange={handleTemplateSelect}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a template..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(templatesByCategory).map(([category, templates]) => (
+                    <SelectGroup key={category}>
+                      <SelectLabel>{category}</SelectLabel>
+                      {templates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
                           <div className="flex items-center gap-2">
-                            <span>{meta.icon}</span>
-                            <span>{meta.label}</span>
+                            <span>{template.name}</span>
+                            {/* Framework badge for Remote DOM templates */}
+                            {template.resource.contentType === 'remoteDom' && template.resource.remoteDomConfig && (
+                              <Badge variant="secondary" className="text-xs h-4">
+                                {template.resource.remoteDomConfig.framework === 'react' ? '⚛️' : '🧩'}
+                              </Badge>
+                            )}
                           </div>
                         </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+                      ))}
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Action Category Dropdown - Only for rawHtml */}
+          {currentResource.contentType === 'rawHtml' && (
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">Actions</Label>
+              <Select value={selectedCategory} onValueChange={handleCategorySelect}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select action type..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {actionCategories.map((category) => {
+                    const meta = categoryMetadata[category];
+                    const IconComponent = iconMap[meta.icon];
+                    return (
+                      <SelectItem key={category} value={category}>
+                        <div className="flex items-center gap-2">
+                          {IconComponent && <IconComponent className="h-4 w-4" />}
+                          <span>{meta.label}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Action Snippet Dropdown - Only show when category selected */}
+          {selectedCategory && currentResource.contentType === 'rawHtml' && (
+            <div>
+              <Select value={selectedActionId} onValueChange={handleActionSelect}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select action snippet..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {categorySnippets.map((snippet) => (
+                    <SelectItem key={snippet.id} value={snippet.id}>
+                      {snippet.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Expanded Action Card - Only show when action selected */}
+          {selectedAction && currentResource.contentType === 'rawHtml' && (
+            <Card className="flex-shrink-0">
+              <CardHeader className="p-3 pb-2">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <CardTitle className="text-sm">{selectedAction.name}</CardTitle>
+                      <Badge variant="outline" className="text-xs">
+                        {selectedAction.category}
+                      </Badge>
+                    </div>
+                    <CardDescription className="text-xs">
+                      {selectedAction.description}
+                    </CardDescription>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={clearActionSelection}
+                    className="h-6 w-6 p-0"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-3 pt-0 space-y-2">
+                {/* Code Preview - Collapsible */}
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="w-full justify-between text-xs">
+                      <span>View Code</span>
+                      <Info className="h-3 w-3" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <pre className="text-xs bg-muted p-2 rounded overflow-x-auto max-h-32 mt-2">
+                      <code>{selectedAction.code}</code>
+                    </pre>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleCopySnippet(selectedAction.code, selectedAction.id)}
+                    className="flex-1 text-xs h-7"
+                  >
+                    {copiedSnippet === selectedAction.id ? (
+                      <>
+                        <Check className="h-3 w-3 mr-1" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3 w-3 mr-1" />
+                        Copy
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleInsertCode(selectedAction.code)}
+                    className="flex-1 text-xs h-7"
+                  >
+                    Insert at Cursor
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Resource Metadata Card - MOVED FROM middle column */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Resource Metadata</CardTitle>
+              <CardDescription>Configure resource identification and visibility</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Title */}
+              <div className="space-y-2">
+                <Label htmlFor="res-title">Title</Label>
+                <Input
+                  id="res-title"
+                  value={currentResource.metadata?.title || ''}
+                  onChange={(e) => updateResource({
+                    metadata: {
+                      ...currentResource.metadata,
+                      title: e.target.value
+                    }
+                  })}
+                  placeholder="Dashboard UI"
+                />
               </div>
 
-              {/* Action Snippet Dropdown - Only show when category selected */}
-              {selectedCategory && (
-                <div>
-                  <Select value={selectedActionId} onValueChange={handleActionSelect}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select action snippet..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categorySnippets.map((snippet) => (
-                        <SelectItem key={snippet.id} value={snippet.id}>
-                          {snippet.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="res-description">Description</Label>
+                <Textarea
+                  id="res-description"
+                  value={currentResource.metadata?.description || ''}
+                  onChange={(e) => updateResource({
+                    metadata: {
+                      ...currentResource.metadata,
+                      description: e.target.value
+                    }
+                  })}
+                  placeholder="Interactive dashboard for monitoring key metrics"
+                  rows={3}
+                />
+              </div>
 
-            {/* Expandable Action Card - Only show when action selected */}
-            {selectedAction && (
-              <Card className="flex-shrink-0">
-                <CardHeader className="p-3 pb-2">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <CardTitle className="text-sm">{selectedAction.name}</CardTitle>
-                        <Badge variant="outline" className="text-xs">
-                          {selectedAction.category}
-                        </Badge>
-                      </div>
-                      <CardDescription className="text-xs">
-                        {selectedAction.description}
-                      </CardDescription>
+              <Separator className="my-4" />
+
+              {/* MIME Type - Read-only Badge */}
+              <div className="space-y-2">
+                <Label>MIME Type</Label>
+                <Badge variant="secondary" className="font-mono">
+                  {displayMimeType}
+                </Badge>
+                <p className="text-xs text-muted-foreground">
+                  Auto-determined from content type (read-only)
+                </p>
+              </div>
+
+              {/* Audience Targeting */}
+              <div className="space-y-2">
+                <Label>Audience</Label>
+                <RadioGroup
+                  value={
+                    !currentResource.audience ? 'both' :
+                    currentResource.audience.includes('user') && !currentResource.audience.includes('assistant') ? 'user' :
+                    currentResource.audience.includes('assistant') && !currentResource.audience.includes('user') ? 'assistant' :
+                    'both'
+                  }
+                  onValueChange={(value) => {
+                    let audience: ('user' | 'assistant')[] | undefined;
+                    if (value === 'user') {
+                      audience = ['user'];
+                    } else if (value === 'assistant') {
+                      audience = ['assistant'];
+                    } else {
+                      audience = undefined; // both = no restriction
+                    }
+                    updateResource({ audience });
+                  }}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="both" id="audience-both" />
+                    <Label htmlFor="audience-both" className="font-normal cursor-pointer">
+                      Both (Default)
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="user" id="audience-user" />
+                    <Label htmlFor="audience-user" className="font-normal cursor-pointer">
+                      User Only
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="assistant" id="audience-assistant" />
+                    <Label htmlFor="audience-assistant" className="font-normal cursor-pointer">
+                      Assistant Only
+                    </Label>
+                  </div>
+                </RadioGroup>
+                <p className="text-xs text-muted-foreground">
+                  Control who can see this UI resource. Assistant-only resources are hidden from end-users but available to AI agents.
+                </p>
+              </div>
+
+              {/* Advanced Options - Collapsible Priority Field */}
+              <Collapsible open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-full justify-start px-0">
+                    {showAdvancedOptions ? (
+                      <ChevronDown className="h-4 w-4 mr-2" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 mr-2" />
+                    )}
+                    <span className="font-semibold">Advanced Options</span>
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4 mt-3">
+                  {/* Priority Field */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="priority">Priority</Label>
+                      <span className="text-xs text-muted-foreground">
+                        {currentResource.priority !== undefined ? currentResource.priority.toFixed(1) : '0.5'}
+                      </span>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={clearActionSelection}
-                      className="h-6 w-6 p-0"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-3 pt-0 space-y-2">
-                  {/* Code Preview - Collapsible */}
-                  <Collapsible>
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm" className="w-full justify-between text-xs">
-                        <span>View Code</span>
-                        <Info className="h-3 w-3" />
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <pre className="text-xs bg-muted p-2 rounded overflow-x-auto max-h-32 mt-2">
-                        <code>{selectedAction.code}</code>
-                      </pre>
-                    </CollapsibleContent>
-                  </Collapsible>
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleCopySnippet(selectedAction.code, selectedAction.id)}
-                      className="flex-1 text-xs h-7"
-                    >
-                      {copiedSnippet === selectedAction.id ? (
-                        <>
-                          <Check className="h-3 w-3 mr-1" />
-                          Copied!
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-3 w-3 mr-1" />
-                          Copy
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => handleInsertCode(selectedAction.code)}
-                      className="flex-1 text-xs h-7"
-                    >
-                      Insert at Cursor
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                    {/* Slider */}
+                    <Slider
+                      id="priority"
+                      value={[currentResource.priority !== undefined ? currentResource.priority : 0.5]}
+                      onValueChange={(values) => {
+                        const value = Math.max(0, Math.min(1, values[0]));
+                        updateResource({ priority: value });
+                      }}
+                      min={0}
+                      max={1}
+                      step={0.1}
+                      className="w-full"
+                    />
 
-            {/* Initial Render Data - Only for rawHtml */}
+                    {/* Number Input */}
+                    <Input
+                      type="number"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={currentResource.priority !== undefined ? currentResource.priority : 0.5}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value);
+                        if (!isNaN(value)) {
+                          const clamped = Math.max(0, Math.min(1, value));
+                          updateResource({ priority: clamped });
+                        }
+                      }}
+                      placeholder="0.5"
+                    />
+
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>0.0 = Lowest</span>
+                      <span>0.5 = Medium</span>
+                      <span>1.0 = Highest</span>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground">
+                      Priority affects display order when multiple UI resources are available. May not apply if resource is linked to a single server.
+                    </p>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </CardContent>
+          </Card>
+
+          {/* Initial Render Data - Collapsible */}
+          {currentResource.contentType === 'rawHtml' && (
             <div className="flex-shrink-0 space-y-2">
               <Label className="text-sm font-semibold block">Initial Render Data</Label>
               <Collapsible>
@@ -737,332 +908,138 @@ export function DesignTab() {
                 </CollapsibleContent>
               </Collapsible>
             </div>
+          )}
 
-            {/* Placeholder Test Data - Only show if placeholders exist */}
-            {currentResource.templatePlaceholders && currentResource.templatePlaceholders.length > 0 && (
-              <div className="flex-shrink-0">
-                <Collapsible>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="w-full justify-between mb-2">
-                      <span className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4" />
-                        Placeholder Test Data
-                      </span>
-                      <Badge variant="secondary" className="text-xs">
-                        {currentResource.templatePlaceholders.length}
-                      </Badge>
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="space-y-3 p-2">
-                      <Label className="text-xs text-muted-foreground">
-                        Test values for preview (not exported)
-                      </Label>
-                      {currentResource.templatePlaceholders.map((placeholder) => (
-                        <div key={placeholder} className="space-y-1">
-                          <Label className="text-xs font-mono text-blue-600">
-                            {`{{${placeholder}}}`}
-                          </Label>
-                          <input
-                            type="text"
-                            className="w-full px-2 py-1 text-sm border rounded-md bg-background"
-                            placeholder={`Test value for ${placeholder}`}
-                            value={currentResource.placeholderTestData?.[placeholder] || ''}
-                            onChange={(e) => {
-                              updateResource({
-                                placeholderTestData: {
-                                  ...currentResource.placeholderTestData,
-                                  [placeholder]: e.target.value
-                                }
-                              });
-                            }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Middle: Editor */}
-        <div className="flex-1 border-r overflow-hidden flex flex-col min-w-0">
-          {/* Resource Metadata Card - Positioned at top of middle column */}
-          <div className="border-b p-4 bg-muted/5 overflow-y-auto max-h-96">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Resource Metadata</CardTitle>
-                <CardDescription>Configure resource identification and visibility</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Basic Fields - Title & Description */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Title */}
-                  <div className="space-y-2">
-                    <Label htmlFor="res-title">Title</Label>
-                    <Input
-                      id="res-title"
-                      value={currentResource.metadata?.title || ''}
-                      onChange={(e) => updateResource({
-                        metadata: {
-                          ...currentResource.metadata,
-                          title: e.target.value
-                        }
-                      })}
-                      placeholder="Dashboard UI"
-                    />
-                  </div>
-
-                  {/* Description */}
-                  <div className="space-y-2">
-                    <Label htmlFor="res-description">Description</Label>
-                    <Textarea
-                      id="res-description"
-                      value={currentResource.metadata?.description || ''}
-                      onChange={(e) => updateResource({
-                        metadata: {
-                          ...currentResource.metadata,
-                          description: e.target.value
-                        }
-                      })}
-                      placeholder="Interactive dashboard for monitoring key metrics"
-                      rows={3}
-                    />
-                  </div>
-                </div>
-
-                <Separator className="my-4" />
-
-                {/* MIME Type Selector */}
-                <div className="space-y-2">
-                  <Label htmlFor="mime-type">MIME Type</Label>
-                  <Select
-                    value={currentResource.mimeType || COMMON_MIME_TYPES.find(t => t.value === getMimeTypeDefault(currentResource.contentType))?.value || 'text/html'}
-                    onValueChange={(value) => {
-                      if (value === 'custom') {
-                        // Show custom input, keep current value or default
-                        setCustomMimeType(currentResource.mimeType || getMimeTypeDefault(currentResource.contentType));
-                      } else {
-                        updateResource({ mimeType: value });
-                      }
-                    }}
-                  >
-                    <SelectTrigger id="mime-type">
-                      <SelectValue placeholder="Select MIME type..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COMMON_MIME_TYPES.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  {/* Custom MIME Type Input */}
-                  {currentResource.mimeType && !COMMON_MIME_TYPES.some(t => t.value === currentResource.mimeType) && (
-                    <Input
-                      value={customMimeType}
-                      onChange={(e) => setCustomMimeType(e.target.value)}
-                      onBlur={() => {
-                        // Validate format: type/subtype
-                        if (customMimeType && /^[\w-]+\/[\w-+.]+$/.test(customMimeType)) {
-                          updateResource({ mimeType: customMimeType });
-                        }
-                      }}
-                      placeholder="e.g., application/custom-format"
-                      className="mt-2"
-                    />
-                  )}
-
-                  <p className="text-xs text-muted-foreground">
-                    MIME type helps clients determine how to parse and render this resource. Auto-detected based on content type.
-                  </p>
-                </div>
-
-                {/* Audience Targeting */}
-                <div className="space-y-2">
-                  <Label>Audience</Label>
-                  <RadioGroup
-                    value={
-                      !currentResource.audience ? 'both' :
-                      currentResource.audience.includes('user') && !currentResource.audience.includes('assistant') ? 'user' :
-                      currentResource.audience.includes('assistant') && !currentResource.audience.includes('user') ? 'assistant' :
-                      'both'
-                    }
-                    onValueChange={(value) => {
-                      let audience: ('user' | 'assistant')[] | undefined;
-                      if (value === 'user') {
-                        audience = ['user'];
-                      } else if (value === 'assistant') {
-                        audience = ['assistant'];
-                      } else {
-                        audience = undefined; // both = no restriction
-                      }
-                      updateResource({ audience });
-                    }}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="both" id="audience-both" />
-                      <Label htmlFor="audience-both" className="font-normal cursor-pointer">
-                        Both (Default)
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="user" id="audience-user" />
-                      <Label htmlFor="audience-user" className="font-normal cursor-pointer">
-                        User Only
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="assistant" id="audience-assistant" />
-                      <Label htmlFor="audience-assistant" className="font-normal cursor-pointer">
-                        Assistant Only
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                  <p className="text-xs text-muted-foreground">
-                    Control who can see this UI resource. Assistant-only resources are hidden from end-users but available to AI agents.
-                  </p>
-                </div>
-
-                {/* Advanced Options - Collapsible Priority Field */}
-                <Collapsible open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="w-full justify-start px-0">
-                      {showAdvancedOptions ? (
-                        <ChevronDown className="h-4 w-4 mr-2" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 mr-2" />
-                      )}
-                      <span className="font-semibold">Advanced Options</span>
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="space-y-4 mt-3">
-                    {/* Priority Field */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="priority">Priority</Label>
-                        <span className="text-xs text-muted-foreground">
-                          {currentResource.priority !== undefined ? currentResource.priority.toFixed(1) : '0.5'}
-                        </span>
-                      </div>
-
-                      {/* Slider */}
-                      <Slider
-                        id="priority"
-                        value={[currentResource.priority !== undefined ? currentResource.priority : 0.5]}
-                        onValueChange={(values) => {
-                          const value = Math.max(0, Math.min(1, values[0]));
-                          updateResource({ priority: value });
-                        }}
-                        min={0}
-                        max={1}
-                        step={0.1}
-                        className="w-full"
-                      />
-
-                      {/* Number Input */}
-                      <Input
-                        type="number"
-                        min="0"
-                        max="1"
-                        step="0.1"
-                        value={currentResource.priority !== undefined ? currentResource.priority : 0.5}
-                        onChange={(e) => {
-                          const value = parseFloat(e.target.value);
-                          if (!isNaN(value)) {
-                            const clamped = Math.max(0, Math.min(1, value));
-                            updateResource({ priority: clamped });
-                          }
-                        }}
-                        placeholder="0.5"
-                      />
-
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>0.0 = Lowest</span>
-                        <span>0.5 = Medium</span>
-                        <span>1.0 = Highest</span>
-                      </div>
-
-                      <p className="text-xs text-muted-foreground">
-                        Priority affects display order when multiple UI resources are available. May not apply if resource is linked to a single server.
-                      </p>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </CardContent>
-            </Card>
-          </div>
-
-          {currentResource.contentType === 'rawHtml' && (
-            <>
-              <div className="flex-1 overflow-hidden">
-                <HTMLEditor
-                  value={currentResource.content}
-                  onChange={(value) => updateResource({ content: value })}
-                  onMount={(editor) => {
-                    editorRef.current = editor;
-                  }}
-                />
-              </div>
-
-              {/* Detected Template Placeholders */}
-              {currentResource.templatePlaceholders && currentResource.templatePlaceholders.length > 0 && (
-                <div className="border-t p-4 bg-blue-50/50 dark:bg-blue-950/20">
-                  <div className="flex items-start gap-2 mb-2">
-                    <Info className="h-4 w-4 text-blue-600 mt-0.5" />
-                    <div className="flex-1">
-                      <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                        Detected Template Placeholders
-                      </h4>
-                      <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                        These placeholders will be filled by the AI with contextual data
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mt-3">
+          {/* Placeholder Test Data - Only show if placeholders exist */}
+          {currentResource.templatePlaceholders && currentResource.templatePlaceholders.length > 0 && (
+            <div className="flex-shrink-0">
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-full justify-between mb-2">
+                    <span className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      Placeholder Test Data
+                    </span>
+                    <Badge variant="secondary" className="text-xs">
+                      {currentResource.templatePlaceholders.length}
+                    </Badge>
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="space-y-3 p-2">
+                    <Label className="text-xs text-muted-foreground">
+                      Test values for preview (not exported)
+                    </Label>
                     {currentResource.templatePlaceholders.map((placeholder) => (
-                      <Badge key={placeholder} variant="secondary" className="font-mono text-xs">
-                        {`{{${placeholder}}}`}
-                      </Badge>
+                      <div key={placeholder} className="space-y-1">
+                        <Label className="text-xs font-mono text-blue-600">
+                          {`{{${placeholder}}}`}
+                        </Label>
+                        <input
+                          type="text"
+                          className="w-full px-2 py-1 text-sm border rounded-md bg-background"
+                          placeholder={`Test value for ${placeholder}`}
+                          value={currentResource.placeholderTestData?.[placeholder] || ''}
+                          onChange={(e) => {
+                            updateResource({
+                              placeholderTestData: {
+                                ...currentResource.placeholderTestData,
+                                [placeholder]: e.target.value
+                              }
+                            });
+                          }}
+                        />
+                      </div>
                     ))}
                   </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {currentResource.contentType === 'externalUrl' && (
-            <div className="h-full p-6 overflow-y-auto">
-              <Card>
-                <CardHeader>
-                  <CardTitle>External URL Configuration</CardTitle>
-                  <CardDescription>
-                    Embed an external website or web application
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <URLInput
-                    value={currentResource.content}
-                    onChange={(value) => updateResource({ content: value })}
-                  />
-                  <Alert className="mt-4">
-                    <Info className="h-4 w-4" />
-                    <AlertDescription>
-                      The external site will be rendered in an iframe. Ensure the site allows iframe embedding.
-                    </AlertDescription>
-                  </Alert>
-                </CardContent>
-              </Card>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           )}
+        </div>
 
-          {currentResource.contentType === 'remoteDom' && (
-            <div className="h-full flex flex-col overflow-hidden">
-              <div className="flex-1 overflow-hidden">
+        {/* Right Column: Code + Optional Preview */}
+        <div className="flex-1 overflow-hidden flex flex-col min-w-0">
+
+          {/* Top Bar with Preview Toggle */}
+          <div className="border-b p-2 flex items-center justify-end gap-2 bg-muted/5">
+            <Button
+              size="sm"
+              variant={showPreview ? 'default' : 'outline'}
+              onClick={() => setShowPreview(!showPreview)}
+              className="gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              {showPreview ? 'Hide Preview' : 'Show Preview'}
+            </Button>
+          </div>
+
+          {/* Code + Preview Area */}
+          {!showPreview ? (
+            /* Full-height editor when preview hidden */
+            <div className="flex-1 overflow-hidden">
+              {currentResource.contentType === 'rawHtml' && (
+                <>
+                  <HTMLEditor
+                    value={currentResource.content}
+                    onChange={(value) => updateResource({ content: value })}
+                    onMount={(editor) => {
+                      editorRef.current = editor;
+                    }}
+                  />
+
+                  {/* Detected Template Placeholders - Fixed position at bottom */}
+                  {currentResource.templatePlaceholders && currentResource.templatePlaceholders.length > 0 && (
+                    <div className="border-t p-4 bg-blue-50/50 dark:bg-blue-950/20">
+                      <div className="flex items-start gap-2 mb-2">
+                        <Info className="h-4 w-4 text-blue-600 mt-0.5" />
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                            Detected Template Placeholders
+                          </h4>
+                          <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                            These placeholders will be filled by the AI with contextual data
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 mt-3">
+                        {currentResource.templatePlaceholders.map((placeholder) => (
+                          <Badge key={placeholder} variant="secondary" className="font-mono text-xs">
+                            {`{{${placeholder}}}`}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {currentResource.contentType === 'externalUrl' && (
+                <div className="h-full p-6 overflow-y-auto">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>External URL Configuration</CardTitle>
+                      <CardDescription>
+                        Embed an external website or web application
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <URLInput
+                        value={currentResource.content}
+                        onChange={(value) => updateResource({ content: value })}
+                      />
+                      <Alert className="mt-4">
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          The external site will be rendered in an iframe. Ensure the site allows iframe embedding.
+                        </AlertDescription>
+                      </Alert>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {currentResource.contentType === 'remoteDom' && (
                 <Editor
                   height="100%"
                   defaultLanguage="javascript"
@@ -1082,15 +1059,78 @@ export function DesignTab() {
                     editorRef.current = editor;
                   }}
                 />
+              )}
+            </div>
+          ) : (
+            /* Resizable split view when preview shown */
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Top: Code Editor (50%) */}
+              <div className="flex-1 min-h-[200px] overflow-hidden border-b">
+                {currentResource.contentType === 'rawHtml' && (
+                  <HTMLEditor
+                    value={currentResource.content}
+                    onChange={(value) => updateResource({ content: value })}
+                    onMount={(editor) => {
+                      editorRef.current = editor;
+                    }}
+                  />
+                )}
+
+                {currentResource.contentType === 'externalUrl' && (
+                  <div className="h-full p-6 overflow-y-auto">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>External URL Configuration</CardTitle>
+                        <CardDescription>
+                          Embed an external website or web application
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <URLInput
+                          value={currentResource.content}
+                          onChange={(value) => updateResource({ content: value })}
+                        />
+                        <Alert className="mt-4">
+                          <Info className="h-4 w-4" />
+                          <AlertDescription>
+                            The external site will be rendered in an iframe. Ensure the site allows iframe embedding.
+                          </AlertDescription>
+                        </Alert>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+
+                {currentResource.contentType === 'remoteDom' && (
+                  <Editor
+                    height="100%"
+                    defaultLanguage="javascript"
+                    value={currentResource.content}
+                    onChange={(value) => value !== undefined && updateResource({ content: value })}
+                    theme="vs-dark"
+                    options={{
+                      minimap: { enabled: true },
+                      fontSize: 14,
+                      lineNumbers: 'on',
+                      scrollBeyondLastLine: false,
+                      wordWrap: 'on',
+                      formatOnPaste: true,
+                      formatOnType: true,
+                    }}
+                    onMount={(editor) => {
+                      editorRef.current = editor;
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Bottom: Preview (50%) */}
+              <div className="flex-1 min-h-[200px] overflow-hidden">
+                {(currentResource.contentType === 'rawHtml' || currentResource.contentType === 'externalUrl' || currentResource.contentType === 'remoteDom') && (
+                  <PreviewPanel />
+                )}
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Right: Preview */}
-        <div className="flex-1 overflow-hidden min-w-0">
-          {(currentResource.contentType === 'rawHtml' || currentResource.contentType === 'externalUrl' || currentResource.contentType === 'remoteDom') && (
-            <PreviewPanel />
           )}
         </div>
       </div>

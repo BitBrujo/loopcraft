@@ -2,15 +2,10 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Wrench, PencilRuler, Server, MessageCircle } from "lucide-react";
+import { PencilRuler, Server, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigationItems = [
-  {
-    title: "MCP Server Builder",
-    href: "/mcp-server-builder",
-    icon: Wrench,
-  },
   {
     title: "MCP-UI Builder",
     href: "/mcp-ui-builder",

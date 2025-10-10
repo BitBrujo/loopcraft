@@ -7,12 +7,13 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Copy, Download, Check, Info, FileCode, Server, Rocket } from 'lucide-react';
+import { Copy, Download, Check, Info, FileCode, Server, Rocket, BookOpen, ChevronDown } from 'lucide-react';
 import { Editor } from '@monaco-editor/react';
 import { generateServerCode, generateTypeScriptCode, generateFastMCPCode } from '@/lib/code-generation';
 import type { ExportFormat, ExportLanguage } from '@/types/ui-builder';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export function ExportTab() {
   const { currentResource } = useUIBuilderStore();
@@ -20,6 +21,7 @@ export function ExportTab() {
   const [language, setLanguage] = useState<ExportLanguage>('typescript');
   const [copied, setCopied] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
+  const [showQuickStart, setShowQuickStart] = useState(false); // Collapsed by default
 
   if (!currentResource) {
     return (
@@ -114,6 +116,132 @@ export function ExportTab() {
         </Alert>
       )}
 
+      {/* Quick Start Guide - Collapsible */}
+      <Collapsible open={showQuickStart} onOpenChange={setShowQuickStart}>
+        <Card>
+          <CardHeader>
+            <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                <CardTitle>Quick Start Guide</CardTitle>
+              </div>
+              <ChevronDown className={`h-4 w-4 transition-transform ${showQuickStart ? '' : '-rotate-90'}`} />
+            </CollapsibleTrigger>
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent className="space-y-4">
+              {exportFormat === 'integration' ? (
+                <div className="space-y-3 text-sm">
+                  <h4 className="font-semibold">
+                    {hasServerSelected
+                      ? `Integration Steps for ${currentResource.selectedServerName}:`
+                      : 'Integration Steps:'
+                    }
+                  </h4>
+                  <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+                    <li>Copy the generated code above</li>
+                    <li>Open your {hasServerSelected ? currentResource.selectedServerName : 'MCP'} server file</li>
+                    <li>Add the <code className="bg-muted px-1 rounded">createUIResource</code> call</li>
+                    <li>Register the tool in your <code className="bg-muted px-1 rounded">ListToolsRequestSchema</code> handler</li>
+                    <li>Handle it in your <code className="bg-muted px-1 rounded">CallToolRequestSchema</code> handler</li>
+                    <li>Return the resource with <code className="bg-muted px-1 rounded">__MCP_UI_RESOURCE__:</code> prefix</li>
+                    <li>Test in chat by asking the AI to use your tool</li>
+                  </ol>
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                      The UI will render automatically when the AI calls your tool.
+                      {currentResource.templatePlaceholders && currentResource.templatePlaceholders.length > 0 && (
+                        <> Agent placeholders like <code className="bg-muted px-1 rounded">{'{{user.id}}'}</code> will be filled with contextual data.</>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              ) : exportFormat === 'fastmcp' ? (
+                <div className="space-y-3 text-sm">
+                  <h4 className="font-semibold">FastMCP Server Steps:</h4>
+                  <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+                    <li>Download the generated server file</li>
+                    <li>Save it as <code className="bg-muted px-1 rounded">server.js</code> (or .ts)</li>
+                    <li>Install dependencies: <code className="bg-muted px-1 rounded">npm install fastmcp zod @mcp-ui/server</code></li>
+                    <li>Test locally: <code className="bg-muted px-1 rounded">node server.js</code></li>
+                    <li>Add to your app via Settings &gt; MCP Servers</li>
+                    <li>Configure as stdio server with command: <code className="bg-muted px-1 rounded">{`["node", "/path/to/server.js"]`}</code></li>
+                    <li>Enable the server and test in chat</li>
+                  </ol>
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>FastMCP Benefits:</strong> Cleaner code (~60% less boilerplate), built-in error handling, type-safe parameters with Zod, and better developer experience.{' '}
+                      {hasServerSelected && (
+                        <>Once tested, you can use the Integration Snippet format to add to {currentResource.selectedServerName}.</>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              ) : (
+                <div className="space-y-3 text-sm">
+                  <h4 className="font-semibold">Standalone Server Steps:</h4>
+                  <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+                    <li>Download the generated server file</li>
+                    <li>Save it as <code className="bg-muted px-1 rounded">server.js</code> (or .ts)</li>
+                    <li>Install dependencies: <code className="bg-muted px-1 rounded">npm install @mcp-ui/server @modelcontextprotocol/sdk</code></li>
+                    <li>Test locally: <code className="bg-muted px-1 rounded">node server.js</code></li>
+                    <li>Add to your app via Settings &gt; MCP Servers</li>
+                    <li>Configure as stdio server with command: <code className="bg-muted px-1 rounded">{`["node", "/path/to/server.js"]`}</code></li>
+                    <li>Enable the server and test in chat</li>
+                  </ol>
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                      This standalone server is great for testing.{' '}
+                      {hasServerSelected && (
+                        <>Once you&apos;re happy with it, use the Integration Snippet format to add it to {currentResource.selectedServerName} server.</>
+                      )}
+                      {!hasServerSelected && (
+                        <>Once you&apos;re happy with it, integrate the UI resource into your main server using the Integration Snippet format.</>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              )}
+
+              <Separator />
+
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm">Official Documentation:</h4>
+                <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+                  <a
+                    href="https://github.com/modelcontextprotocol/specification"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    → MCP Protocol Specification
+                  </a>
+                  <a
+                    href="https://github.com/modelcontextprotocol/mcp-ui"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    → MCP-UI Documentation
+                  </a>
+                  <a
+                    href="https://github.com/modelcontextprotocol"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    → Model Context Protocol GitHub
+                  </a>
+                </div>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
       {/* Quick Deploy Option - Only if server selected */}
       {hasServerSelected && (
         <Card className="border-primary/50 bg-primary/5">
@@ -172,7 +300,6 @@ export function ExportTab() {
                   <Label htmlFor="integration" className="font-semibold cursor-pointer flex items-center gap-2">
                     <FileCode className="h-4 w-4" />
                     Integration Snippet
-                    <Badge variant="secondary">Recommended</Badge>
                   </Label>
                   <p className="text-sm text-muted-foreground mt-1">
                     {hasServerSelected
@@ -288,117 +415,6 @@ export function ExportTab() {
               <Download className="h-4 w-4" />
               Download File
             </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Start Guide */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Info className="h-5 w-5" />
-            Quick Start Guide
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {exportFormat === 'integration' ? (
-            <div className="space-y-3 text-sm">
-              <h4 className="font-semibold">
-                {hasServerSelected
-                  ? `Integration Steps for ${currentResource.selectedServerName}:`
-                  : 'Integration Steps:'
-                }
-              </h4>
-              <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                <li>Copy the generated code above</li>
-                <li>Open your {hasServerSelected ? currentResource.selectedServerName : 'MCP'} server file</li>
-                <li>Add the <code className="bg-muted px-1 rounded">createUIResource</code> call</li>
-                <li>Register the tool in your <code className="bg-muted px-1 rounded">ListToolsRequestSchema</code> handler</li>
-                <li>Handle it in your <code className="bg-muted px-1 rounded">CallToolRequestSchema</code> handler</li>
-                <li>Return the resource with <code className="bg-muted px-1 rounded">__MCP_UI_RESOURCE__:</code> prefix</li>
-                <li>Test in chat by asking the AI to use your tool</li>
-              </ol>
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription>
-                  The UI will render automatically when the AI calls your tool.
-                  {currentResource.templatePlaceholders && currentResource.templatePlaceholders.length > 0 && (
-                    <> Agent placeholders like <code className="bg-muted px-1 rounded">{'{{user.id}}'}</code> will be filled with contextual data.</>
-                  )}
-                </AlertDescription>
-              </Alert>
-            </div>
-          ) : exportFormat === 'fastmcp' ? (
-            <div className="space-y-3 text-sm">
-              <h4 className="font-semibold">FastMCP Server Steps:</h4>
-              <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                <li>Download the generated server file</li>
-                <li>Save it as <code className="bg-muted px-1 rounded">server.js</code> (or .ts)</li>
-                <li>Install dependencies: <code className="bg-muted px-1 rounded">npm install fastmcp zod @mcp-ui/server</code></li>
-                <li>Test locally: <code className="bg-muted px-1 rounded">node server.js</code></li>
-                <li>Add to your app via Settings &gt; MCP Servers</li>
-                <li>Configure as stdio server with command: <code className="bg-muted px-1 rounded">{`["node", "/path/to/server.js"]`}</code></li>
-                <li>Enable the server and test in chat</li>
-              </ol>
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>FastMCP Benefits:</strong> Cleaner code (~60% less boilerplate), built-in error handling, type-safe parameters with Zod, and better developer experience.{' '}
-                  {hasServerSelected && (
-                    <>Once tested, you can use the Integration Snippet format to add to {currentResource.selectedServerName}.</>
-                  )}
-                </AlertDescription>
-              </Alert>
-            </div>
-          ) : (
-            <div className="space-y-3 text-sm">
-              <h4 className="font-semibold">Standalone Server Steps:</h4>
-              <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                <li>Download the generated server file</li>
-                <li>Save it as <code className="bg-muted px-1 rounded">server.js</code> (or .ts)</li>
-                <li>Install dependencies: <code className="bg-muted px-1 rounded">npm install @mcp-ui/server @modelcontextprotocol/sdk</code></li>
-                <li>Test locally: <code className="bg-muted px-1 rounded">node server.js</code></li>
-                <li>Add to your app via Settings &gt; MCP Servers</li>
-                <li>Configure as stdio server with command: <code className="bg-muted px-1 rounded">{`["node", "/path/to/server.js"]`}</code></li>
-                <li>Enable the server and test in chat</li>
-              </ol>
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription>
-                  This standalone server is great for testing.{' '}
-                  {hasServerSelected && (
-                    <>Once you&apos;re happy with it, use the Integration Snippet format to add it to {currentResource.selectedServerName} server.</>
-                  )}
-                  {!hasServerSelected && (
-                    <>Once you&apos;re happy with it, integrate the UI resource into your main server using the Integration Snippet format.</>
-                  )}
-                </AlertDescription>
-              </Alert>
-            </div>
-          )}
-
-          <Separator />
-
-          <div className="space-y-2">
-            <h4 className="font-semibold text-sm">Official Documentation:</h4>
-            <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-              <a
-                href="https://docs.mcp.dev/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                → MCP Protocol Specification
-              </a>
-              <a
-                href="https://mcp-ui.org/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                → MCP-UI Documentation
-              </a>
-            </div>
           </div>
         </CardContent>
       </Card>

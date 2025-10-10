@@ -385,35 +385,36 @@ export function getSnippetsByCategory(category: ActionSnippet['category']) {
 
 /**
  * Category metadata for UI display
+ * Icons are Lucide icon names (rendered by consuming components)
  */
 export const categoryMetadata = {
   tool: {
     label: 'Tool Actions',
-    icon: '🔧',
+    icon: 'wrench',
     description: 'Execute MCP tools from buttons and forms',
     color: 'bg-blue-500',
   },
   prompt: {
     label: 'Prompt Actions',
-    icon: '💬',
+    icon: 'message-square',
     description: 'Send prompts to AI assistant',
     color: 'bg-indigo-500',
   },
   link: {
     label: 'Link Actions',
-    icon: '🔗',
+    icon: 'link',
     description: 'Open external URLs in new tab',
     color: 'bg-cyan-500',
   },
   intent: {
     label: 'Intent Actions',
-    icon: '🎯',
+    icon: 'target',
     description: 'Trigger app navigation and actions',
     color: 'bg-orange-500',
   },
   notify: {
     label: 'Notify Actions',
-    icon: '🔔',
+    icon: 'bell',
     description: 'Show toast notifications',
     color: 'bg-green-500',
   },
