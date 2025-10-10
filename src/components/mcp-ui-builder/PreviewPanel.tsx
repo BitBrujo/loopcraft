@@ -23,7 +23,7 @@ export function PreviewPanel() {
     // Validate URI format
     if (!currentResource.uri.startsWith('ui://')) {
       setMcpResource(null);
-      setError('URI must start with "ui://"');
+      setError('Invalid URI format. Must start with "ui://" (e.g., ui://myserver/resource)');
       setIsLoading(false);
       return;
     }
@@ -31,7 +31,7 @@ export function PreviewPanel() {
     // Validate external URL content is not empty
     if (currentResource.contentType === 'externalUrl' && !currentResource.content.trim()) {
       setMcpResource(null);
-      setError('Enter a URL to see preview');
+      setError('💡 Enter a URL in the Design tab to see preview (e.g., https://example.com)');
       setIsLoading(false);
       return;
     }
@@ -39,7 +39,23 @@ export function PreviewPanel() {
     // Validate rawHtml content is not empty
     if (currentResource.contentType === 'rawHtml' && !currentResource.content.trim()) {
       setMcpResource(null);
-      setError('Enter HTML content to see preview');
+      setError('💡 Select a template or write HTML in the Design tab to see preview');
+      setIsLoading(false);
+      return;
+    }
+
+    // Remote DOM requires framework selection
+    if (currentResource.contentType === 'remoteDom' && !currentResource.remoteDomConfig?.framework) {
+      setMcpResource(null);
+      setError('⚙️ Select a framework (React or WebComponents) in Configure tab');
+      setIsLoading(false);
+      return;
+    }
+
+    // Remote DOM requires script content
+    if (currentResource.contentType === 'remoteDom' && !currentResource.content.trim()) {
+      setMcpResource(null);
+      setError('💡 Write a Remote DOM script in the Design tab to see preview');
       setIsLoading(false);
       return;
     }

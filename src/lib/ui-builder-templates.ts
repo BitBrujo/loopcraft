@@ -620,6 +620,274 @@ export const builtInTemplates: Template[] = [
       content: 'https://example.com',
     },
   },
+  // Remote DOM Templates
+  {
+    id: 'remote-dom-react-button',
+    name: 'Remote DOM: React Button',
+    category: 'interactive',
+    description: 'Interactive button using React Remote DOM framework',
+    resource: {
+      uri: 'ui://loopcraft/remote-react-button',
+      contentType: 'remoteDom',
+      remoteDomConfig: { framework: 'react' },
+      content: `// React Remote DOM Button Example
+// This script runs in a sandboxed Web Worker
+import { h, render } from '@remote-dom/core/client';
+
+// Create interactive button with event handler
+const button = h(
+  'button',
+  {
+    onClick: () => {
+      // Send notification to parent
+      window.parent.postMessage({
+        type: 'notify',
+        payload: { message: 'React button clicked!' }
+      }, '*');
+    },
+    style: {
+      padding: '12px 24px',
+      background: '#0066cc',
+      color: 'white',
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      fontSize: '16px',
+      fontWeight: '600'
+    }
+  },
+  'Click Me (React)'
+);
+
+// Create container
+const container = h('div', {
+  style: {
+    padding: '20px',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '200px'
+  }
+}, [button]);
+
+// Render to root
+const root = document.querySelector('#root');
+if (root) {
+  render(container, root);
+}`,
+    },
+  },
+  {
+    id: 'remote-dom-webcomponent-card',
+    name: 'Remote DOM: Web Component Card',
+    category: 'interactive',
+    description: 'Custom card element using Web Components',
+    resource: {
+      uri: 'ui://loopcraft/remote-wc-card',
+      contentType: 'remoteDom',
+      remoteDomConfig: { framework: 'webcomponents' },
+      content: `// Web Components Remote DOM Card Example
+// Define custom card element
+class InfoCard extends HTMLElement {
+  connectedCallback() {
+    // Set shadow DOM
+    this.attachShadow({ mode: 'open' });
+
+    // Card template
+    this.shadowRoot.innerHTML = \`
+      <style>
+        .card {
+          padding: 24px;
+          background: white;
+          border: 1px solid #e0e0e0;
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          max-width: 400px;
+          margin: 20px auto;
+        }
+        .card h2 {
+          margin: 0 0 12px 0;
+          color: #333;
+          font-size: 20px;
+        }
+        .card p {
+          margin: 0;
+          color: #666;
+          line-height: 1.5;
+        }
+        .card button {
+          margin-top: 16px;
+          padding: 10px 20px;
+          background: #10b981;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          font-weight: 600;
+        }
+        .card button:hover {
+          background: #059669;
+        }
+      </style>
+      <div class="card">
+        <h2>🧩 Web Component Card</h2>
+        <p>This is a custom element built with native Web Components API. It's rendered via Remote DOM for secure, sandboxed execution.</p>
+        <button id="actionBtn">Take Action</button>
+      </div>
+    \`;
+
+    // Add event listener
+    const btn = this.shadowRoot.querySelector('#actionBtn');
+    btn.addEventListener('click', () => {
+      window.parent.postMessage({
+        type: 'notify',
+        payload: { message: 'Web Component action triggered!' }
+      }, '*');
+    });
+  }
+}
+
+// Register custom element
+customElements.define('info-card', InfoCard);
+
+// Append to document
+const card = document.createElement('info-card');
+document.body.appendChild(card);`,
+    },
+  },
+  {
+    id: 'remote-dom-react-form',
+    name: 'Remote DOM: React Form',
+    category: 'forms',
+    description: 'Interactive form with React Remote DOM and tool calling',
+    resource: {
+      uri: 'ui://loopcraft/remote-react-form',
+      contentType: 'remoteDom',
+      remoteDomConfig: { framework: 'react' },
+      content: `// React Remote DOM Form Example
+import { h, render, useState } from '@remote-dom/core/client';
+
+// Form component with state
+function ContactForm() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    // Call MCP tool with form data
+    window.parent.postMessage({
+      type: 'tool',
+      payload: {
+        toolName: 'submit_contact',
+        params: { name, email, message }
+      }
+    }, '*');
+
+    // Reset form
+    setName('');
+    setEmail('');
+    setMessage('');
+  };
+
+  return h('div', {
+    style: {
+      padding: '24px',
+      maxWidth: '500px',
+      margin: '20px auto',
+      background: 'white',
+      borderRadius: '12px',
+      boxShadow: '0 2px 12px rgba(0,0,0,0.1)'
+    }
+  }, [
+    h('h2', {
+      style: { margin: '0 0 20px 0', color: '#333' }
+    }, 'Contact Form (React)'),
+
+    h('form', { onSubmit: handleSubmit }, [
+      h('div', { style: { marginBottom: '16px' } }, [
+        h('label', {
+          style: { display: 'block', marginBottom: '6px', fontWeight: '500' }
+        }, 'Name'),
+        h('input', {
+          type: 'text',
+          value: name,
+          onInput: (e) => setName(e.target.value),
+          required: true,
+          style: {
+            width: '100%',
+            padding: '10px',
+            border: '1px solid #ddd',
+            borderRadius: '6px',
+            fontSize: '14px'
+          }
+        })
+      ]),
+
+      h('div', { style: { marginBottom: '16px' } }, [
+        h('label', {
+          style: { display: 'block', marginBottom: '6px', fontWeight: '500' }
+        }, 'Email'),
+        h('input', {
+          type: 'email',
+          value: email,
+          onInput: (e) => setEmail(e.target.value),
+          required: true,
+          style: {
+            width: '100%',
+            padding: '10px',
+            border: '1px solid #ddd',
+            borderRadius: '6px',
+            fontSize: '14px'
+          }
+        })
+      ]),
+
+      h('div', { style: { marginBottom: '16px' } }, [
+        h('label', {
+          style: { display: 'block', marginBottom: '6px', fontWeight: '500' }
+        }, 'Message'),
+        h('textarea', {
+          value: message,
+          onInput: (e) => setMessage(e.target.value),
+          required: true,
+          rows: 4,
+          style: {
+            width: '100%',
+            padding: '10px',
+            border: '1px solid #ddd',
+            borderRadius: '6px',
+            fontSize: '14px',
+            fontFamily: 'inherit'
+          }
+        })
+      ]),
+
+      h('button', {
+        type: 'submit',
+        style: {
+          padding: '12px 24px',
+          background: '#8b5cf6',
+          color: 'white',
+          border: 'none',
+          borderRadius: '6px',
+          cursor: 'pointer',
+          fontSize: '16px',
+          fontWeight: '600'
+        }
+      }, 'Submit Form')
+    ])
+  ]);
+}
+
+// Render form
+const root = document.querySelector('#root');
+if (root) {
+  render(h(ContactForm), root);
+}`,
+    },
+  },
 ];
 
 export function getTemplatesByCategory(category: string): Template[] {

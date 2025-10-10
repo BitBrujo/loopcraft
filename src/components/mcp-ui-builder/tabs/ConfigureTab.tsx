@@ -228,6 +228,58 @@ export function ConfigureTab() {
         </CardContent>
       </Card>
 
+      {/* Remote DOM Framework Selection - Only show when remoteDom is selected */}
+      {currentResource.contentType === 'remoteDom' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5" />
+              Remote DOM Framework
+            </CardTitle>
+            <CardDescription>
+              Select the framework for your Remote DOM component
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="framework">Framework</Label>
+              <Select
+                value={currentResource.remoteDomConfig?.framework || 'react'}
+                onValueChange={(value: 'react' | 'webcomponents') => {
+                  updateResource({
+                    remoteDomConfig: {
+                      ...currentResource.remoteDomConfig,
+                      framework: value,
+                    },
+                  });
+                }}
+              >
+                <SelectTrigger id="framework">
+                  <SelectValue placeholder="Select framework" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="react">
+                    <div className="flex items-center gap-2">
+                      <span>⚛️ React</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="webcomponents">
+                    <div className="flex items-center gap-2">
+                      <span>🧩 Web Components</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {currentResource.remoteDomConfig?.framework === 'react'
+                  ? 'Use React components via @remote-dom/core/client'
+                  : 'Use native Web Components with customElements API'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* MCP Server Integration */}
       <Card>
         <CardHeader>

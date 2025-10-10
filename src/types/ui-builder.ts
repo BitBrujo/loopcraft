@@ -6,10 +6,11 @@ export type ContentType = 'rawHtml' | 'externalUrl' | 'remoteDom';
 /**
  * Remote DOM configuration
  * Used when contentType is 'remoteDom'
+ * Framework options per official MCP-UI specification
  */
 export interface RemoteDomConfig {
-  framework: 'react' | 'preact' | 'vue';
-  script: string;
+  framework: 'react' | 'webcomponents';
+  script?: string; // Optional: script can also be in content field
 }
 
 /**

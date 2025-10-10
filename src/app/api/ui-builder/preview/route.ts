@@ -72,18 +72,30 @@ export async function POST(request: NextRequest) {
         });
         break;
 
-      case 'remoteDom':
+      case 'remoteDom': {
+        // Get framework from config, default to 'react' per official MCP-UI spec
+        const framework = resource.remoteDomConfig?.framework || 'react';
+
+        // Validate framework is supported
+        if (framework !== 'react' && framework !== 'webcomponents') {
+          return NextResponse.json(
+            { error: `Unsupported Remote DOM framework: ${framework}. Use 'react' or 'webcomponents'.` },
+            { status: 400 }
+          );
+        }
+
         mcpResource = createUIResource({
           uri: resource.uri as `ui://${string}`,
           content: {
             type: 'remoteDom',
             script: resource.content,
-            framework: 'react',
+            framework: framework,
           },
           encoding: 'text',
           metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
         });
         break;
+      }
 
       default:
         return NextResponse.json(

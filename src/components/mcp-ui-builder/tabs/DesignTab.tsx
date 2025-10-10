@@ -584,44 +584,67 @@ export function DesignTab() {
           )}
 
           {currentResource.contentType === 'remoteDom' && (
-            <div className="h-full p-6 overflow-y-auto">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Remote DOM Configuration</CardTitle>
-                  <CardDescription>
-                    Server-generated UI using Shopify&apos;s Remote DOM framework
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Alert>
-                    <Info className="h-4 w-4" />
-                    <AlertDescription>
-                      Remote DOM support coming soon. Use Raw HTML or External URL for now.
-                    </AlertDescription>
-                  </Alert>
-                </CardContent>
-              </Card>
+            <div className="h-full flex flex-col overflow-hidden">
+              <div className="flex-1 overflow-hidden">
+                <Editor
+                  height="100%"
+                  defaultLanguage="javascript"
+                  value={currentResource.content}
+                  onChange={(value) => value !== undefined && updateResource({ content: value })}
+                  theme="vs-dark"
+                  options={{
+                    minimap: { enabled: true },
+                    fontSize: 14,
+                    lineNumbers: 'on',
+                    scrollBeyondLastLine: false,
+                    wordWrap: 'on',
+                    formatOnPaste: true,
+                    formatOnType: true,
+                  }}
+                />
+              </div>
+
+              {/* Remote DOM Info Panel */}
+              <div className="border-t p-4 bg-purple-50/50 dark:bg-purple-950/20 max-h-48 overflow-y-auto">
+                <div className="flex items-start gap-2 mb-2">
+                  <Info className="h-4 w-4 text-purple-600 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium text-purple-900 dark:text-purple-100">
+                      Remote DOM Script ({currentResource.remoteDomConfig?.framework || 'react'})
+                    </h4>
+                    <p className="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                      {currentResource.remoteDomConfig?.framework === 'react'
+                        ? 'Write React components using @remote-dom/core/client. Use h() to create elements.'
+                        : 'Write Web Components using customElements API. Define custom elements and register them.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Quick reference */}
+                <div className="mt-3 p-2 bg-purple-100/50 dark:bg-purple-900/20 rounded text-xs font-mono">
+                  {currentResource.remoteDomConfig?.framework === 'react' ? (
+                    <div>
+                      <div className="text-purple-800 dark:text-purple-200">// React Remote DOM Example:</div>
+                      <div className="text-purple-600 dark:text-purple-400">import &#123; h &#125; from '@remote-dom/core/client';</div>
+                      <div className="text-purple-600 dark:text-purple-400">const button = h('button', &#123; onClick: () =&gt; &#123;...&#125; &#125;, 'Click');</div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="text-purple-800 dark:text-purple-200">// Web Components Example:</div>
+                      <div className="text-purple-600 dark:text-purple-400">class MyElement extends HTMLElement &#123; ... &#125;</div>
+                      <div className="text-purple-600 dark:text-purple-400">customElements.define('my-element', MyElement);</div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>
 
         {/* Right: Preview */}
         <div className="flex-1 overflow-hidden min-w-0">
-          {(currentResource.contentType === 'rawHtml' || currentResource.contentType === 'externalUrl') && (
+          {(currentResource.contentType === 'rawHtml' || currentResource.contentType === 'externalUrl' || currentResource.contentType === 'remoteDom') && (
             <PreviewPanel />
-          )}
-
-          {currentResource.contentType === 'remoteDom' && (
-            <div className="h-full flex items-center justify-center p-6 bg-muted/30">
-              <Alert className="max-w-md">
-                <Info className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Preview not available for Remote DOM</strong>
-                  <br />
-                  Test your Remote DOM resource in the chat after exporting.
-                </AlertDescription>
-              </Alert>
-            </div>
           )}
         </div>
       </div>
