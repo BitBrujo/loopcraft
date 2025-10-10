@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { ArrowRight, Sparkles, Info, Copy } from 'lucide-react';
+import { ArrowRight, Sparkles, Info, Copy, Check, X } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { Button } from '@/components/ui/button';
 import { PreviewPanel } from '../PreviewPanel';
@@ -17,9 +17,19 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Editor } from '@monaco-editor/react';
 import { uiTemplates } from '@/lib/ui-templates';
-import { ActionSnippets } from '../ActionSnippets';
+import { actionSnippets, categoryMetadata, getSnippetsByCategory } from '@/lib/action-snippets';
+import type { ActionSnippet } from '@/lib/action-snippets';
 import type { editor as MonacoEditor } from 'monaco-editor';
 
 // HTML template library - mapped from ui-templates.ts with enhanced Tailwind CSS
@@ -141,7 +151,11 @@ export function DesignTab() {
     currentResource,
     updateResource,
   } = useUIBuilderStore();
-  const [expandedTemplateId, setExpandedTemplateId] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedActionId, setSelectedActionId] = useState<string>('');
+  const [selectedAction, setSelectedAction] = useState<ActionSnippet | null>(null);
+  const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
 
   // Auto-detect template placeholders when HTML content changes
@@ -166,13 +180,37 @@ export function DesignTab() {
   const canProceed = currentResource.content.trim().length > 0;
   const agentSlots = currentResource.templatePlaceholders?.length || 0;
 
-  const handleTemplateSelect = (template: typeof HTML_TEMPLATES[0]) => {
-    updateResource({ content: template.html });
-    setExpandedTemplateId(null);
+  // Template selection handler
+  const handleTemplateSelect = (templateId: string) => {
+    const template = HTML_TEMPLATES.find(t => t.id === templateId);
+    if (template) {
+      updateResource({ content: template.html });
+      setSelectedTemplateId(''); // Clear selection after loading
+    }
   };
 
-  const toggleExpand = (id: string) => {
-    setExpandedTemplateId(expandedTemplateId === id ? null : id);
+  // Action selection handlers
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setSelectedActionId('');
+    setSelectedAction(null);
+  };
+
+  const handleActionSelect = (actionId: string) => {
+    setSelectedActionId(actionId);
+    const action = actionSnippets.find(s => s.id === actionId);
+    setSelectedAction(action || null);
+  };
+
+  const handleCopySnippet = async (code: string, id: string) => {
+    await navigator.clipboard.writeText(code);
+    setCopiedSnippet(id);
+    setTimeout(() => setCopiedSnippet(null), 2000);
+  };
+
+  const clearActionSelection = () => {
+    setSelectedActionId('');
+    setSelectedAction(null);
   };
 
   const handleInitialDataChange = (value: string) => {
@@ -222,7 +260,7 @@ export function DesignTab() {
     }
   };
 
-  // Group templates by category
+  // Group templates by category for dropdown
   const templatesByCategory = HTML_TEMPLATES.reduce((acc, template) => {
     const category = template.category;
     if (!acc[category]) {
@@ -232,97 +270,171 @@ export function DesignTab() {
     return acc;
   }, {} as Record<string, typeof HTML_TEMPLATES>);
 
+  // Get action categories
+  const actionCategories = Object.keys(categoryMetadata) as Array<keyof typeof categoryMetadata>;
+
+  // Get snippets for selected category
+  const categorySnippets = selectedCategory ? getSnippetsByCategory(selectedCategory as ActionSnippet['category']) : [];
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* 3-Column Layout */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left: Templates & Actions Column - Only for rawHtml */}
         {currentResource.contentType === 'rawHtml' && (
-          <div className="w-64 border-r overflow-y-auto p-3 bg-muted/10 flex flex-col gap-4">
-            {/* Templates Section */}
-            <div>
-              <h3 className="font-semibold mb-3 text-sm uppercase tracking-wide">Templates</h3>
-
-              {Object.entries(templatesByCategory).map(([category, templates]) => (
-              <div key={category} className="mb-4">
-                <h4 className="text-xs font-medium uppercase text-muted-foreground mb-2 px-1">
-                  {category}
-                </h4>
-                <div className="space-y-1">
-                  {templates.map((template) => {
-                    const isExpanded = expandedTemplateId === template.id;
-                    return (
-                      <Card
-                        key={template.id}
-                        className={`transition-all ${
-                          isExpanded ? 'border-primary' : 'cursor-pointer hover:border-primary/50'
-                        }`}
-                      >
-                        <div
-                          onClick={() => toggleExpand(template.id)}
-                          className="p-3 cursor-pointer"
-                        >
-                          <div className="flex items-start justify-between mb-1">
-                            <h5 className="text-sm font-medium leading-tight">{template.name}</h5>
-                            {template.placeholders && template.placeholders.length > 0 && (
-                              <Badge variant="secondary" className="text-xs ml-1 h-5">
-                                <Sparkles className="h-3 w-3" />
-                                {template.placeholders.length}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {template.description}
-                          </p>
-                        </div>
-
-                        {isExpanded && (
-                          <div className="px-3 pb-3 space-y-2 border-t pt-2">
-                            {template.placeholders && template.placeholders.length > 0 && (
-                              <div className="flex flex-wrap gap-1">
-                                {template.placeholders.slice(0, 3).map((p) => (
-                                  <Badge key={p} variant="outline" className="text-xs">
-                                    {`{{${p}}}`}
-                                  </Badge>
-                                ))}
-                                {template.placeholders.length > 3 && (
-                                  <Badge variant="outline" className="text-xs">
-                                    +{template.placeholders.length - 3}
-                                  </Badge>
-                                )}
-                              </div>
-                            )}
-
-                            <Button
-                              size="sm"
-                              className="w-full mt-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleTemplateSelect(template);
-                              }}
-                            >
-                              <Copy className="h-3 w-3 mr-1" />
-                              Use Template
-                            </Button>
-                          </div>
-                        )}
-                      </Card>
-                    );
-                  })}
-                </div>
+          <div className="w-72 border-r p-4 flex flex-col gap-4 bg-muted/10">
+            {/* Dropdowns Section */}
+            <div className="space-y-3 flex-shrink-0">
+              {/* Templates Dropdown */}
+              <div>
+                <Label className="text-sm font-semibold mb-2 block">Templates</Label>
+                <Select value={selectedTemplateId} onValueChange={handleTemplateSelect}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a template..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(templatesByCategory).map(([category, templates]) => (
+                      <SelectGroup key={category}>
+                        <SelectLabel>{category}</SelectLabel>
+                        {templates.map((template) => (
+                          <SelectItem key={template.id} value={template.id}>
+                            <div className="flex items-center gap-2">
+                              <span>{template.name}</span>
+                              {template.placeholders && template.placeholders.length > 0 && (
+                                <Badge variant="secondary" className="text-xs h-4">
+                                  <Sparkles className="h-2 w-2 mr-1" />
+                                  {template.placeholders.length}
+                                </Badge>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            ))}
+
+              {/* Action Category Dropdown */}
+              <div>
+                <Label className="text-sm font-semibold mb-2 block">Actions</Label>
+                <Select value={selectedCategory} onValueChange={handleCategorySelect}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select action type..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {actionCategories.map((category) => {
+                      const meta = categoryMetadata[category];
+                      return (
+                        <SelectItem key={category} value={category}>
+                          <div className="flex items-center gap-2">
+                            <span>{meta.icon}</span>
+                            <span>{meta.label}</span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Action Snippet Dropdown - Only show when category selected */}
+              {selectedCategory && (
+                <div>
+                  <Select value={selectedActionId} onValueChange={handleActionSelect}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select action snippet..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categorySnippets.map((snippet) => (
+                        <SelectItem key={snippet.id} value={snippet.id}>
+                          {snippet.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
-            {/* Action Snippets Section */}
-            <div className="border-t pt-4">
-              <ActionSnippets onInsert={handleInsertCode} />
-            </div>
+            {/* Expandable Action Card - Only show when action selected */}
+            {selectedAction && (
+              <Card className="flex-shrink-0">
+                <CardHeader className="p-3 pb-2">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <CardTitle className="text-sm">{selectedAction.name}</CardTitle>
+                        <Badge variant="outline" className="text-xs">
+                          {selectedAction.category}
+                        </Badge>
+                      </div>
+                      <CardDescription className="text-xs">
+                        {selectedAction.description}
+                      </CardDescription>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={clearActionSelection}
+                      className="h-6 w-6 p-0"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-3 pt-0 space-y-2">
+                  {/* Code Preview - Collapsible */}
+                  <Collapsible>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="w-full justify-between text-xs">
+                        <span>View Code</span>
+                        <Info className="h-3 w-3" />
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <pre className="text-xs bg-muted p-2 rounded overflow-x-auto max-h-32 mt-2">
+                        <code>{selectedAction.code}</code>
+                      </pre>
+                    </CollapsibleContent>
+                  </Collapsible>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleCopySnippet(selectedAction.code, selectedAction.id)}
+                      className="flex-1 text-xs h-7"
+                    >
+                      {copiedSnippet === selectedAction.id ? (
+                        <>
+                          <Check className="h-3 w-3 mr-1" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3 w-3 mr-1" />
+                          Copy
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleInsertCode(selectedAction.code)}
+                      className="flex-1 text-xs h-7"
+                    >
+                      Insert at Cursor
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
 
         {/* Middle: Editor */}
-        <div className="flex-1 border-r overflow-hidden flex flex-col">
+        <div className="flex-1 border-r overflow-hidden flex flex-col min-w-0">
           {currentResource.contentType === 'rawHtml' && (
             <>
               <div className="flex-1 overflow-hidden">
@@ -446,7 +558,7 @@ export function DesignTab() {
         </div>
 
         {/* Right: Preview */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden min-w-0">
           {(currentResource.contentType === 'rawHtml' || currentResource.contentType === 'externalUrl') && (
             <PreviewPanel />
           )}
