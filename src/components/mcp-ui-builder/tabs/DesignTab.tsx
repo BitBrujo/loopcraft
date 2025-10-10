@@ -550,7 +550,7 @@ export function DesignTab() {
   const displayMimeType = getDisplayMimeType(currentResource.contentType);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* 2-Column Layout */}
       <div className="flex-1 flex min-h-0">
 

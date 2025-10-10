@@ -180,7 +180,7 @@ export function ConfigureTab() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="p-6 space-y-6 max-w-5xl mx-auto">
+      <div className="p-6 space-y-6 max-w-5xl mx-auto pb-20">
 
         {/* Section 1: Basic Configuration */}
         <Card className="border-primary/30">
