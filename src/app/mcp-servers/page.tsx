@@ -247,17 +247,11 @@ export default function MCPServersPage() {
       <div className="flex-1 overflow-y-auto">
         <div className="container max-w-4xl mx-auto py-8 px-4">
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">MCP Server Management</h1>
-                <p className="text-sm text-muted-foreground">
-                  Configure and manage your Model Context Protocol servers
-                </p>
-              </div>
-              <Button onClick={openAddServerDialog}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Server
-              </Button>
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">MCP Server Management</h1>
+              <p className="text-sm text-muted-foreground">
+                Configure and manage your Model Context Protocol servers
+              </p>
             </div>
 
             {mcpServers.length === 0 ? (
