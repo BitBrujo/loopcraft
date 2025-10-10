@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Copy, Download, Check, Info, FileCode, Server, Rocket } from 'lucide-react';
 import { Editor } from '@monaco-editor/react';
-import { generateServerCode, generateTypeScriptCode } from '@/lib/code-generation';
+import { generateServerCode, generateTypeScriptCode, generateFastMCPCode } from '@/lib/code-generation';
 import type { ExportFormat, ExportLanguage } from '@/types/ui-builder';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +37,9 @@ export function ExportTab() {
     if (exportFormat === 'integration') {
       // Integration snippet - just the createUIResource call
       return generateTypeScriptCode(currentResource);
+    } else if (exportFormat === 'fastmcp') {
+      // FastMCP server - using fastmcp framework
+      return generateFastMCPCode(currentResource);
     } else {
       // Standalone server - complete runnable server
       return generateServerCode(currentResource);
@@ -54,6 +57,8 @@ export function ExportTab() {
   const handleDownload = () => {
     const filename = exportFormat === 'integration'
       ? `ui-resource.${language === 'typescript' ? 'ts' : 'js'}`
+      : exportFormat === 'fastmcp'
+      ? `fastmcp-server.${language === 'typescript' ? 'ts' : 'js'}`
       : `mcp-server.${language === 'typescript' ? 'ts' : 'js'}`;
 
     const blob = new Blob([code], { type: 'text/plain' });
@@ -192,6 +197,21 @@ export function ExportTab() {
                   </p>
                 </div>
               </div>
+
+              <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-accent/50 cursor-pointer border-primary/50 bg-primary/5">
+                <RadioGroupItem value="fastmcp" id="fastmcp" className="mt-1" />
+                <div className="flex-1">
+                  <Label htmlFor="fastmcp" className="font-semibold cursor-pointer flex items-center gap-2">
+                    <Server className="h-4 w-4" />
+                    FastMCP Server
+                    <Badge variant="default">Recommended</Badge>
+                  </Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Modern MCP framework with cleaner code, built-in error handling, and better developer experience.
+                    {hasServerSelected && ' Perfect for production deployments.'}
+                  </p>
+                </div>
+              </div>
             </RadioGroup>
           </div>
 
@@ -227,6 +247,8 @@ export function ExportTab() {
               ? hasServerSelected
                 ? `Add this code to ${currentResource.selectedServerName} server`
                 : 'Add this code to your MCP server'
+              : exportFormat === 'fastmcp'
+              ? 'FastMCP server - cleaner code with built-in features'
               : 'Save this as a .js/.ts file and run with Node.js'}
           </CardDescription>
         </CardHeader>
@@ -302,6 +324,28 @@ export function ExportTab() {
                   The UI will render automatically when the AI calls your tool.
                   {currentResource.templatePlaceholders && currentResource.templatePlaceholders.length > 0 && (
                     <> Agent placeholders like <code className="bg-muted px-1 rounded">{'{{user.id}}'}</code> will be filled with contextual data.</>
+                  )}
+                </AlertDescription>
+              </Alert>
+            </div>
+          ) : exportFormat === 'fastmcp' ? (
+            <div className="space-y-3 text-sm">
+              <h4 className="font-semibold">FastMCP Server Steps:</h4>
+              <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+                <li>Download the generated server file</li>
+                <li>Save it as <code className="bg-muted px-1 rounded">server.js</code> (or .ts)</li>
+                <li>Install dependencies: <code className="bg-muted px-1 rounded">npm install fastmcp zod @mcp-ui/server</code></li>
+                <li>Test locally: <code className="bg-muted px-1 rounded">node server.js</code></li>
+                <li>Add to your app via Settings &gt; MCP Servers</li>
+                <li>Configure as stdio server with command: <code className="bg-muted px-1 rounded">{`["node", "/path/to/server.js"]`}</code></li>
+                <li>Enable the server and test in chat</li>
+              </ol>
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>FastMCP Benefits:</strong> Cleaner code (~60% less boilerplate), built-in error handling, type-safe parameters with Zod, and better developer experience.{' '}
+                  {hasServerSelected && (
+                    <>Once tested, you can use the Integration Snippet format to add to {currentResource.selectedServerName}.</>
                   )}
                 </AlertDescription>
               </Alert>

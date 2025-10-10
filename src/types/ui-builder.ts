@@ -105,7 +105,7 @@ export interface ValidationError {
 export type TabId = 'configure' | 'design' | 'export';
 
 /** Export format options */
-export type ExportFormat = 'integration' | 'standalone';
+export type ExportFormat = 'integration' | 'standalone' | 'fastmcp';
 
 /** Language options for code generation */
 export type ExportLanguage = 'typescript' | 'javascript';

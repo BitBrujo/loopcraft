@@ -225,3 +225,145 @@ main().catch((error) => {
 
   return code;
 }
+
+export function generateFastMCPCode(resource: UIResource): string {
+  const serverName = resource.uri.split('/')[2] || 'my-ui-server';
+  const agentPlaceholders = resource.templatePlaceholders || [];
+
+  // Generate content configuration based on type
+  let contentConfig: string;
+  let contentVariable = 'content';
+
+  if (resource.contentType === 'rawHtml') {
+    contentVariable = 'htmlContent';
+    contentConfig = `let ${contentVariable} = \`${resource.content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;`;
+  } else if (resource.contentType === 'externalUrl') {
+    contentConfig = `const ${contentVariable} = { type: 'externalUrl', iframeUrl: '${resource.content}' };`;
+  } else {
+    // remoteDom
+    const framework = resource.remoteDomConfig?.framework || 'react';
+    contentConfig = `const ${contentVariable} = {
+      type: 'remoteDom',
+      script: \`${resource.content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`,
+      framework: '${framework}'
+    };`;
+  }
+
+  let code = `#!/usr/bin/env node
+import { FastMCP } from "fastmcp";
+import { z } from "zod";
+import { createUIResource } from '@mcp-ui/server';
+
+// MCP Server for ${resource.uri}
+// Built with FastMCP framework for cleaner code and built-in features
+
+const server = new FastMCP({
+  name: '${serverName}',
+  version: '1.0.0',
+});
+`;
+
+  // Add helper function for placeholder replacement if needed (HTML only)
+  if (agentPlaceholders.length > 0 && resource.contentType === 'rawHtml') {
+    code += `
+// Helper function to replace agent placeholders in HTML
+function fillAgentPlaceholders(html, agentContext) {
+  let result = html;
+`;
+    agentPlaceholders.forEach(placeholder => {
+      const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      code += `  if (agentContext['${placeholder}'] !== undefined) {
+    result = result.replace(/\\{\\{${escapedPlaceholder}\\}\\}/g, agentContext['${placeholder}']);
+  }
+`;
+    });
+    code += `  return result;
+}
+`;
+  }
+
+  // Build Zod schema for parameters
+  let zodSchema = 'z.object({';
+  if (agentPlaceholders.length > 0) {
+    zodSchema += '\n';
+    agentPlaceholders.forEach((placeholder, index) => {
+      zodSchema += `    '${placeholder}': z.string().optional()`;
+      if (index < agentPlaceholders.length - 1) zodSchema += ',';
+      zodSchema += '\n';
+    });
+    zodSchema += '  })';
+  } else {
+    zodSchema += '})';
+  }
+
+  // Add tool using FastMCP's addTool method
+  code += `
+// Add UI tool
+server.addTool({
+  name: 'get_ui',
+  description: '${resource.metadata?.description || 'Get the UI resource'}',
+  parameters: ${zodSchema},
+  execute: async (args) => {
+    // Prepare content
+    ${contentConfig}
+`;
+
+  // Add placeholder filling for HTML
+  if (agentPlaceholders.length > 0 && resource.contentType === 'rawHtml') {
+    code += `
+    // Fill agent placeholders
+    htmlContent = fillAgentPlaceholders(htmlContent, args || {});
+`;
+  }
+
+  // Build createUIResource call
+  const hasMetadata = resource.metadata?.title || resource.metadata?.description;
+  const hasUiMetadata = resource.uiMetadata?.['preferred-frame-size'] ||
+                        resource.uiMetadata?.['initial-render-data'];
+
+  code += `
+    const uiResource = createUIResource({
+      uri: '${resource.uri}',
+      content: ${resource.contentType === 'rawHtml' ? `{ type: 'rawHtml', htmlString: ${contentVariable} }` : contentVariable},
+      encoding: 'text'`;
+
+  if (hasMetadata) {
+    code += `,
+      metadata: {`;
+    if (resource.metadata?.title) code += `\n        title: '${resource.metadata.title}',`;
+    if (resource.metadata?.description) code += `\n        description: '${resource.metadata.description}'`;
+    code += `\n      }`;
+  }
+
+  if (hasUiMetadata) {
+    code += `,
+      uiMetadata: {`;
+    if (resource.uiMetadata?.['preferred-frame-size']) {
+      code += `\n        'preferred-frame-size': ['${resource.uiMetadata['preferred-frame-size'][0]}', '${resource.uiMetadata['preferred-frame-size'][1]}'],`;
+    }
+    if (resource.uiMetadata?.['initial-render-data']) {
+      code += `\n        'initial-render-data': ${JSON.stringify(resource.uiMetadata['initial-render-data'])}`;
+    }
+    code += `\n      }`;
+  }
+
+  code += `
+    });
+
+    return {
+      content: [{
+        type: 'text',
+        text: '__MCP_UI_RESOURCE__:' + JSON.stringify(uiResource),
+      }],
+    };
+  },
+});
+
+// Start server with stdio transport
+server.start({
+  transportType: "stdio",
+});
+`;
+
+  return code;
+}
