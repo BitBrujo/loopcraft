@@ -126,9 +126,9 @@ export function BuilderLayout() {
                     w-full text-left px-4 py-3 rounded-lg transition-all
                     ${
                         isActive
-                            ? "bg-primary text-primary-foreground shadow-sm"
+                            ? "border-2 border-primary text-primary bg-transparent hover:bg-primary/5"
                             : isCompleted
-                              ? "bg-green-500/10 text-foreground hover:bg-green-500/20"
+                              ? "border-2 border-green-500 text-green-600 bg-transparent hover:bg-green-500/5"
                               : "hover:bg-muted text-muted-foreground hover:text-foreground"
                     }
                   `}
@@ -139,9 +139,9 @@ export function BuilderLayout() {
                       flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 mt-0.5
                       ${
                           isActive
-                              ? "bg-primary-foreground text-primary"
+                              ? "border-2 border-primary text-primary bg-transparent"
                               : isCompleted
-                                ? "bg-green-500 text-white"
+                                ? "border-2 border-green-500 text-green-600 bg-transparent"
                                 : "bg-muted text-muted-foreground"
                       }
                     `}
