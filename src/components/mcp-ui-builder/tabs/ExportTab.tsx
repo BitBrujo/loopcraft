@@ -92,8 +92,8 @@ export function ExportTab() {
   };
 
   return (
-    <div className="p-6 overflow-y-auto h-full">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="flex-1 overflow-y-auto">
+      <div className="p-6 max-w-6xl mx-auto space-y-6">
       {/* Server Integration Status */}
       {hasServerSelected && (
         <Alert>
