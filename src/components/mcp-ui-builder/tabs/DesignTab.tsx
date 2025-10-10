@@ -282,7 +282,7 @@ export function DesignTab() {
       <div className="flex-1 flex overflow-hidden">
         {/* Left: Templates & Actions Column - Only for rawHtml */}
         {currentResource.contentType === 'rawHtml' && (
-          <div className="w-72 border-r p-4 flex flex-col gap-4 bg-muted/10">
+          <div className="w-72 border-r p-4 flex flex-col gap-4 bg-muted/10 overflow-y-auto">
             {/* Dropdowns Section */}
             <div className="space-y-3 flex-shrink-0">
               {/* Templates Dropdown */}

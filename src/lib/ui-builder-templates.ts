@@ -328,6 +328,12 @@ export const builtInTemplates: Template[] = [
     <button class="prompt-btn" onclick="askAI('What are the available action types in MCP-UI?')">
       Available action types
     </button>
+
+    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+      <input type="text" id="customQuestion" placeholder="Type your own question..."
+             style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; font-size: 15px; font-family: system-ui, sans-serif;">
+      <button class="prompt-btn" onclick="askCustomQuestion()">Ask Custom Question</button>
+    </div>
   </div>
   <script>
     function askAI(prompt) {
@@ -335,6 +341,17 @@ export const builtInTemplates: Template[] = [
         type: 'prompt',
         payload: { prompt: prompt }
       }, '*');
+    }
+
+    function askCustomQuestion() {
+      const question = document.getElementById('customQuestion').value;
+      if (question.trim()) {
+        window.parent.postMessage({
+          type: 'prompt',
+          payload: { prompt: question }
+        }, '*');
+        document.getElementById('customQuestion').value = ''; // Clear input after sending
+      }
     }
   </script>
 </body>
