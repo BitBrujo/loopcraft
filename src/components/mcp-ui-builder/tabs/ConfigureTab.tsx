@@ -8,9 +8,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { Info, Check, AlertCircle, Server, Sparkles, ChevronDown, Component, Puzzle } from 'lucide-react';
+import { Info, Check, AlertCircle, Server, Sparkles, ChevronDown, Component, Puzzle, Settings } from 'lucide-react';
 import type { ContentType } from '@/types/ui-builder';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Tooltip,
@@ -63,6 +64,7 @@ export function ConfigureTab() {
   const [isLoadingServers, setIsLoadingServers] = useState(true);
   const [sizePreset, setSizePreset] = useState<SizePreset>('medium');
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [showRendererOptions, setShowRendererOptions] = useState(false);
 
   // Fetch MCP servers on mount
   useEffect(() => {
@@ -185,7 +187,7 @@ export function ConfigureTab() {
         {/* Section 1: Basic Configuration */}
         <Card className="border-primary/30">
           <CardHeader>
-            <CardTitle>Basic Configuration</CardTitle>
+            <CardTitle className="text-lg font-semibold">Basic Configuration</CardTitle>
             <CardDescription>Core resource settings</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -305,13 +307,15 @@ export function ConfigureTab() {
               {/* Advanced Content Options - Nested under MCP Server Integration */}
               <Collapsible open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions} className="mt-4">
                 <div className="rounded-lg border bg-muted/30 p-4">
-                  <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
-                    <div className="flex items-center gap-2">
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2">
+                      <span className="flex items-center gap-2 font-semibold">
+                        Advanced Content Options
+                      </span>
                       <ChevronDown className={`h-4 w-4 transition-transform ${showAdvancedOptions ? '' : '-rotate-90'}`} />
-                      <h4 className="text-sm font-medium">Advanced Content Options</h4>
-                    </div>
+                    </Button>
                   </CollapsibleTrigger>
-                  <p className="text-xs text-muted-foreground mt-1 mb-3">Optional advanced configuration</p>
+                  <p className="text-xs text-muted-foreground mb-3">Optional advanced configuration</p>
                   <CollapsibleContent>
                     <div className="space-y-4 pt-2">
                       <TooltipProvider>
@@ -470,7 +474,7 @@ export function ConfigureTab() {
         {/* Section 2: UI Metadata */}
         <Card>
           <CardHeader>
-            <CardTitle>UI Metadata</CardTitle>
+            <CardTitle className="text-lg font-semibold">UI Metadata</CardTitle>
             <CardDescription>Display and rendering configuration</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -528,14 +532,22 @@ export function ConfigureTab() {
               </div>
             )}
 
-            <Separator className="my-4" />
+            <Separator className="my-6" />
 
-            {/* Renderer Options Section */}
-            <div className="space-y-4">
-              <div>
-                <h4 className="text-sm font-medium mb-1">Renderer Options</h4>
-                <p className="text-xs text-muted-foreground">Configure iframe rendering behavior</p>
-              </div>
+            {/* Renderer Options Section - Collapsible */}
+            <Collapsible open={showRendererOptions} onOpenChange={setShowRendererOptions}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-4">
+                  <span className="flex items-center gap-2 font-semibold">
+                    <Settings className="h-4 w-4" />
+                    Renderer Options
+                  </span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${showRendererOptions ? '' : '-rotate-90'}`} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="space-y-4">
+                  <p className="text-xs text-muted-foreground">Configure iframe rendering behavior</p>
 
               {/* Auto-Resize Iframe */}
               {currentResource.contentType !== 'remoteDom' && (
@@ -746,7 +758,9 @@ export function ConfigureTab() {
                   Visual customization for the iframe container
                 </p>
               </div>
-            </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </CardContent>
         </Card>
 

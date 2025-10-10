@@ -120,7 +120,7 @@ export function ExportTab() {
       {hasServerSelected && (
         <Card className="border-primary/50 bg-primary/5">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
               <Rocket className="h-5 w-5" />
               Quick Deploy
             </CardTitle>
@@ -155,7 +155,7 @@ export function ExportTab() {
       {/* Export Options */}
       <Card>
         <CardHeader>
-          <CardTitle>Export Options</CardTitle>
+          <CardTitle className="text-lg font-semibold">Export Options</CardTitle>
           <CardDescription>
             {hasServerSelected
               ? 'Choose how you want to integrate with your server'
@@ -168,12 +168,13 @@ export function ExportTab() {
           <div className="space-y-3">
             <Label>Export Format</Label>
             <RadioGroup value={exportFormat} onValueChange={(v) => setExportFormat(v as ExportFormat)}>
-              <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-accent/50 cursor-pointer">
+              <div className={`flex items-start space-x-3 p-4 border rounded-lg hover:bg-accent/50 cursor-pointer ${hasServerSelected ? 'border-primary/50 bg-primary/5' : ''}`}>
                 <RadioGroupItem value="integration" id="integration" className="mt-1" />
                 <div className="flex-1">
                   <Label htmlFor="integration" className="font-semibold cursor-pointer flex items-center gap-2">
                     <FileCode className="h-4 w-4" />
                     Integration Snippet
+                    {hasServerSelected && <Badge variant="default">Best for {currentResource.selectedServerName}</Badge>}
                   </Label>
                   <p className="text-sm text-muted-foreground mt-1">
                     {hasServerSelected
@@ -199,13 +200,13 @@ export function ExportTab() {
                 </div>
               </div>
 
-              <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-accent/50 cursor-pointer border-primary/50 bg-primary/5">
+              <div className={`flex items-start space-x-3 p-4 border rounded-lg hover:bg-accent/50 cursor-pointer ${!hasServerSelected ? 'border-primary/50 bg-primary/5' : ''}`}>
                 <RadioGroupItem value="fastmcp" id="fastmcp" className="mt-1" />
                 <div className="flex-1">
                   <Label htmlFor="fastmcp" className="font-semibold cursor-pointer flex items-center gap-2">
                     <Server className="h-4 w-4" />
                     FastMCP Server
-                    <Badge variant="default">Recommended</Badge>
+                    {!hasServerSelected && <Badge variant="default">Recommended</Badge>}
                   </Label>
                   <p className="text-sm text-muted-foreground mt-1">
                     Modern MCP framework with cleaner code, built-in error handling, and better developer experience.
@@ -246,7 +247,7 @@ export function ExportTab() {
             <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
               <div className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5" />
-                <CardTitle>Quick Start Guide</CardTitle>
+                <CardTitle className="text-lg font-semibold">Quick Start Guide</CardTitle>
               </div>
               <ChevronDown className={`h-4 w-4 transition-transform ${showQuickStart ? '' : '-rotate-90'}`} />
             </CollapsibleTrigger>
@@ -368,7 +369,7 @@ export function ExportTab() {
       {/* Generated Code */}
       <Card>
         <CardHeader>
-          <CardTitle>Generated Code</CardTitle>
+          <CardTitle className="text-lg font-semibold">Generated Code</CardTitle>
           <CardDescription>
             {exportFormat === 'integration'
               ? hasServerSelected

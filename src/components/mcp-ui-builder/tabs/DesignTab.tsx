@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { ArrowRight, Sparkles, Info, Copy, Check, X, Eye, Wrench, MessageSquare, Link as LinkIcon, Target, Bell, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowRight, Sparkles, Info, Copy, Check, X, Eye, Wrench, MessageSquare, Link as LinkIcon, Target, Bell, ChevronDown } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { Button } from '@/components/ui/button';
 import { PreviewPanel } from '../PreviewPanel';
@@ -706,181 +706,17 @@ export function DesignTab() {
             </Card>
           )}
 
-          {/* Resource Metadata Card - MOVED FROM middle column */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Resource Metadata</CardTitle>
-              <CardDescription>Configure resource identification and visibility</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Title */}
-              <div className="space-y-2">
-                <Label htmlFor="res-title">Title</Label>
-                <Input
-                  id="res-title"
-                  value={currentResource.metadata?.title || ''}
-                  onChange={(e) => updateResource({
-                    metadata: {
-                      ...currentResource.metadata,
-                      title: e.target.value
-                    }
-                  })}
-                  placeholder="Dashboard UI"
-                />
-              </div>
-
-              {/* Description */}
-              <div className="space-y-2">
-                <Label htmlFor="res-description">Description</Label>
-                <Textarea
-                  id="res-description"
-                  value={currentResource.metadata?.description || ''}
-                  onChange={(e) => updateResource({
-                    metadata: {
-                      ...currentResource.metadata,
-                      description: e.target.value
-                    }
-                  })}
-                  placeholder="Interactive dashboard for monitoring key metrics"
-                  rows={3}
-                />
-              </div>
-
-              <Separator className="my-4" />
-
-              {/* MIME Type - Read-only Badge */}
-              <div className="space-y-2">
-                <Label>MIME Type</Label>
-                <Badge variant="secondary" className="font-mono">
-                  {displayMimeType}
-                </Badge>
-                <p className="text-xs text-muted-foreground">
-                  Auto-determined from content type (read-only)
-                </p>
-              </div>
-
-              {/* Audience Targeting */}
-              <div className="space-y-2">
-                <Label>Audience</Label>
-                <RadioGroup
-                  value={
-                    !currentResource.audience ? 'both' :
-                    currentResource.audience.includes('user') && !currentResource.audience.includes('assistant') ? 'user' :
-                    currentResource.audience.includes('assistant') && !currentResource.audience.includes('user') ? 'assistant' :
-                    'both'
-                  }
-                  onValueChange={(value) => {
-                    let audience: ('user' | 'assistant')[] | undefined;
-                    if (value === 'user') {
-                      audience = ['user'];
-                    } else if (value === 'assistant') {
-                      audience = ['assistant'];
-                    } else {
-                      audience = undefined; // both = no restriction
-                    }
-                    updateResource({ audience });
-                  }}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="both" id="audience-both" />
-                    <Label htmlFor="audience-both" className="font-normal cursor-pointer">
-                      Both (Default)
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="user" id="audience-user" />
-                    <Label htmlFor="audience-user" className="font-normal cursor-pointer">
-                      User Only
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="assistant" id="audience-assistant" />
-                    <Label htmlFor="audience-assistant" className="font-normal cursor-pointer">
-                      Assistant Only
-                    </Label>
-                  </div>
-                </RadioGroup>
-                <p className="text-xs text-muted-foreground">
-                  Control who can see this UI resource. Assistant-only resources are hidden from end-users but available to AI agents.
-                </p>
-              </div>
-
-              {/* Advanced Options - Collapsible Priority Field */}
-              <Collapsible open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="w-full justify-start px-0">
-                    {showAdvancedOptions ? (
-                      <ChevronDown className="h-4 w-4 mr-2" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 mr-2" />
-                    )}
-                    <span className="font-semibold">Advanced Options</span>
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-4 mt-3">
-                  {/* Priority Field */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="priority">Priority</Label>
-                      <span className="text-xs text-muted-foreground">
-                        {currentResource.priority !== undefined ? currentResource.priority.toFixed(1) : '0.5'}
-                      </span>
-                    </div>
-
-                    {/* Slider */}
-                    <Slider
-                      id="priority"
-                      value={[currentResource.priority !== undefined ? currentResource.priority : 0.5]}
-                      onValueChange={(values) => {
-                        const value = Math.max(0, Math.min(1, values[0]));
-                        updateResource({ priority: value });
-                      }}
-                      min={0}
-                      max={1}
-                      step={0.1}
-                      className="w-full"
-                    />
-
-                    {/* Number Input */}
-                    <Input
-                      type="number"
-                      min="0"
-                      max="1"
-                      step="0.1"
-                      value={currentResource.priority !== undefined ? currentResource.priority : 0.5}
-                      onChange={(e) => {
-                        const value = parseFloat(e.target.value);
-                        if (!isNaN(value)) {
-                          const clamped = Math.max(0, Math.min(1, value));
-                          updateResource({ priority: clamped });
-                        }
-                      }}
-                      placeholder="0.5"
-                    />
-
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>0.0 = Lowest</span>
-                      <span>0.5 = Medium</span>
-                      <span>1.0 = Highest</span>
-                    </div>
-
-                    <p className="text-xs text-muted-foreground">
-                      Priority affects display order when multiple UI resources are available. May not apply if resource is linked to a single server.
-                    </p>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            </CardContent>
-          </Card>
-
           {/* Initial Render Data - Collapsible */}
           {currentResource.contentType === 'rawHtml' && (
             <div className="flex-shrink-0 space-y-2">
-              <Label className="text-sm font-semibold block">Initial Render Data</Label>
               <Collapsible>
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="w-full justify-center mb-2">
-                    <span className="text-xs text-muted-foreground">Optional</span>
+                  <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2">
+                    <span className="flex items-center gap-2 font-semibold">
+                      Initial Render Data
+                      <Badge variant="secondary" className="text-xs">Optional</Badge>
+                    </span>
+                    <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
@@ -915,14 +751,15 @@ export function DesignTab() {
             <div className="flex-shrink-0">
               <Collapsible>
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="w-full justify-between mb-2">
-                    <span className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2">
+                    <span className="flex items-center gap-2 font-semibold">
                       <Sparkles className="h-4 w-4" />
                       Placeholder Test Data
+                      <Badge variant="secondary" className="text-xs">
+                        {currentResource.templatePlaceholders.length}
+                      </Badge>
                     </span>
-                    <Badge variant="secondary" className="text-xs">
-                      {currentResource.templatePlaceholders.length}
-                    </Badge>
+                    <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
@@ -960,6 +797,167 @@ export function DesignTab() {
 
         {/* Right Column: Code + Optional Preview */}
         <div className="flex-1 overflow-hidden flex flex-col min-w-0">
+
+          {/* Resource Metadata - Collapsible at top */}
+          <Collapsible open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
+            <div className="border-b bg-card">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-full justify-between px-4 py-2 rounded-none hover:bg-accent">
+                  <span className="flex items-center gap-2 font-semibold text-sm">
+                    <Info className="h-4 w-4" />
+                    Resource Metadata
+                  </span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${showAdvancedOptions ? '' : '-rotate-90'}`} />
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent>
+              <div className="border-b p-4 bg-muted/5 space-y-4">
+                {/* Title */}
+                <div className="space-y-2">
+                  <Label htmlFor="res-title">Title</Label>
+                  <Input
+                    id="res-title"
+                    value={currentResource.metadata?.title || ''}
+                    onChange={(e) => updateResource({
+                      metadata: {
+                        ...currentResource.metadata,
+                        title: e.target.value
+                      }
+                    })}
+                    placeholder="Dashboard UI"
+                  />
+                </div>
+
+                {/* Description */}
+                <div className="space-y-2">
+                  <Label htmlFor="res-description">Description</Label>
+                  <Textarea
+                    id="res-description"
+                    value={currentResource.metadata?.description || ''}
+                    onChange={(e) => updateResource({
+                      metadata: {
+                        ...currentResource.metadata,
+                        description: e.target.value
+                      }
+                    })}
+                    placeholder="Interactive dashboard for monitoring key metrics"
+                    rows={3}
+                  />
+                </div>
+
+                <Separator className="my-4" />
+
+                {/* MIME Type - Read-only Badge */}
+                <div className="space-y-2">
+                  <Label>MIME Type</Label>
+                  <Badge variant="secondary" className="font-mono">
+                    {displayMimeType}
+                  </Badge>
+                  <p className="text-xs text-muted-foreground">
+                    Auto-determined from content type (read-only)
+                  </p>
+                </div>
+
+                {/* Audience Targeting */}
+                <div className="space-y-2">
+                  <Label>Audience</Label>
+                  <RadioGroup
+                    value={
+                      !currentResource.audience ? 'both' :
+                      currentResource.audience.includes('user') && !currentResource.audience.includes('assistant') ? 'user' :
+                      currentResource.audience.includes('assistant') && !currentResource.audience.includes('user') ? 'assistant' :
+                      'both'
+                    }
+                    onValueChange={(value) => {
+                      let audience: ('user' | 'assistant')[] | undefined;
+                      if (value === 'user') {
+                        audience = ['user'];
+                      } else if (value === 'assistant') {
+                        audience = ['assistant'];
+                      } else {
+                        audience = undefined; // both = no restriction
+                      }
+                      updateResource({ audience });
+                    }}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="both" id="audience-both" />
+                      <Label htmlFor="audience-both" className="font-normal cursor-pointer">
+                        Both (Default)
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="user" id="audience-user" />
+                      <Label htmlFor="audience-user" className="font-normal cursor-pointer">
+                        User Only
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="assistant" id="audience-assistant" />
+                      <Label htmlFor="audience-assistant" className="font-normal cursor-pointer">
+                        Assistant Only
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                  <p className="text-xs text-muted-foreground">
+                    Control who can see this UI resource. Assistant-only resources are hidden from end-users but available to AI agents.
+                  </p>
+                </div>
+
+                {/* Priority Field */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="priority">Priority</Label>
+                    <span className="text-xs text-muted-foreground">
+                      {currentResource.priority !== undefined ? currentResource.priority.toFixed(1) : '0.5'}
+                    </span>
+                  </div>
+
+                  {/* Slider */}
+                  <Slider
+                    id="priority"
+                    value={[currentResource.priority !== undefined ? currentResource.priority : 0.5]}
+                    onValueChange={(values) => {
+                      const value = Math.max(0, Math.min(1, values[0]));
+                      updateResource({ priority: value });
+                    }}
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    className="w-full"
+                  />
+
+                  {/* Number Input */}
+                  <Input
+                    type="number"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={currentResource.priority !== undefined ? currentResource.priority : 0.5}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value);
+                      if (!isNaN(value)) {
+                        const clamped = Math.max(0, Math.min(1, value));
+                        updateResource({ priority: clamped });
+                      }
+                    }}
+                    placeholder="0.5"
+                  />
+
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>0.0 = Lowest</span>
+                    <span>0.5 = Medium</span>
+                    <span>1.0 = Highest</span>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground">
+                    Priority affects display order when multiple UI resources are available. May not apply if resource is linked to a single server.
+                  </p>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           {/* Top Bar with Preview Toggle */}
           <div className="border-b p-2 flex items-center justify-end gap-2 bg-muted/5">
