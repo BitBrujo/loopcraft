@@ -223,10 +223,7 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content, serverNam
             // Set iframe title if provided
             iframeProps: iframeTitle ? {
               title: iframeTitle,
-              'data-mcp-ui-resource': 'true'
-            } : {
-              'data-mcp-ui-resource': 'true'
-            },
+            } : undefined,
           }}
         />
       </div>
