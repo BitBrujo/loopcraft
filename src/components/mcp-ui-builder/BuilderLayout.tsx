@@ -65,7 +65,7 @@ export function BuilderLayout() {
             {/* Header - Centered */}
             <div className="border-b bg-card px-6 py-4 relative">
                 <div className="text-center">
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
+                    <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                         MCP-UI Builder
                     </h1>
                     <p className="text-sm text-muted-foreground">

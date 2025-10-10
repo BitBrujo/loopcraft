@@ -249,7 +249,7 @@ export default function MCPServersPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold mb-2">MCP Server Management</h1>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">MCP Server Management</h1>
                 <p className="text-sm text-muted-foreground">
                   Configure and manage your Model Context Protocol servers
                 </p>
