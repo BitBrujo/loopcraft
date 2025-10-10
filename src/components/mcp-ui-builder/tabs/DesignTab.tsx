@@ -31,9 +31,23 @@ import { uiTemplates } from '@/lib/ui-templates';
 import { actionSnippets, categoryMetadata, getSnippetsByCategory } from '@/lib/action-snippets';
 import type { ActionSnippet } from '@/lib/action-snippets';
 import type { editor as MonacoEditor } from 'monaco-editor';
+import type { UIResource, ContentType, RemoteDomConfig } from '@/types/ui-builder';
 
-// HTML template library - mapped from ui-templates.ts with enhanced Tailwind CSS
-const HTML_TEMPLATES = [
+// Extended template structure that supports both HTML and Remote DOM
+interface ExtendedTemplate {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  resource: {
+    contentType: ContentType;
+    content: string;
+    remoteDomConfig?: RemoteDomConfig;
+  };
+}
+
+// HTML templates - mapped from ui-templates.ts with enhanced Tailwind CSS
+const HTML_TEMPLATES: ExtendedTemplate[] = [
   // Forms
   ...uiTemplates
     .filter(t => t.category === 'forms')
@@ -42,8 +56,10 @@ const HTML_TEMPLATES = [
       name: t.name,
       category: t.category.charAt(0).toUpperCase() + t.category.slice(1),
       description: t.description,
-      html: wrapWithTailwind(t.htmlContent),
-      placeholders: t.templatePlaceholders || [],
+      resource: {
+        contentType: 'rawHtml' as ContentType,
+        content: wrapWithTailwind(t.htmlContent),
+      },
     })),
   // Dashboards
   ...uiTemplates
@@ -53,8 +69,10 @@ const HTML_TEMPLATES = [
       name: t.name,
       category: t.category.charAt(0).toUpperCase() + t.category.slice(1),
       description: t.description,
-      html: wrapWithTailwind(t.htmlContent),
-      placeholders: t.templatePlaceholders || [],
+      resource: {
+        contentType: 'rawHtml' as ContentType,
+        content: wrapWithTailwind(t.htmlContent),
+      },
     })),
   // Tables
   ...uiTemplates
@@ -64,8 +82,10 @@ const HTML_TEMPLATES = [
       name: t.name,
       category: t.category.charAt(0).toUpperCase() + t.category.slice(1),
       description: t.description,
-      html: wrapWithTailwind(t.htmlContent),
-      placeholders: t.templatePlaceholders || [],
+      resource: {
+        contentType: 'rawHtml' as ContentType,
+        content: wrapWithTailwind(t.htmlContent),
+      },
     })),
   // Galleries
   ...uiTemplates
@@ -75,8 +95,10 @@ const HTML_TEMPLATES = [
       name: t.name,
       category: t.category.charAt(0).toUpperCase() + t.category.slice(1),
       description: t.description,
-      html: wrapWithTailwind(t.htmlContent),
-      placeholders: t.templatePlaceholders || [],
+      resource: {
+        contentType: 'rawHtml' as ContentType,
+        content: wrapWithTailwind(t.htmlContent),
+      },
     })),
   // Custom
   ...uiTemplates
@@ -86,16 +108,20 @@ const HTML_TEMPLATES = [
       name: t.name,
       category: t.category.charAt(0).toUpperCase() + t.category.slice(1),
       description: t.description,
-      html: wrapWithTailwind(t.htmlContent),
-      placeholders: t.templatePlaceholders || [],
+      resource: {
+        contentType: 'rawHtml' as ContentType,
+        content: wrapWithTailwind(t.htmlContent),
+      },
     })),
-  // Blank template
+  // Blank HTML template
   {
-    id: 'blank',
-    name: 'Blank Template',
+    id: 'blank-html',
+    name: 'Blank HTML',
     category: 'Custom',
     description: 'Start from scratch with basic HTML structure',
-    html: `<!DOCTYPE html>
+    resource: {
+      contentType: 'rawHtml',
+      content: `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -113,9 +139,209 @@ const HTML_TEMPLATES = [
   <p class="text-gray-600 dark:text-gray-400">Start building your custom UI here.</p>
 </body>
 </html>`,
-    placeholders: [],
+    },
   },
 ];
+
+// Remote DOM templates
+const REMOTE_DOM_TEMPLATES: ExtendedTemplate[] = [
+  {
+    id: 'react-button',
+    name: 'React Button',
+    category: 'Interactive',
+    description: 'Simple React button component using Remote DOM',
+    resource: {
+      contentType: 'remoteDom',
+      content: `import { h } from '@remote-dom/core/client';
+
+// Create a simple button component
+const button = h('button', {
+  onClick: () => {
+    window.parent.postMessage({
+      type: 'notify',
+      payload: { message: 'Button clicked!' }
+    }, '*');
+  },
+  style: {
+    padding: '12px 24px',
+    backgroundColor: '#3b82f6',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '16px',
+    fontWeight: '500',
+  }
+}, 'Click Me');
+
+// Render the button
+export default button;`,
+      remoteDomConfig: { framework: 'react' },
+    },
+  },
+  {
+    id: 'react-counter',
+    name: 'React Counter',
+    category: 'Interactive',
+    description: 'React counter with state using Remote DOM',
+    resource: {
+      contentType: 'remoteDom',
+      content: `import { h, useState } from '@remote-dom/core/client';
+
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  return h('div', { style: { padding: '24px', fontFamily: 'system-ui' } }, [
+    h('h2', { style: { fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' } }, 'Counter'),
+    h('p', { style: { fontSize: '48px', marginBottom: '16px' } }, String(count)),
+    h('div', { style: { display: 'flex', gap: '8px' } }, [
+      h('button', {
+        onClick: () => setCount(count - 1),
+        style: {
+          padding: '8px 16px',
+          backgroundColor: '#ef4444',
+          color: 'white',
+          border: 'none',
+          borderRadius: '6px',
+          cursor: 'pointer',
+        }
+      }, '−'),
+      h('button', {
+        onClick: () => setCount(count + 1),
+        style: {
+          padding: '8px 16px',
+          backgroundColor: '#3b82f6',
+          color: 'white',
+          border: 'none',
+          borderRadius: '6px',
+          cursor: 'pointer',
+        }
+      }, '+'),
+    ]),
+  ]);
+}
+
+export default Counter;`,
+      remoteDomConfig: { framework: 'react' },
+    },
+  },
+  {
+    id: 'webcomponent-card',
+    name: 'Web Component Card',
+    category: 'Custom',
+    description: 'Custom card element using Web Components',
+    resource: {
+      contentType: 'remoteDom',
+      content: `class CardElement extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+  }
+
+  connectedCallback() {
+    const title = this.getAttribute('title') || 'Card Title';
+    const description = this.getAttribute('description') || 'Card description';
+
+    this.shadowRoot.innerHTML = \`
+      <style>
+        .card {
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          padding: 24px;
+          background: white;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          font-family: system-ui, -apple-system, sans-serif;
+        }
+        .title {
+          font-size: 20px;
+          font-weight: 600;
+          margin-bottom: 8px;
+          color: #111827;
+        }
+        .description {
+          color: #6b7280;
+          font-size: 14px;
+        }
+      </style>
+      <div class="card">
+        <div class="title">\${title}</div>
+        <div class="description">\${description}</div>
+      </div>
+    \`;
+  }
+}
+
+customElements.define('custom-card', CardElement);
+
+// Create instance
+const card = document.createElement('custom-card');
+card.setAttribute('title', 'Welcome');
+card.setAttribute('description', 'This is a custom Web Component card');
+
+export default card;`,
+      remoteDomConfig: { framework: 'webcomponents' },
+    },
+  },
+  {
+    id: 'blank-react-remotedom',
+    name: 'Blank React Remote DOM',
+    category: 'Custom',
+    description: 'Start from scratch with React Remote DOM',
+    resource: {
+      contentType: 'remoteDom',
+      content: `import { h } from '@remote-dom/core/client';
+
+// Your React Remote DOM code here
+const component = h('div', {
+  style: { padding: '24px', fontFamily: 'system-ui' }
+}, [
+  h('h1', { style: { fontSize: '24px', fontWeight: 'bold' } }, 'Hello Remote DOM!'),
+  h('p', { style: { color: '#6b7280' } }, 'Start building your component here.'),
+]);
+
+export default component;`,
+      remoteDomConfig: { framework: 'react' },
+    },
+  },
+  {
+    id: 'blank-webcomponent-remotedom',
+    name: 'Blank Web Component',
+    category: 'Custom',
+    description: 'Start from scratch with Web Components',
+    resource: {
+      contentType: 'remoteDom',
+      content: `class MyComponent extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+  }
+
+  connectedCallback() {
+    this.shadowRoot.innerHTML = \`
+      <style>
+        .container {
+          padding: 24px;
+          font-family: system-ui, -apple-system, sans-serif;
+        }
+      </style>
+      <div class="container">
+        <h1>Hello Web Component!</h1>
+        <p>Start building your component here.</p>
+      </div>
+    \`;
+  }
+}
+
+customElements.define('my-component', MyComponent);
+
+export default document.createElement('my-component');`,
+      remoteDomConfig: { framework: 'webcomponents' },
+    },
+  },
+];
+
+// Combine all templates
+const ALL_TEMPLATES = [...HTML_TEMPLATES, ...REMOTE_DOM_TEMPLATES];
 
 // Helper function to wrap HTML content with Tailwind CDN
 function wrapWithTailwind(htmlContent: string): string {
@@ -180,11 +406,25 @@ export function DesignTab() {
   const canProceed = currentResource.content.trim().length > 0;
   const agentSlots = currentResource.templatePlaceholders?.length || 0;
 
+  // Filter templates based on current content type
+  const relevantTemplates = ALL_TEMPLATES.filter(template =>
+    template.resource.contentType === currentResource.contentType
+  );
+
   // Template selection handler
   const handleTemplateSelect = (templateId: string) => {
-    const template = HTML_TEMPLATES.find(t => t.id === templateId);
+    const template = ALL_TEMPLATES.find(t => t.id === templateId);
     if (template) {
-      updateResource({ content: template.html });
+      // Update content and Remote DOM config if applicable
+      const updates: Partial<UIResource> = {
+        content: template.resource.content,
+      };
+
+      if (template.resource.contentType === 'remoteDom' && template.resource.remoteDomConfig) {
+        updates.remoteDomConfig = template.resource.remoteDomConfig;
+      }
+
+      updateResource(updates);
       setSelectedTemplateId(''); // Clear selection after loading
     }
   };
@@ -260,15 +500,15 @@ export function DesignTab() {
     }
   };
 
-  // Group templates by category for dropdown
-  const templatesByCategory = HTML_TEMPLATES.reduce((acc, template) => {
+  // Group templates by category for dropdown (filtered by content type)
+  const templatesByCategory = relevantTemplates.reduce((acc, template) => {
     const category = template.category;
     if (!acc[category]) {
       acc[category] = [];
     }
     acc[category].push(template);
     return acc;
-  }, {} as Record<string, typeof HTML_TEMPLATES>);
+  }, {} as Record<string, typeof relevantTemplates>);
 
   // Get action categories
   const actionCategories = Object.keys(categoryMetadata) as Array<keyof typeof categoryMetadata>;
@@ -280,8 +520,8 @@ export function DesignTab() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* 3-Column Layout */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left: Templates & Actions Column - Only for rawHtml */}
-        {currentResource.contentType === 'rawHtml' && (
+        {/* Left: Templates & Actions Column - For rawHtml and remoteDom */}
+        {(currentResource.contentType === 'rawHtml' || currentResource.contentType === 'remoteDom') && (
           <div className="w-72 border-r p-4 flex flex-col gap-4 bg-muted/10 overflow-y-auto">
             {/* Dropdowns Section */}
             <div className="space-y-3 flex-shrink-0">
@@ -300,10 +540,10 @@ export function DesignTab() {
                           <SelectItem key={template.id} value={template.id}>
                             <div className="flex items-center gap-2">
                               <span>{template.name}</span>
-                              {template.placeholders && template.placeholders.length > 0 && (
+                              {/* Framework badge for Remote DOM templates */}
+                              {template.resource.contentType === 'remoteDom' && template.resource.remoteDomConfig && (
                                 <Badge variant="secondary" className="text-xs h-4">
-                                  <Sparkles className="h-2 w-2 mr-1" />
-                                  {template.placeholders.length}
+                                  {template.resource.remoteDomConfig.framework === 'react' ? '⚛️' : '🧩'}
                                 </Badge>
                               )}
                             </div>
@@ -601,41 +841,10 @@ export function DesignTab() {
                     formatOnPaste: true,
                     formatOnType: true,
                   }}
+                  onMount={(editor) => {
+                    editorRef.current = editor;
+                  }}
                 />
-              </div>
-
-              {/* Remote DOM Info Panel */}
-              <div className="border-t p-4 bg-purple-50/50 dark:bg-purple-950/20 max-h-48 overflow-y-auto">
-                <div className="flex items-start gap-2 mb-2">
-                  <Info className="h-4 w-4 text-purple-600 mt-0.5" />
-                  <div className="flex-1">
-                    <h4 className="text-sm font-medium text-purple-900 dark:text-purple-100">
-                      Remote DOM Script ({currentResource.remoteDomConfig?.framework || 'react'})
-                    </h4>
-                    <p className="text-xs text-purple-700 dark:text-purple-300 mt-1">
-                      {currentResource.remoteDomConfig?.framework === 'react'
-                        ? 'Write React components using @remote-dom/core/client. Use h() to create elements.'
-                        : 'Write Web Components using customElements API. Define custom elements and register them.'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Quick reference */}
-                <div className="mt-3 p-2 bg-purple-100/50 dark:bg-purple-900/20 rounded text-xs font-mono">
-                  {currentResource.remoteDomConfig?.framework === 'react' ? (
-                    <div>
-                      <div className="text-purple-800 dark:text-purple-200">// React Remote DOM Example:</div>
-                      <div className="text-purple-600 dark:text-purple-400">import &#123; h &#125; from '@remote-dom/core/client';</div>
-                      <div className="text-purple-600 dark:text-purple-400">const button = h('button', &#123; onClick: () =&gt; &#123;...&#125; &#125;, 'Click');</div>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="text-purple-800 dark:text-purple-200">// Web Components Example:</div>
-                      <div className="text-purple-600 dark:text-purple-400">class MyElement extends HTMLElement &#123; ... &#125;</div>
-                      <div className="text-purple-600 dark:text-purple-400">customElements.define('my-element', MyElement);</div>
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
           )}
