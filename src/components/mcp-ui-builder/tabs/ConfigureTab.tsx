@@ -228,6 +228,43 @@ export function ConfigureTab() {
         </CardContent>
       </Card>
 
+      {/* Renderer Options - Show on far right when Remote DOM is not selected */}
+      {currentResource.contentType !== 'remoteDom' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Renderer Options</CardTitle>
+            <CardDescription>
+              Configure how the UI resource is rendered
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Auto-Resize Iframe */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="autoResize"
+                  checked={!!currentResource.uiMetadata?.['auto-resize-iframe']}
+                  onChange={(e) => updateResource({
+                    uiMetadata: {
+                      ...currentResource.uiMetadata,
+                      'auto-resize-iframe': e.target.checked
+                    }
+                  })}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="autoResize" className="font-normal cursor-pointer">
+                  Auto-resize iframe to content
+                </Label>
+              </div>
+              <p className="text-xs text-muted-foreground ml-6">
+                Automatically adjusts iframe dimensions to fit content. Iframe uses secure sandbox permissions by default.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Remote DOM Framework Selection - Only show when remoteDom is selected */}
       {currentResource.contentType === 'remoteDom' && (
         <Card>
@@ -446,41 +483,6 @@ export function ConfigureTab() {
               </p>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Renderer Options */}
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle>Renderer Options</CardTitle>
-          <CardDescription>
-            Configure how the UI resource is rendered
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Auto-Resize Iframe */}
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="autoResize"
-                checked={!!currentResource.uiMetadata?.['auto-resize-iframe']}
-                onChange={(e) => updateResource({
-                  uiMetadata: {
-                    ...currentResource.uiMetadata,
-                    'auto-resize-iframe': e.target.checked
-                  }
-                })}
-                className="h-4 w-4 rounded border-gray-300"
-              />
-              <Label htmlFor="autoResize" className="font-normal cursor-pointer">
-                Auto-resize iframe to content
-              </Label>
-            </div>
-            <p className="text-xs text-muted-foreground ml-6">
-              Automatically adjusts iframe dimensions to fit content. Iframe uses secure sandbox permissions by default.
-            </p>
-          </div>
         </CardContent>
       </Card>
 

@@ -672,14 +672,11 @@ export function DesignTab() {
             )}
 
             {/* Initial Render Data - Only for rawHtml */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 space-y-2">
+              <Label className="text-sm font-semibold block">Initial Render Data</Label>
               <Collapsible>
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="w-full justify-between mb-2">
-                    <span className="flex items-center gap-2">
-                      <Sparkles className="h-4 w-4" />
-                      Initial Render Data
-                    </span>
+                  <Button variant="ghost" size="sm" className="w-full justify-center mb-2">
                     <span className="text-xs text-muted-foreground">Optional</span>
                   </Button>
                 </CollapsibleTrigger>
