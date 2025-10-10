@@ -236,19 +236,13 @@ export function DesignTab() {
                               </Badge>
                             )}
                           </div>
-                          {!isExpanded && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                              {template.description}
-                            </p>
-                          )}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {template.description}
+                          </p>
                         </div>
 
                         {isExpanded && (
-                          <div className="px-3 pb-3 space-y-2 border-t pt-2 mt-1">
-                            <p className="text-xs text-muted-foreground leading-relaxed">
-                              {template.description}
-                            </p>
-
+                          <div className="px-3 pb-3 space-y-2 border-t pt-2">
                             {template.placeholders && template.placeholders.length > 0 && (
                               <div className="flex flex-wrap gap-1">
                                 {template.placeholders.slice(0, 3).map((p) => (
@@ -333,6 +327,30 @@ export function DesignTab() {
                   </CollapsibleContent>
                 </Collapsible>
               </div>
+
+              {/* Detected Template Placeholders */}
+              {currentResource.templatePlaceholders && currentResource.templatePlaceholders.length > 0 && (
+                <div className="border-t p-4 bg-blue-50/50 dark:bg-blue-950/20">
+                  <div className="flex items-start gap-2 mb-2">
+                    <Info className="h-4 w-4 text-blue-600 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                        Detected Template Placeholders
+                      </h4>
+                      <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                        These placeholders will be filled by the AI with contextual data
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {currentResource.templatePlaceholders.map((placeholder) => (
+                      <Badge key={placeholder} variant="secondary" className="font-mono text-xs">
+                        {`{{${placeholder}}}`}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
 

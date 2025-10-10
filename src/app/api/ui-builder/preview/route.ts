@@ -19,18 +19,19 @@ export async function POST(request: NextRequest) {
     // Convert UI resource to MCP UI resource format
     let mcpResource;
 
-    // Prepare metadata
+    // Prepare metadata - merge standard and UI metadata with proper prefixes
     const metadata: Record<string, unknown> = {};
+
+    // Add standard metadata
     if (resource.metadata?.title) metadata.title = resource.metadata.title;
     if (resource.metadata?.description) metadata.description = resource.metadata.description;
 
-    // Prepare UI metadata from existing uiMetadata
-    const uiMetadata: Record<string, unknown> = {};
+    // Add UI metadata with mcpui.dev/ui- prefix (required by MCP-UI spec)
     if (resource.uiMetadata?.['preferred-frame-size']) {
-      uiMetadata['preferred-frame-size'] = resource.uiMetadata['preferred-frame-size'];
+      metadata['mcpui.dev/ui-preferred-frame-size'] = resource.uiMetadata['preferred-frame-size'];
     }
     if (resource.uiMetadata?.['initial-render-data']) {
-      uiMetadata['initial-render-data'] = resource.uiMetadata['initial-render-data'];
+      metadata['mcpui.dev/ui-initial-render-data'] = resource.uiMetadata['initial-render-data'];
     }
 
     switch (resource.contentType) {
@@ -40,7 +41,6 @@ export async function POST(request: NextRequest) {
           content: { type: 'rawHtml', htmlString: resource.content },
           encoding: 'text',
           metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
-          uiMetadata: Object.keys(uiMetadata).length > 0 ? uiMetadata : undefined,
         });
         break;
 
@@ -57,7 +57,6 @@ export async function POST(request: NextRequest) {
           content: { type: 'externalUrl', iframeUrl: resource.content },
           encoding: 'text',
           metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
-          uiMetadata: Object.keys(uiMetadata).length > 0 ? uiMetadata : undefined,
         });
         break;
 
@@ -71,7 +70,6 @@ export async function POST(request: NextRequest) {
           },
           encoding: 'text',
           metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
-          uiMetadata: Object.keys(uiMetadata).length > 0 ? uiMetadata : undefined,
         });
         break;
 

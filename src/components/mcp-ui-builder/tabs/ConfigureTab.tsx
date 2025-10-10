@@ -393,31 +393,6 @@ export function ConfigureTab() {
         </CardContent>
       </Card>
 
-      {/* Detected Placeholders */}
-      {currentResource.templatePlaceholders && currentResource.templatePlaceholders.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Info className="h-5 w-5" />
-              Detected Template Placeholders
-            </CardTitle>
-            <CardDescription>
-              These placeholders will be filled by the AI with contextual data
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {currentResource.templatePlaceholders.map((placeholder) => (
-                <Badge key={placeholder} variant="secondary" className="font-mono">
-                  <Check className="h-3 w-3 mr-1" />
-                  {placeholder}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <Alert className="lg:col-span-2">
         <Info className="h-4 w-4" />
         <AlertDescription>
