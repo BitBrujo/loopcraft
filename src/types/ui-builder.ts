@@ -44,18 +44,6 @@ export interface UIMetadata {
    * Can be boolean (both dimensions) or object for granular control
    */
   'auto-resize-iframe'?: boolean | { width?: boolean; height?: boolean };
-
-  /**
-   * Custom sandbox permissions for iframe
-   * Example: 'allow-forms allow-scripts allow-same-origin'
-   */
-  'sandbox-permissions'?: string;
-
-  /**
-   * Custom iframe HTML attributes
-   * Example: { 'data-theme': 'dark', 'loading': 'lazy' }
-   */
-  'custom-iframe-props'?: Record<string, string>;
 }
 
 /**

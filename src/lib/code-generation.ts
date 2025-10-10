@@ -37,9 +37,7 @@ export function generateTypeScriptCode(resource: UIResource): string {
   // Generate UI metadata (prefixed with mcpui.dev/ui-)
   const hasUiMetadata = resource.uiMetadata?.['preferred-frame-size'] ||
                         resource.uiMetadata?.['initial-render-data'] ||
-                        resource.uiMetadata?.['auto-resize-iframe'] ||
-                        resource.uiMetadata?.['sandbox-permissions'] ||
-                        resource.uiMetadata?.['custom-iframe-props'];
+                        resource.uiMetadata?.['auto-resize-iframe'];
 
   const uiMetadataParams: string[] = [];
   if (resource.uiMetadata?.['preferred-frame-size']) {
@@ -50,12 +48,6 @@ export function generateTypeScriptCode(resource: UIResource): string {
   }
   if (resource.uiMetadata?.['auto-resize-iframe'] !== undefined) {
     uiMetadataParams.push(`'auto-resize-iframe': ${JSON.stringify(resource.uiMetadata['auto-resize-iframe'])}`);
-  }
-  if (resource.uiMetadata?.['sandbox-permissions']) {
-    uiMetadataParams.push(`'sandbox-permissions': '${resource.uiMetadata['sandbox-permissions']}'`);
-  }
-  if (resource.uiMetadata?.['custom-iframe-props']) {
-    uiMetadataParams.push(`'custom-iframe-props': ${JSON.stringify(resource.uiMetadata['custom-iframe-props'])}`);
   }
 
   const uiMetadataParam = hasUiMetadata
@@ -185,9 +177,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const hasMetadata = resource.metadata?.title || resource.metadata?.description;
   const hasUiMetadata = resource.uiMetadata?.['preferred-frame-size'] ||
                         resource.uiMetadata?.['initial-render-data'] ||
-                        resource.uiMetadata?.['auto-resize-iframe'] ||
-                        resource.uiMetadata?.['sandbox-permissions'] ||
-                        resource.uiMetadata?.['custom-iframe-props'];
+                        resource.uiMetadata?.['auto-resize-iframe'];
 
   code += `
     const uiResource = createUIResource({
@@ -215,12 +205,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
     if (resource.uiMetadata?.['auto-resize-iframe'] !== undefined) {
       uiMetadataParts.push(`'auto-resize-iframe': ${JSON.stringify(resource.uiMetadata['auto-resize-iframe'])}`);
-    }
-    if (resource.uiMetadata?.['sandbox-permissions']) {
-      uiMetadataParts.push(`'sandbox-permissions': '${resource.uiMetadata['sandbox-permissions']}'`);
-    }
-    if (resource.uiMetadata?.['custom-iframe-props']) {
-      uiMetadataParts.push(`'custom-iframe-props': ${JSON.stringify(resource.uiMetadata['custom-iframe-props'])}`);
     }
     code += `\n        ${uiMetadataParts.join(',\n        ')}`;
     code += `\n      }`;
@@ -350,9 +334,7 @@ server.addTool({
   const hasMetadata = resource.metadata?.title || resource.metadata?.description;
   const hasUiMetadata = resource.uiMetadata?.['preferred-frame-size'] ||
                         resource.uiMetadata?.['initial-render-data'] ||
-                        resource.uiMetadata?.['auto-resize-iframe'] ||
-                        resource.uiMetadata?.['sandbox-permissions'] ||
-                        resource.uiMetadata?.['custom-iframe-props'];
+                        resource.uiMetadata?.['auto-resize-iframe'];
 
   code += `
     const uiResource = createUIResource({
@@ -380,12 +362,6 @@ server.addTool({
     }
     if (resource.uiMetadata?.['auto-resize-iframe'] !== undefined) {
       uiMetadataParts.push(`'auto-resize-iframe': ${JSON.stringify(resource.uiMetadata['auto-resize-iframe'])}`);
-    }
-    if (resource.uiMetadata?.['sandbox-permissions']) {
-      uiMetadataParts.push(`'sandbox-permissions': '${resource.uiMetadata['sandbox-permissions']}'`);
-    }
-    if (resource.uiMetadata?.['custom-iframe-props']) {
-      uiMetadataParts.push(`'custom-iframe-props': ${JSON.stringify(resource.uiMetadata['custom-iframe-props'])}`);
     }
     code += `\n        ${uiMetadataParts.join(',\n        ')}`;
     code += `\n      }`;

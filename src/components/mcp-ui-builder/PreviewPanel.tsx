@@ -20,10 +20,26 @@ export function PreviewPanel() {
       return;
     }
 
+    // Validate URI format
+    if (!currentResource.uri.startsWith('ui://')) {
+      setMcpResource(null);
+      setError('URI must start with "ui://"');
+      setIsLoading(false);
+      return;
+    }
+
     // Validate external URL content is not empty
     if (currentResource.contentType === 'externalUrl' && !currentResource.content.trim()) {
       setMcpResource(null);
       setError('Enter a URL to see preview');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate rawHtml content is not empty
+    if (currentResource.contentType === 'rawHtml' && !currentResource.content.trim()) {
+      setMcpResource(null);
+      setError('Enter HTML content to see preview');
       setIsLoading(false);
       return;
     }
@@ -40,12 +56,20 @@ export function PreviewPanel() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate preview");
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.details || "Failed to generate preview");
       }
 
       const data = await response.json();
+
+      // Validate response format
+      if (!data.mcpResource || !data.mcpResource.type || !data.mcpResource.resource) {
+        throw new Error("Invalid preview response format");
+      }
+
       setMcpResource(data.mcpResource);
     } catch (err) {
+      console.error("Preview generation error:", err);
       setError(err instanceof Error ? err.message : "Failed to generate preview");
       setMcpResource(null);
     } finally {
