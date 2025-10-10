@@ -19,31 +19,23 @@ A Next.js 15 application that integrates the Model Context Protocol (MCP) with a
 - Authentication support (app-level JWT + MCP-level env vars)
 - Bidirectional communication between UI and MCP servers
 
-### 🎨 MCP-UI Builder (`/mcp-ui-builder`)
+### 🎨 MCP-UI Builder
 
 **Visual tool for creating UI resources following the official MCP-UI specification**
 
-#### Key Capabilities
-- **MCP Server Integration**: Select target server or create standalone resources
+#### Core Features
+- **Server Integration**: Select target MCP server or create standalone resources
 - **3 Content Types**: rawHtml (default), externalUrl, remoteDom (coming soon)
 - **HTML Template Library**: 13 ready-to-use templates
-  - Forms: Contact Form
-  - Dashboards: Dashboard Card
-  - Tables: Data Table
-  - Galleries: Image Gallery
-  - Charts: Chart Container
-  - Action Examples: AI Assistant Helper, Documentation Viewer, Navigation Panel, Status Notifier, Multi-Action Demo, Settings Panel, Notification Center
-  - Blank: Start from scratch
+  - Forms, Dashboards, Tables, Galleries, Charts
+  - Action Examples: AI Assistant Helper, Documentation Viewer, Navigation Panel, Status Notifier, Multi-Action Demo
 - **Action Snippets Library**: 13 code snippets across 5 action types
-  - Tool Actions (3): Execute MCP tools from UI
-  - Prompt Actions (3): Send prompts to AI assistant
-  - Link Actions (2): Open external URLs
-  - Intent Actions (2): Trigger app navigation
-  - Notify Actions (3): Show toast notifications
+  - Tool, Prompt, Link, Intent, Notify actions
+  - "Insert at Cursor" functionality for Monaco editor
 - **Size Presets**: 5 iframe size options (Small, Medium, Large, Full Width, Custom)
+- **Renderer Options**: Auto-resize, sandbox permissions, iframe title, container styling
 - **Template Placeholders**: Auto-detect `{{agent.name}}` patterns for dynamic content
-- **Initial Render Data**: JSON editor for passing initial state to iframe
-- **Renderer Options**: Auto-resize iframe, smart positioning
+- **Initial Render Data**: JSON editor for passing initial state
 - **Export Options**: Integration snippet OR standalone server (TypeScript/JavaScript)
 - **Live Preview**: Real-time iframe preview with MCPUIRenderer
 - **Save/Load Templates**: Persist and reuse UI resources (JWT auth required)
@@ -53,14 +45,13 @@ A Next.js 15 application that integrates the Model Context Protocol (MCP) with a
 1. **Configure Tab**
    - Select MCP server or create standalone
    - Set resource URI (format: `ui://server/resource`)
-   - Choose content type (rawHtml, externalUrl, remoteDom)
-   - Set size preset and add metadata
-   - Configure renderer options (auto-resize iframe) - positioned on far right when available
+   - Choose content type and size preset
+   - Configure metadata and renderer options
 
 2. **Design Tab**
    - Browse 13 HTML templates or use action snippets library
    - Edit content in Monaco editor with live preview
-   - Configure initial render data (collapsible, header-style label with "Optional" button)
+   - Configure initial render data (collapsible)
    - Insert action snippets at cursor position
 
 3. **Export Tab**
@@ -71,7 +62,7 @@ A Next.js 15 application that integrates the Model Context Protocol (MCP) with a
 
 ### 🔄 MCP-UI Action Types
 
-All 5 action types are fully implemented for bidirectional communication:
+All 5 action types fully implemented for bidirectional communication:
 
 1. **Tool** - Execute MCP tools (form submissions, data creation)
 2. **Prompt** - Send message to AI (context-aware help requests)
@@ -99,7 +90,7 @@ window.parent.postMessage({
 1. **Clone the repository**
 ```bash
 git clone <repository-url>
-cd loopcraft
+cd hyperface
 ```
 
 2. **Install dependencies**
@@ -151,7 +142,7 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 ```bash
 # Development
 npm run dev              # Start dev server with Turbopack
-npm run build            # Build for production with Turbopack
+npm run build            # Build for production
 npm start                # Start production server
 npm run lint             # Run ESLint
 
@@ -159,14 +150,15 @@ npm run lint             # Run ESLint
 docker-compose up -d     # Start MySQL
 docker-compose down      # Stop MySQL
 
-# Demo MCP Server (for testing MCP-UI Builder)
-npm run mcp:demo         # Start demo server on port 3001
+# Demo MCP Servers
+npm run mcp:demo         # Contact form demo server (port 3001)
+npm run mcp:hypermemory  # HyperMemory knowledge graph server
 ```
 
 ## 🗂️ Project Structure
 
 ```
-loopcraft/
+hyperface/
 ├── src/
 │   ├── app/                          # Next.js App Router
 │   │   ├── api/                      # API routes
@@ -175,6 +167,7 @@ loopcraft/
 │   │   │   ├── ui-builder/           # MCP-UI Builder API
 │   │   │   └── auth/                 # Authentication
 │   │   ├── mcp-ui-builder/           # MCP-UI Builder page
+│   │   ├── mcp-servers/              # MCP Servers management page
 │   │   ├── chat/                     # Chat interface page
 │   │   └── settings/                 # Settings page
 │   ├── components/
@@ -189,13 +182,16 @@ loopcraft/
 │   │   ├── mcp-init.ts               # Shared MCP initialization
 │   │   ├── db.ts                     # Database utilities
 │   │   ├── auth.ts                   # JWT authentication
-│   │   ├── ui-templates.ts           # HTML templates
+│   │   ├── ui-templates.ts           # HTML templates (13 templates)
 │   │   ├── action-snippets.ts        # MCP-UI action snippets
 │   │   ├── code-generation.ts        # Code export utilities
 │   │   └── stores/                   # Zustand state management
-│   └── types/
-│       ├── ui-builder.ts             # MCP-UI Builder types
-│       └── database.ts               # Database types
+│   ├── types/
+│   │   ├── ui-builder.ts             # MCP-UI Builder types
+│   │   └── database.ts               # Database types
+│   └── mcp-servers/                  # Demo MCP servers
+│       ├── demo-server.ts            # Contact form demo
+│       └── hypermemory-server.ts     # Knowledge graph demo
 ├── docker/
 │   └── mysql/
 │       └── init.sql                  # Database schema
@@ -218,7 +214,8 @@ loopcraft/
 - **Monaco Editor**: Code editing with syntax highlighting
 - **Lucide React**: Icon library
 - **Zod**: Schema validation
-- **Class Variance Authority**: Component variants
+- **React Hook Form**: Form management
+- **React Flow**: Visual flow diagrams
 
 ## 🔐 Authentication & Security
 
@@ -267,12 +264,9 @@ All MCP servers are user-specific and managed through the Settings UI:
 3. **Chat** (`/chat`) - Test MCP tools with AI-powered chat interface
 
 ### Additional Routes
-- **Home** (`/`) - Landing page with 3 intro cards for quick access
+- **Home** (`/`) - Landing page with quick access cards
 - **Settings** (`/settings`) - User settings (AI config, profile, MCP servers)
 - **Login/Register** (`/login`, `/register`) - Authentication pages
-
-### Legacy Routes
-- **Conversational Builder** (`/conversational-builder`) - AI-guided conversational UI builder (accessible via direct URL)
 
 ## 📊 Database Schema
 
@@ -288,29 +282,33 @@ All tables include:
 - Proper indexes for performance
 - Automatic timestamp management (created_at, updated_at)
 
-## 🧪 Demo MCP Server
+## 🧪 Demo MCP Servers
 
-A demo MCP server is included for testing the MCP-UI Function Builder:
+### Demo Contact Form Server
 
-**Start the demo server:**
+Start the demo server:
 ```bash
 npm run mcp:demo  # Runs on port 3001
 ```
 
-**Add via Settings UI:**
+Add via Settings UI:
 - Name: `demo-ui`
 - Type: `sse`
 - URL: `http://localhost:3001/mcp`
-- Enable the server
 
 **Available Tools:**
-- `get_contact_form` - Returns interactive HTML contact form
-- `get_dashboard` - Returns external URL embed
-- `submit_form` - Processes form submissions
+- `get_contact_form` - Interactive HTML contact form
+- `get_dashboard` - External URL embed
+- `submit_form` - Process form submissions
 
-**To remove:** See `DEMO_SERVER_README.md` for complete instructions.
+### HyperMemory Knowledge Graph Server
 
-**Note:** The demo server is excluded from TypeScript compilation as it's a standalone Node.js server.
+Start the HyperMemory server:
+```bash
+npm run mcp:hypermemory
+```
+
+Add via Settings UI and test entity creation, search, and relationship management.
 
 ## 🔄 Bidirectional Communication Flow
 
@@ -376,8 +374,7 @@ MIT License - see LICENSE file for details
 ## 📞 Support
 
 For issues and questions:
-- Open a [GitHub issue](https://github.com/yourusername/loopcraft/issues)
-- Check the [documentation](./CLAUDE.md)
+- Check the [CLAUDE.md](./CLAUDE.md) documentation
 - Review component-specific CLAUDE.md files in `src/components/`
 
 ## 🎉 Acknowledgments
