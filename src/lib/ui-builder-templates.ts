@@ -296,6 +296,303 @@ export const builtInTemplates: Template[] = [
     },
   },
   {
+    id: 'ai-assistant-helper',
+    name: 'AI Assistant Helper',
+    category: 'interactive',
+    description: 'Prompt action example - Send questions to AI',
+    resource: {
+      uri: 'ui://loopcraft/ai-helper',
+      contentType: 'rawHtml',
+      content: `<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Assistant</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 500px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
+    .container { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    h2 { margin: 0 0 20px 0; color: #333; }
+    .prompt-btn { width: 100%; padding: 15px; margin: 8px 0; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; text-align: left; transition: all 0.2s; }
+    .prompt-btn:hover { background: #5568d3; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+    .prompt-btn::before { content: '💬 '; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Ask AI Assistant</h2>
+    <button class="prompt-btn" onclick="askAI('Explain what MCP servers are and how they work')">
+      Explain MCP servers
+    </button>
+    <button class="prompt-btn" onclick="askAI('Show me how to create a new UI resource')">
+      How to create UI resources
+    </button>
+    <button class="prompt-btn" onclick="askAI('What are the available action types in MCP-UI?')">
+      Available action types
+    </button>
+  </div>
+  <script>
+    function askAI(prompt) {
+      window.parent.postMessage({
+        type: 'prompt',
+        payload: { prompt: prompt }
+      }, '*');
+    }
+  </script>
+</body>
+</html>`,
+    },
+  },
+  {
+    id: 'documentation-viewer',
+    name: 'Documentation Viewer',
+    category: 'interactive',
+    description: 'Link action example - Open external URLs',
+    resource: {
+      uri: 'ui://loopcraft/docs',
+      contentType: 'rawHtml',
+      content: `<!DOCTYPE html>
+<html>
+<head>
+  <title>Documentation</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 600px; }
+    h2 { color: #333; margin-bottom: 20px; }
+    .doc-link { display: block; padding: 15px 20px; margin: 10px 0; background: #f5f5f5; border-left: 4px solid #0066cc; border-radius: 4px; text-decoration: none; color: #333; transition: all 0.2s; cursor: pointer; }
+    .doc-link:hover { background: #e5e5e5; border-left-color: #0052a3; transform: translateX(5px); }
+    .doc-link .title { font-weight: 600; margin-bottom: 5px; }
+    .doc-link .desc { font-size: 14px; color: #666; }
+  </style>
+</head>
+<body>
+  <h2>📚 Documentation</h2>
+  <a class="doc-link" onclick="openDoc('https://modelcontextprotocol.io')">
+    <div class="title">MCP Protocol Docs</div>
+    <div class="desc">Official Model Context Protocol documentation</div>
+  </a>
+  <a class="doc-link" onclick="openDoc('https://github.com/modelcontextprotocol/servers')">
+    <div class="title">MCP Servers Repository</div>
+    <div class="desc">Community MCP server implementations</div>
+  </a>
+  <a class="doc-link" onclick="openDoc('https://github.com/modelcontextprotocol/typescript-sdk')">
+    <div class="title">TypeScript SDK</div>
+    <div class="desc">Official MCP TypeScript SDK documentation</div>
+  </a>
+  <script>
+    function openDoc(url) {
+      window.parent.postMessage({
+        type: 'link',
+        payload: { url: url }
+      }, '*');
+    }
+  </script>
+</body>
+</html>`,
+    },
+  },
+  {
+    id: 'navigation-panel',
+    name: 'Navigation Panel',
+    category: 'interactive',
+    description: 'Intent action example - Navigate between pages',
+    resource: {
+      uri: 'ui://loopcraft/nav',
+      contentType: 'rawHtml',
+      content: `<!DOCTYPE html>
+<html>
+<head>
+  <title>Navigation</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 400px; }
+    h2 { color: #333; margin-bottom: 20px; }
+    .nav-btn { width: 100%; padding: 15px 20px; margin: 8px 0; background: white; border: 2px solid #0066cc; color: #0066cc; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 10px; }
+    .nav-btn:hover { background: #0066cc; color: white; transform: scale(1.02); }
+    .nav-btn .icon { font-size: 20px; }
+  </style>
+</head>
+<body>
+  <h2>🧭 Quick Navigation</h2>
+  <button class="nav-btn" onclick="navigate('settings')">
+    <span class="icon">⚙️</span>
+    <span>Settings</span>
+  </button>
+  <button class="nav-btn" onclick="navigate('chat')">
+    <span class="icon">💬</span>
+    <span>Chat</span>
+  </button>
+  <button class="nav-btn" onclick="navigate('builder')">
+    <span class="icon">🛠️</span>
+    <span>UI Builder</span>
+  </button>
+  <button class="nav-btn" onclick="navigate('servers')">
+    <span class="icon">🔌</span>
+    <span>MCP Servers</span>
+  </button>
+  <script>
+    function navigate(intent) {
+      window.parent.postMessage({
+        type: 'intent',
+        payload: { intent: intent, params: {} }
+      }, '*');
+    }
+  </script>
+</body>
+</html>`,
+    },
+  },
+  {
+    id: 'status-notifier',
+    name: 'Status Notifier',
+    category: 'interactive',
+    description: 'Notify action example - Show toast notifications',
+    resource: {
+      uri: 'ui://loopcraft/status',
+      contentType: 'rawHtml',
+      content: `<!DOCTYPE html>
+<html>
+<head>
+  <title>Status Notifications</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 500px; }
+    h2 { color: #333; margin-bottom: 20px; }
+    .notify-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .notify-btn { padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; color: white; }
+    .notify-btn:hover { transform: translateY(-2px); opacity: 0.9; }
+    .success { background: #10b981; }
+    .error { background: #ef4444; }
+    .warning { background: #f59e0b; }
+    .info { background: #3b82f6; }
+  </style>
+</head>
+<body>
+  <h2>🔔 Notifications Demo</h2>
+  <div class="notify-grid">
+    <button class="notify-btn success" onclick="notify('Changes saved successfully!')">
+      ✓ Success
+    </button>
+    <button class="notify-btn error" onclick="notify('Error: Failed to save changes')">
+      ✗ Error
+    </button>
+    <button class="notify-btn warning" onclick="notify('Warning: Connection unstable')">
+      ⚠ Warning
+    </button>
+    <button class="notify-btn info" onclick="notify('Processing your request...')">
+      ℹ Info
+    </button>
+  </div>
+  <script>
+    function notify(message) {
+      window.parent.postMessage({
+        type: 'notify',
+        payload: { message: message }
+      }, '*');
+    }
+  </script>
+</body>
+</html>`,
+    },
+  },
+  {
+    id: 'multi-action-demo',
+    name: 'Multi-Action Demo',
+    category: 'interactive',
+    description: 'All 5 action types in one interactive playground',
+    resource: {
+      uri: 'ui://loopcraft/playground',
+      contentType: 'rawHtml',
+      content: `<!DOCTYPE html>
+<html>
+<head>
+  <title>Action Playground</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 700px; margin: 0 auto; background: #f5f5f5; }
+    h2 { color: #333; margin-bottom: 10px; }
+    .subtitle { color: #666; margin-bottom: 25px; }
+    .section { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .section h3 { margin: 0 0 15px 0; color: #555; font-size: 16px; }
+    .action-btn { padding: 12px 20px; margin: 5px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+    .action-btn:hover { transform: translateY(-2px); opacity: 0.9; }
+    .tool-btn { background: #8b5cf6; color: white; }
+    .prompt-btn { background: #0ea5e9; color: white; }
+    .link-btn { background: #10b981; color: white; }
+    .intent-btn { background: #f59e0b; color: white; }
+    .notify-btn { background: #ef4444; color: white; }
+    input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h2>🎮 MCP-UI Action Playground</h2>
+  <p class="subtitle">Test all 5 action types interactively</p>
+
+  <div class="section">
+    <h3>🔧 Tool Action</h3>
+    <input type="text" id="toolInput" placeholder="Enter your name">
+    <button class="action-btn tool-btn" onclick="callTool()">Execute Tool</button>
+  </div>
+
+  <div class="section">
+    <h3>💬 Prompt Action</h3>
+    <button class="action-btn prompt-btn" onclick="sendPrompt('What are MCP action types?')">Ask AI Question</button>
+  </div>
+
+  <div class="section">
+    <h3>🔗 Link Action</h3>
+    <button class="action-btn link-btn" onclick="openLink('https://modelcontextprotocol.io')">Open MCP Docs</button>
+  </div>
+
+  <div class="section">
+    <h3>🎯 Intent Action</h3>
+    <button class="action-btn intent-btn" onclick="triggerIntent('settings')">Go to Settings</button>
+  </div>
+
+  <div class="section">
+    <h3>🔔 Notify Action</h3>
+    <button class="action-btn notify-btn" onclick="showNotification('Success: All actions working!')">Show Toast</button>
+  </div>
+
+  <script>
+    function callTool() {
+      const name = document.getElementById('toolInput').value || 'World';
+      window.parent.postMessage({
+        type: 'tool',
+        payload: {
+          toolName: 'greet_user',
+          params: { name: name }
+        }
+      }, '*');
+    }
+
+    function sendPrompt(prompt) {
+      window.parent.postMessage({
+        type: 'prompt',
+        payload: { prompt: prompt }
+      }, '*');
+    }
+
+    function openLink(url) {
+      window.parent.postMessage({
+        type: 'link',
+        payload: { url: url }
+      }, '*');
+    }
+
+    function triggerIntent(intent) {
+      window.parent.postMessage({
+        type: 'intent',
+        payload: { intent: intent, params: {} }
+      }, '*');
+    }
+
+    function showNotification(message) {
+      window.parent.postMessage({
+        type: 'notify',
+        payload: { message: message }
+      }, '*');
+    }
+  </script>
+</body>
+</html>`,
+    },
+  },
+  {
     id: 'external-url',
     name: 'External Website',
     category: 'media',

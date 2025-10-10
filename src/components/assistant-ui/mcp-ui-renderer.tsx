@@ -1,5 +1,7 @@
 import { UIResourceRenderer, UIActionResult, isUIResource } from "@mcp-ui/client";
 import { useCallback, useRef, useEffect } from "react";
+import { toast } from "@/lib/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 interface MCPUIRendererProps {
   content: {
@@ -17,6 +19,7 @@ interface MCPUIRendererProps {
 
 export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content, serverName }) => {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const router = useRouter();
 
   // Find iframe element after render
   useEffect(() => {
@@ -103,18 +106,62 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content, serverNam
         return { status: 'error', error: error instanceof Error ? error.message : 'Unknown error' };
       }
     } else if (result.type === 'prompt') {
-      console.log(`Prompt from UI:`, result.payload.prompt);
-      // TODO: Handle prompts from UI components
+      console.log(`💬 Prompt from UI:`, result.payload.prompt);
+      // Insert prompt into chat input
+      const chatInput = document.querySelector('textarea[placeholder*="Message"]') as HTMLTextAreaElement;
+      if (chatInput) {
+        chatInput.value = result.payload.prompt;
+        chatInput.focus();
+        // Trigger input event to notify React
+        const event = new Event('input', { bubbles: true });
+        chatInput.dispatchEvent(event);
+      }
     } else if (result.type === 'link') {
       console.log(`Link from UI:`, result.payload.url);
       // Handle link clicks from UI components
       window.open(result.payload.url, '_blank');
     } else if (result.type === 'intent') {
-      console.log(`Intent from UI:`, result.payload.intent);
-      // TODO: Handle intents from UI components
+      console.log(`🎯 Intent from UI:`, result.payload.intent, result.payload.params);
+      // Handle intents based on intent type
+      const { intent, params } = result.payload;
+
+      // Navigation intents
+      if (intent === 'navigate' && params?.path) {
+        router.push(params.path as string);
+      } else if (intent === 'settings') {
+        router.push('/settings');
+      } else if (intent === 'chat') {
+        router.push('/chat');
+      } else if (intent === 'builder') {
+        router.push('/mcp-ui-builder');
+      } else if (intent === 'servers') {
+        router.push('/mcp-servers');
+      } else {
+        // Custom intent - log for debugging
+        console.log(`Custom intent: ${intent}`, params);
+      }
     } else if (result.type === 'notify') {
-      console.log(`Notification from UI:`, result.payload.message);
-      // TODO: Handle notifications from UI components
+      console.log(`🔔 Notification from UI:`, result.payload.message);
+      // Show toast notification
+      const message = result.payload.message;
+
+      // Determine variant based on message content (simple heuristic)
+      let variant: "default" | "success" | "error" | "warning" = "default";
+      const lowerMessage = message.toLowerCase();
+
+      if (lowerMessage.includes('success') || lowerMessage.includes('saved') || lowerMessage.includes('complete')) {
+        variant = "success";
+      } else if (lowerMessage.includes('error') || lowerMessage.includes('failed') || lowerMessage.includes('invalid')) {
+        variant = "error";
+      } else if (lowerMessage.includes('warning') || lowerMessage.includes('caution')) {
+        variant = "warning";
+      }
+
+      toast({
+        message,
+        variant,
+        duration: 5000,
+      });
     }
 
     return { status: 'handled' };
