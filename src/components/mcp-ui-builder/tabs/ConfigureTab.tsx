@@ -301,6 +301,168 @@ export function ConfigureTab() {
                   Creating standalone resource - you can deploy it as a new server
                 </div>
               )}
+
+              {/* Advanced Content Options - Nested under MCP Server Integration */}
+              <Collapsible open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions} className="mt-4">
+                <div className="rounded-lg border bg-muted/30 p-4">
+                  <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+                    <div className="flex items-center gap-2">
+                      <ChevronDown className={`h-4 w-4 transition-transform ${showAdvancedOptions ? '' : '-rotate-90'}`} />
+                      <h4 className="text-sm font-medium">Advanced Content Options</h4>
+                    </div>
+                  </CollapsibleTrigger>
+                  <p className="text-xs text-muted-foreground mt-1 mb-3">Optional advanced configuration</p>
+                  <CollapsibleContent>
+                    <div className="space-y-4 pt-2">
+                      <TooltipProvider>
+                        {/* MIME Type (Read-only) */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Label>MIME Type</Label>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p>Automatically determined based on content type</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <Badge variant="secondary" className="font-mono">
+                            {displayMimeType}
+                          </Badge>
+                          <p className="text-xs text-muted-foreground">
+                            Auto-determined from content type (read-only)
+                          </p>
+                        </div>
+
+                        {/* Encoding (only for rawHtml) */}
+                        {currentResource.contentType === 'rawHtml' && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Label htmlFor="encoding">Encoding</Label>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p>Text encoding is standard. Use Base64 for embedding binary data or images.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                            <Select
+                              value={currentResource.encoding || 'text'}
+                              onValueChange={(value: 'text' | 'base64') => updateResource({ encoding: value === 'text' ? undefined : value })}
+                            >
+                              <SelectTrigger id="encoding">
+                                <SelectValue placeholder="Select encoding" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="text">Text (UTF-8)</SelectItem>
+                                <SelectItem value="base64">Base64</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
+                        {/* Supported Content Types (only for rawHtml) */}
+                        {currentResource.contentType === 'rawHtml' && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Label htmlFor="supportedContentTypes">Supported Content Types</Label>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p>Restrict which rendering modes are allowed for security/policy enforcement</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {(['rawHtml', 'externalUrl', 'remoteDom'] as const).map((type) => (
+                                <Badge
+                                  key={type}
+                                  variant={
+                                    !currentResource.supportedContentTypes ||
+                                    currentResource.supportedContentTypes.includes(type)
+                                      ? 'default'
+                                      : 'outline'
+                                  }
+                                  className="cursor-pointer"
+                                  onClick={() => {
+                                    const current = currentResource.supportedContentTypes || ['rawHtml', 'externalUrl', 'remoteDom'];
+                                    const updated = current.includes(type)
+                                      ? current.filter(t => t !== type)
+                                      : [...current, type];
+                                    updateResource({
+                                      supportedContentTypes: updated.length === 3 ? undefined : updated as ('rawHtml' | 'externalUrl' | 'remoteDom')[]
+                                    });
+                                  }}
+                                >
+                                  {type === 'rawHtml' && 'Raw HTML'}
+                                  {type === 'externalUrl' && 'External URL'}
+                                  {type === 'remoteDom' && 'Remote DOM'}
+                                </Badge>
+                              ))}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Click to toggle. All types enabled by default.
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Remote DOM Framework (only when remoteDom is selected) */}
+                        {currentResource.contentType === 'remoteDom' && (
+                          <div className="space-y-2 pt-2 border-t">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Sparkles className="h-4 w-4 text-primary" />
+                              <Label className="text-base font-medium">Remote DOM Framework</Label>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="framework">Framework</Label>
+                              <Select
+                                value={currentResource.remoteDomConfig?.framework || 'react'}
+                                onValueChange={(value: 'react' | 'webcomponents') => {
+                                  updateResource({
+                                    remoteDomConfig: {
+                                      ...currentResource.remoteDomConfig,
+                                      framework: value,
+                                    },
+                                  });
+                                }}
+                              >
+                                <SelectTrigger id="framework">
+                                  <SelectValue placeholder="Select framework" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="react">
+                                    <div className="flex items-center gap-2">
+                                      <Component className="h-4 w-4" />
+                                      <span>React</span>
+                                    </div>
+                                  </SelectItem>
+                                  <SelectItem value="webcomponents">
+                                    <div className="flex items-center gap-2">
+                                      <Puzzle className="h-4 w-4" />
+                                      <span>Web Components</span>
+                                    </div>
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <p className="text-xs text-muted-foreground">
+                                {currentResource.remoteDomConfig?.framework === 'react'
+                                  ? 'Use React components via @remote-dom/core/client'
+                                  : 'Use native Web Components with customElements API'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </TooltipProvider>
+                    </div>
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
             </div>
           </CardContent>
         </Card>
@@ -587,170 +749,6 @@ export function ConfigureTab() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Section 3: Advanced Options */}
-        <Collapsible open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
-          <Card>
-            <CardHeader>
-              <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
-                <div className="flex items-center gap-2">
-                  <ChevronDown className={`h-4 w-4 transition-transform ${showAdvancedOptions ? '' : '-rotate-90'}`} />
-                  <CardTitle>Advanced Content Options</CardTitle>
-                </div>
-              </CollapsibleTrigger>
-              <CardDescription>Optional advanced configuration</CardDescription>
-            </CardHeader>
-            <CollapsibleContent>
-              <CardContent className="space-y-4 pt-2">
-                <TooltipProvider>
-                  {/* MIME Type (Read-only) */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Label>MIME Type</Label>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs">
-                          <p>Automatically determined based on content type</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                    <Badge variant="secondary" className="font-mono">
-                      {displayMimeType}
-                    </Badge>
-                    <p className="text-xs text-muted-foreground">
-                      Auto-determined from content type (read-only)
-                    </p>
-                  </div>
-
-                  {/* Encoding (only for rawHtml) */}
-                  {currentResource.contentType === 'rawHtml' && (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor="encoding">Encoding</Label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
-                            <p>Text encoding is standard. Use Base64 for embedding binary data or images.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      <Select
-                        value={currentResource.encoding || 'text'}
-                        onValueChange={(value: 'text' | 'base64') => updateResource({ encoding: value === 'text' ? undefined : value })}
-                      >
-                        <SelectTrigger id="encoding">
-                          <SelectValue placeholder="Select encoding" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="text">Text (UTF-8)</SelectItem>
-                          <SelectItem value="base64">Base64</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {/* Supported Content Types (only for rawHtml) */}
-                  {currentResource.contentType === 'rawHtml' && (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor="supportedContentTypes">Supported Content Types</Label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
-                            <p>Restrict which rendering modes are allowed for security/policy enforcement</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {(['rawHtml', 'externalUrl', 'remoteDom'] as const).map((type) => (
-                          <Badge
-                            key={type}
-                            variant={
-                              !currentResource.supportedContentTypes ||
-                              currentResource.supportedContentTypes.includes(type)
-                                ? 'default'
-                                : 'outline'
-                            }
-                            className="cursor-pointer"
-                            onClick={() => {
-                              const current = currentResource.supportedContentTypes || ['rawHtml', 'externalUrl', 'remoteDom'];
-                              const updated = current.includes(type)
-                                ? current.filter(t => t !== type)
-                                : [...current, type];
-                              updateResource({
-                                supportedContentTypes: updated.length === 3 ? undefined : updated as ('rawHtml' | 'externalUrl' | 'remoteDom')[]
-                              });
-                            }}
-                          >
-                            {type === 'rawHtml' && 'Raw HTML'}
-                            {type === 'externalUrl' && 'External URL'}
-                            {type === 'remoteDom' && 'Remote DOM'}
-                          </Badge>
-                        ))}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Click to toggle. All types enabled by default.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Remote DOM Framework (only when remoteDom is selected) */}
-                  {currentResource.contentType === 'remoteDom' && (
-                    <div className="space-y-2 pt-2 border-t">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className="h-4 w-4 text-primary" />
-                        <Label className="text-base font-medium">Remote DOM Framework</Label>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="framework">Framework</Label>
-                        <Select
-                          value={currentResource.remoteDomConfig?.framework || 'react'}
-                          onValueChange={(value: 'react' | 'webcomponents') => {
-                            updateResource({
-                              remoteDomConfig: {
-                                ...currentResource.remoteDomConfig,
-                                framework: value,
-                              },
-                            });
-                          }}
-                        >
-                          <SelectTrigger id="framework">
-                            <SelectValue placeholder="Select framework" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="react">
-                              <div className="flex items-center gap-2">
-                                <Component className="h-4 w-4" />
-                                <span>React</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="webcomponents">
-                              <div className="flex items-center gap-2">
-                                <Puzzle className="h-4 w-4" />
-                                <span>Web Components</span>
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <p className="text-xs text-muted-foreground">
-                          {currentResource.remoteDomConfig?.framework === 'react'
-                            ? 'Use React components via @remote-dom/core/client'
-                            : 'Use native Web Components with customElements API'}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </TooltipProvider>
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
 
         {/* Next Steps Alert */}
         <Alert>
