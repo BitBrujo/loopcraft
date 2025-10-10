@@ -7,18 +7,12 @@ import type {
   ComponentRelationship,
   DependencyWarning,
 } from '@/types/server-builder';
-import type {
-  ConversationalContext,
-  TemplateMatch,
-} from '@/types/conversational-builder';
 import {
   generateAnalysisPrompt,
   parseAIResponse,
   analyzeRelationships,
   validateDependencies,
 } from '@/lib/relationship-mapper';
-// Schema generator was removed - using inline stub for conversational context
-// TODO: Re-implement template matching for conversational builder
 
 // Simple in-memory cache for analysis results (5 minute TTL)
 const analysisCache = new Map<
@@ -53,38 +47,13 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       context,
-      conversationalContext,
       useAI = false,
     }: {
       context?: AnalysisContext;
-      conversationalContext?: ConversationalContext;
       useAI?: boolean;
     } = body;
 
-    // Support both analysis contexts
-    if (!context && !conversationalContext) {
-      return NextResponse.json(
-        { error: 'Invalid analysis context' },
-        { status: 400 }
-      );
-    }
-
-    // Handle conversational context
-    if (conversationalContext) {
-      // TODO: Re-implement template matching for conversational builder
-      // Returning empty matches for now
-      return NextResponse.json({
-        relationships: [],
-        warnings: [],
-        templateMatches: {
-          tools: [],
-          resources: [],
-        },
-        cached: false,
-      });
-    }
-
-    // Original analysis context validation
+    // Validate analysis context
     if (!context || !context.existingTools || !context.existingResources) {
       return NextResponse.json(
         { error: 'Invalid analysis context' },
