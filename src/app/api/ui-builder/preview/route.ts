@@ -26,6 +26,16 @@ export async function POST(request: NextRequest) {
     if (resource.metadata?.title) metadata.title = resource.metadata.title;
     if (resource.metadata?.description) metadata.description = resource.metadata.description;
 
+    // Add resource annotations (new fields)
+    if (resource.audience) metadata.audience = resource.audience;
+    if (resource.priority !== undefined) metadata.priority = resource.priority;
+
+    // Add MIME type to metadata (for renderer access)
+    const mimeType = resource.mimeType || getDefaultMimeType(resource.contentType);
+    if (resource.mimeType) {
+      metadata.mimeType = mimeType;
+    }
+
     // Add UI metadata with mcpui.dev/ui- prefix (required by MCP-UI spec)
     if (resource.uiMetadata?.['preferred-frame-size']) {
       metadata['mcpui.dev/ui-preferred-frame-size'] = resource.uiMetadata['preferred-frame-size'];
@@ -33,6 +43,44 @@ export async function POST(request: NextRequest) {
     if (resource.uiMetadata?.['initial-render-data']) {
       metadata['mcpui.dev/ui-initial-render-data'] = resource.uiMetadata['initial-render-data'];
     }
+    if (resource.uiMetadata?.['auto-resize-iframe'] !== undefined) {
+      metadata['mcpui.dev/ui-auto-resize-iframe'] = resource.uiMetadata['auto-resize-iframe'];
+    }
+    if (resource.uiMetadata?.['sandbox-permissions']) {
+      metadata['mcpui.dev/ui-sandbox-permissions'] = resource.uiMetadata['sandbox-permissions'];
+    }
+    if (resource.uiMetadata?.['iframe-title']) {
+      metadata['mcpui.dev/ui-iframe-title'] = resource.uiMetadata['iframe-title'];
+    }
+    if (resource.uiMetadata?.['container-style']) {
+      metadata['mcpui.dev/ui-container-style'] = resource.uiMetadata['container-style'];
+    }
+
+    // Validate custom MIME type format if provided
+    if (resource.mimeType && !/^[\w-]+\/[\w-+.]+$/.test(resource.mimeType)) {
+      return NextResponse.json(
+        { error: 'Invalid MIME type format. Expected format: type/subtype (e.g., text/html)' },
+        { status: 400 }
+      );
+    }
+
+    // Validate priority range if provided
+    if (resource.priority !== undefined && (resource.priority < 0 || resource.priority > 1)) {
+      return NextResponse.json(
+        { error: 'Priority must be between 0.0 and 1.0' },
+        { status: 400 }
+      );
+    }
+
+    // Helper function to get default MIME type
+    const getDefaultMimeType = (contentType: string): string => {
+      switch (contentType) {
+        case 'rawHtml': return 'text/html';
+        case 'externalUrl': return 'text/uri-list';
+        case 'remoteDom': return 'application/vnd.mcp-ui.remote-dom';
+        default: return 'text/html';
+      }
+    };
 
     switch (resource.contentType) {
       case 'rawHtml': {
@@ -47,10 +95,13 @@ export async function POST(request: NextRequest) {
           });
         }
 
+        // Map encoding: 'base64' → 'blob' for MCP-UI server compatibility
+        const encoding = resource.encoding === 'base64' ? ('blob' as const) : ('text' as const);
+
         mcpResource = createUIResource({
           uri: resource.uri as `ui://${string}`,
           content: { type: 'rawHtml', htmlString: htmlContent },
-          encoding: 'text',
+          encoding: encoding,
           metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
         });
         break;
@@ -64,10 +115,14 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
+
+        // Map encoding for MCP-UI server
+        const urlEncoding = resource.encoding === 'base64' ? ('blob' as const) : ('text' as const);
+
         mcpResource = createUIResource({
           uri: resource.uri as `ui://${string}`,
           content: { type: 'externalUrl', iframeUrl: resource.content },
-          encoding: 'text',
+          encoding: urlEncoding,
           metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
         });
         break;
@@ -84,6 +139,9 @@ export async function POST(request: NextRequest) {
           );
         }
 
+        // Map encoding for MCP-UI server
+        const domEncoding = resource.encoding === 'base64' ? ('blob' as const) : ('text' as const);
+
         mcpResource = createUIResource({
           uri: resource.uri as `ui://${string}`,
           content: {
@@ -91,7 +149,7 @@ export async function POST(request: NextRequest) {
             script: resource.content,
             framework: framework,
           },
-          encoding: 'text',
+          encoding: domEncoding,
           metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
         });
         break;

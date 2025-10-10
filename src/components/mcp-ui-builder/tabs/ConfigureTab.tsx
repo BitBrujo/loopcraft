@@ -616,47 +616,7 @@ export function ConfigureTab() {
         </CardContent>
       </Card>
 
-      {/* Standard Metadata */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Standard Metadata</CardTitle>
-          <CardDescription>
-            Basic information about this resource (maps to _meta property)
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              value={currentResource.metadata?.title || ''}
-              onChange={(e) => updateResource({
-                metadata: {
-                  ...currentResource.metadata,
-                  title: e.target.value
-                }
-              })}
-              placeholder="Dashboard UI"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={currentResource.metadata?.description || ''}
-              onChange={(e) => updateResource({
-                metadata: {
-                  ...currentResource.metadata,
-                  description: e.target.value
-                }
-              })}
-              placeholder="Interactive dashboard for monitoring key metrics"
-              rows={3}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Standard Metadata Card removed - fields moved to Design tab */}
 
       {/* UI Metadata */}
       <Card>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { ArrowRight, Sparkles, Info, Copy, Check, X } from 'lucide-react';
+import { ArrowRight, Sparkles, Info, Copy, Check, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { Button } from '@/components/ui/button';
 import { PreviewPanel } from '../PreviewPanel';
@@ -11,7 +11,12 @@ import { URLInput } from '../editors/URLInput';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Slider } from '@/components/ui/slider';
 import {
   Collapsible,
   CollapsibleContent,
@@ -343,6 +348,31 @@ export default document.createElement('my-component');`,
 // Combine all templates
 const ALL_TEMPLATES = [...HTML_TEMPLATES, ...REMOTE_DOM_TEMPLATES];
 
+// Common MIME types for dropdown
+const COMMON_MIME_TYPES = [
+  { value: 'text/html', label: 'text/html' },
+  { value: 'application/json', label: 'application/json' },
+  { value: 'text/xml', label: 'text/xml' },
+  { value: 'text/plain', label: 'text/plain' },
+  { value: 'text/uri-list', label: 'text/uri-list' },
+  { value: 'application/vnd.mcp-ui.remote-dom', label: 'application/vnd.mcp-ui.remote-dom' },
+  { value: 'custom', label: 'Custom' },
+] as const;
+
+// Helper function to get default MIME type based on content type
+function getMimeTypeDefault(contentType: ContentType): string {
+  switch (contentType) {
+    case 'rawHtml':
+      return 'text/html';
+    case 'externalUrl':
+      return 'text/uri-list';
+    case 'remoteDom':
+      return 'application/vnd.mcp-ui.remote-dom';
+    default:
+      return 'text/html';
+  }
+}
+
 // Helper function to wrap HTML content with Tailwind CDN
 function wrapWithTailwind(htmlContent: string): string {
   if (htmlContent.includes('<!DOCTYPE html>')) {
@@ -382,6 +412,8 @@ export function DesignTab() {
   const [selectedActionId, setSelectedActionId] = useState<string>('');
   const [selectedAction, setSelectedAction] = useState<ActionSnippet | null>(null);
   const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
+  const [customMimeType, setCustomMimeType] = useState<string>('');
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
 
   // Auto-detect template placeholders when HTML content changes
@@ -757,6 +789,214 @@ export function DesignTab() {
 
         {/* Middle: Editor */}
         <div className="flex-1 border-r overflow-hidden flex flex-col min-w-0">
+          {/* Resource Metadata Card - Positioned at top of middle column */}
+          <div className="border-b p-4 bg-muted/5 overflow-y-auto max-h-96">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Resource Metadata</CardTitle>
+                <CardDescription>Configure resource identification and visibility</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Basic Fields - Title & Description */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Title */}
+                  <div className="space-y-2">
+                    <Label htmlFor="res-title">Title</Label>
+                    <Input
+                      id="res-title"
+                      value={currentResource.metadata?.title || ''}
+                      onChange={(e) => updateResource({
+                        metadata: {
+                          ...currentResource.metadata,
+                          title: e.target.value
+                        }
+                      })}
+                      placeholder="Dashboard UI"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div className="space-y-2">
+                    <Label htmlFor="res-description">Description</Label>
+                    <Textarea
+                      id="res-description"
+                      value={currentResource.metadata?.description || ''}
+                      onChange={(e) => updateResource({
+                        metadata: {
+                          ...currentResource.metadata,
+                          description: e.target.value
+                        }
+                      })}
+                      placeholder="Interactive dashboard for monitoring key metrics"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                <Separator className="my-4" />
+
+                {/* MIME Type Selector */}
+                <div className="space-y-2">
+                  <Label htmlFor="mime-type">MIME Type</Label>
+                  <Select
+                    value={currentResource.mimeType || COMMON_MIME_TYPES.find(t => t.value === getMimeTypeDefault(currentResource.contentType))?.value || 'text/html'}
+                    onValueChange={(value) => {
+                      if (value === 'custom') {
+                        // Show custom input, keep current value or default
+                        setCustomMimeType(currentResource.mimeType || getMimeTypeDefault(currentResource.contentType));
+                      } else {
+                        updateResource({ mimeType: value });
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="mime-type">
+                      <SelectValue placeholder="Select MIME type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COMMON_MIME_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Custom MIME Type Input */}
+                  {currentResource.mimeType && !COMMON_MIME_TYPES.some(t => t.value === currentResource.mimeType) && (
+                    <Input
+                      value={customMimeType}
+                      onChange={(e) => setCustomMimeType(e.target.value)}
+                      onBlur={() => {
+                        // Validate format: type/subtype
+                        if (customMimeType && /^[\w-]+\/[\w-+.]+$/.test(customMimeType)) {
+                          updateResource({ mimeType: customMimeType });
+                        }
+                      }}
+                      placeholder="e.g., application/custom-format"
+                      className="mt-2"
+                    />
+                  )}
+
+                  <p className="text-xs text-muted-foreground">
+                    MIME type helps clients determine how to parse and render this resource. Auto-detected based on content type.
+                  </p>
+                </div>
+
+                {/* Audience Targeting */}
+                <div className="space-y-2">
+                  <Label>Audience</Label>
+                  <RadioGroup
+                    value={
+                      !currentResource.audience ? 'both' :
+                      currentResource.audience.includes('user') && !currentResource.audience.includes('assistant') ? 'user' :
+                      currentResource.audience.includes('assistant') && !currentResource.audience.includes('user') ? 'assistant' :
+                      'both'
+                    }
+                    onValueChange={(value) => {
+                      let audience: ('user' | 'assistant')[] | undefined;
+                      if (value === 'user') {
+                        audience = ['user'];
+                      } else if (value === 'assistant') {
+                        audience = ['assistant'];
+                      } else {
+                        audience = undefined; // both = no restriction
+                      }
+                      updateResource({ audience });
+                    }}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="both" id="audience-both" />
+                      <Label htmlFor="audience-both" className="font-normal cursor-pointer">
+                        Both (Default)
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="user" id="audience-user" />
+                      <Label htmlFor="audience-user" className="font-normal cursor-pointer">
+                        User Only
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="assistant" id="audience-assistant" />
+                      <Label htmlFor="audience-assistant" className="font-normal cursor-pointer">
+                        Assistant Only
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                  <p className="text-xs text-muted-foreground">
+                    Control who can see this UI resource. Assistant-only resources are hidden from end-users but available to AI agents.
+                  </p>
+                </div>
+
+                {/* Advanced Options - Collapsible Priority Field */}
+                <Collapsible open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="w-full justify-start px-0">
+                      {showAdvancedOptions ? (
+                        <ChevronDown className="h-4 w-4 mr-2" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 mr-2" />
+                      )}
+                      <span className="font-semibold">Advanced Options</span>
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-4 mt-3">
+                    {/* Priority Field */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="priority">Priority</Label>
+                        <span className="text-xs text-muted-foreground">
+                          {currentResource.priority !== undefined ? currentResource.priority.toFixed(1) : '0.5'}
+                        </span>
+                      </div>
+
+                      {/* Slider */}
+                      <Slider
+                        id="priority"
+                        value={[currentResource.priority !== undefined ? currentResource.priority : 0.5]}
+                        onValueChange={(values) => {
+                          const value = Math.max(0, Math.min(1, values[0]));
+                          updateResource({ priority: value });
+                        }}
+                        min={0}
+                        max={1}
+                        step={0.1}
+                        className="w-full"
+                      />
+
+                      {/* Number Input */}
+                      <Input
+                        type="number"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value={currentResource.priority !== undefined ? currentResource.priority : 0.5}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value);
+                          if (!isNaN(value)) {
+                            const clamped = Math.max(0, Math.min(1, value));
+                            updateResource({ priority: clamped });
+                          }
+                        }}
+                        placeholder="0.5"
+                      />
+
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>0.0 = Lowest</span>
+                        <span>0.5 = Medium</span>
+                        <span>1.0 = Highest</span>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground">
+                        Priority affects display order when multiple UI resources are available. May not apply if resource is linked to a single server.
+                      </p>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </CardContent>
+            </Card>
+          </div>
+
           {currentResource.contentType === 'rawHtml' && (
             <>
               <div className="flex-1 overflow-hidden">
