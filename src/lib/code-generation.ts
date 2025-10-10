@@ -37,7 +37,10 @@ export function generateTypeScriptCode(resource: UIResource): string {
   // Generate UI metadata (prefixed with mcpui.dev/ui-)
   const hasUiMetadata = resource.uiMetadata?.['preferred-frame-size'] ||
                         resource.uiMetadata?.['initial-render-data'] ||
-                        resource.uiMetadata?.['auto-resize-iframe'];
+                        resource.uiMetadata?.['auto-resize-iframe'] ||
+                        resource.uiMetadata?.['sandbox-permissions'] ||
+                        resource.uiMetadata?.['iframe-title'] ||
+                        resource.uiMetadata?.['container-style'];
 
   const uiMetadataParams: string[] = [];
   if (resource.uiMetadata?.['preferred-frame-size']) {
@@ -48,6 +51,15 @@ export function generateTypeScriptCode(resource: UIResource): string {
   }
   if (resource.uiMetadata?.['auto-resize-iframe'] !== undefined) {
     uiMetadataParams.push(`'auto-resize-iframe': ${JSON.stringify(resource.uiMetadata['auto-resize-iframe'])}`);
+  }
+  if (resource.uiMetadata?.['sandbox-permissions']) {
+    uiMetadataParams.push(`'sandbox-permissions': '${resource.uiMetadata['sandbox-permissions']}'`);
+  }
+  if (resource.uiMetadata?.['iframe-title']) {
+    uiMetadataParams.push(`'iframe-title': '${resource.uiMetadata['iframe-title']}'`);
+  }
+  if (resource.uiMetadata?.['container-style']) {
+    uiMetadataParams.push(`'container-style': ${JSON.stringify(resource.uiMetadata['container-style'])}`);
   }
 
   const uiMetadataParam = hasUiMetadata
@@ -177,7 +189,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const hasMetadata = resource.metadata?.title || resource.metadata?.description;
   const hasUiMetadata = resource.uiMetadata?.['preferred-frame-size'] ||
                         resource.uiMetadata?.['initial-render-data'] ||
-                        resource.uiMetadata?.['auto-resize-iframe'];
+                        resource.uiMetadata?.['auto-resize-iframe'] ||
+                        resource.uiMetadata?.['sandbox-permissions'] ||
+                        resource.uiMetadata?.['iframe-title'] ||
+                        resource.uiMetadata?.['container-style'];
 
   code += `
     const uiResource = createUIResource({
@@ -205,6 +220,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
     if (resource.uiMetadata?.['auto-resize-iframe'] !== undefined) {
       uiMetadataParts.push(`'auto-resize-iframe': ${JSON.stringify(resource.uiMetadata['auto-resize-iframe'])}`);
+    }
+    if (resource.uiMetadata?.['sandbox-permissions']) {
+      uiMetadataParts.push(`'sandbox-permissions': '${resource.uiMetadata['sandbox-permissions']}'`);
+    }
+    if (resource.uiMetadata?.['iframe-title']) {
+      uiMetadataParts.push(`'iframe-title': '${resource.uiMetadata['iframe-title']}'`);
+    }
+    if (resource.uiMetadata?.['container-style']) {
+      uiMetadataParts.push(`'container-style': ${JSON.stringify(resource.uiMetadata['container-style'])}`);
     }
     code += `\n        ${uiMetadataParts.join(',\n        ')}`;
     code += `\n      }`;
@@ -334,7 +358,10 @@ server.addTool({
   const hasMetadata = resource.metadata?.title || resource.metadata?.description;
   const hasUiMetadata = resource.uiMetadata?.['preferred-frame-size'] ||
                         resource.uiMetadata?.['initial-render-data'] ||
-                        resource.uiMetadata?.['auto-resize-iframe'];
+                        resource.uiMetadata?.['auto-resize-iframe'] ||
+                        resource.uiMetadata?.['sandbox-permissions'] ||
+                        resource.uiMetadata?.['iframe-title'] ||
+                        resource.uiMetadata?.['container-style'];
 
   code += `
     const uiResource = createUIResource({
@@ -362,6 +389,15 @@ server.addTool({
     }
     if (resource.uiMetadata?.['auto-resize-iframe'] !== undefined) {
       uiMetadataParts.push(`'auto-resize-iframe': ${JSON.stringify(resource.uiMetadata['auto-resize-iframe'])}`);
+    }
+    if (resource.uiMetadata?.['sandbox-permissions']) {
+      uiMetadataParts.push(`'sandbox-permissions': '${resource.uiMetadata['sandbox-permissions']}'`);
+    }
+    if (resource.uiMetadata?.['iframe-title']) {
+      uiMetadataParts.push(`'iframe-title': '${resource.uiMetadata['iframe-title']}'`);
+    }
+    if (resource.uiMetadata?.['container-style']) {
+      uiMetadataParts.push(`'container-style': ${JSON.stringify(resource.uiMetadata['container-style'])}`);
     }
     code += `\n        ${uiMetadataParts.join(',\n        ')}`;
     code += `\n      }`;

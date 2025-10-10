@@ -24,6 +24,16 @@ export interface StandardMetadata {
 }
 
 /**
+ * Container style configuration for iframe wrapper
+ */
+export interface ContainerStyle {
+  border?: string;        // e.g., "1px solid #ccc"
+  borderColor?: string;   // e.g., "#007acc"
+  borderRadius?: string;  // e.g., "8px"
+  minHeight?: string;     // e.g., "400px"
+}
+
+/**
  * MCP-UI specific metadata
  * These keys are automatically prefixed with 'mcpui.dev/ui-' in the resource
  */
@@ -45,6 +55,25 @@ export interface UIMetadata {
    * Can be boolean (both dimensions) or object for granular control
    */
   'auto-resize-iframe'?: boolean | { width?: boolean; height?: boolean };
+
+  /**
+   * Iframe sandbox permissions
+   * Controls security restrictions for iframe content
+   * Common values: 'allow-scripts', 'allow-forms allow-scripts allow-same-origin'
+   */
+  'sandbox-permissions'?: string;
+
+  /**
+   * Iframe title attribute for accessibility
+   * Helps screen readers identify the iframe content
+   */
+  'iframe-title'?: string;
+
+  /**
+   * Container style configuration
+   * CSS properties for the iframe wrapper element
+   */
+  'container-style'?: ContainerStyle;
 }
 
 /**

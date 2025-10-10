@@ -186,6 +186,21 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content, serverNam
   // Extract metadata from resource
   const preferredSize = resource._meta?.['mcpui.dev/ui-preferred-frame-size'] as [string, string] | undefined;
   const initialData = resource._meta?.['mcpui.dev/ui-initial-render-data'] as Record<string, unknown> | undefined;
+  const autoResize = resource._meta?.['mcpui.dev/ui-auto-resize-iframe'] as boolean | { width?: boolean; height?: boolean } | undefined;
+  const sandboxPerms = resource._meta?.['mcpui.dev/ui-sandbox-permissions'] as string | undefined;
+  const iframeTitle = resource._meta?.['mcpui.dev/ui-iframe-title'] as string | undefined;
+  const containerStyle = resource._meta?.['mcpui.dev/ui-container-style'] as { border?: string; borderColor?: string; borderRadius?: string; minHeight?: string } | undefined;
+
+  // Build container style object
+  const containerStyles: React.CSSProperties = {};
+  if (containerStyle?.border) containerStyles.border = containerStyle.border;
+  if (containerStyle?.borderColor) containerStyles.borderColor = containerStyle.borderColor;
+  if (containerStyle?.borderRadius) containerStyles.borderRadius = containerStyle.borderRadius;
+  if (containerStyle?.minHeight) containerStyles.minHeight = containerStyle.minHeight;
+  if (preferredSize) {
+    containerStyles.width = preferredSize[0];
+    containerStyles.height = preferredSize[1];
+  }
 
   return (
     <div className="mcp-ui-container border rounded-lg p-4 my-4 bg-card">
@@ -197,15 +212,21 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content, serverNam
           resource={resource}
           onUIAction={handleUIAction}
           htmlProps={{
-            autoResizeIframe: true,
-            sandboxPermissions: 'allow-forms allow-scripts allow-same-origin',
+            // Use custom auto-resize setting or default to true
+            autoResizeIframe: autoResize !== undefined ? autoResize : true,
+            // Use custom sandbox permissions or default to standard
+            sandboxPermissions: sandboxPerms || 'allow-forms allow-scripts allow-same-origin',
             // Pass initial render data from metadata
             iframeRenderData: initialData,
-            // Use preferred size if specified in metadata
-            style: preferredSize ? {
-              width: preferredSize[0],
-              height: preferredSize[1],
-            } : undefined,
+            // Apply container styles
+            style: Object.keys(containerStyles).length > 0 ? containerStyles : undefined,
+            // Set iframe title if provided
+            iframeProps: iframeTitle ? {
+              title: iframeTitle,
+              'data-mcp-ui-resource': 'true'
+            } : {
+              'data-mcp-ui-resource': 'true'
+            },
           }}
         />
       </div>

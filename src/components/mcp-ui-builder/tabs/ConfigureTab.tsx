@@ -228,42 +228,6 @@ export function ConfigureTab() {
         </CardContent>
       </Card>
 
-      {/* Renderer Options - Show on far right when Remote DOM is not selected */}
-      {currentResource.contentType !== 'remoteDom' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Renderer Options</CardTitle>
-            <CardDescription>
-              Configure how the UI resource is rendered
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Auto-Resize Iframe */}
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="autoResize"
-                  checked={!!currentResource.uiMetadata?.['auto-resize-iframe']}
-                  onChange={(e) => updateResource({
-                    uiMetadata: {
-                      ...currentResource.uiMetadata,
-                      'auto-resize-iframe': e.target.checked
-                    }
-                  })}
-                  className="h-4 w-4 rounded border-gray-300"
-                />
-                <Label htmlFor="autoResize" className="font-normal cursor-pointer">
-                  Auto-resize iframe to content
-                </Label>
-              </div>
-              <p className="text-xs text-muted-foreground ml-6">
-                Automatically adjusts iframe dimensions to fit content. Iframe uses secure sandbox permissions by default.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Remote DOM Framework Selection - Only show when remoteDom is selected */}
       {currentResource.contentType === 'remoteDom' && (
@@ -483,6 +447,226 @@ export function ConfigureTab() {
               </p>
             </div>
           )}
+
+          <Separator className="my-4" />
+
+          {/* Renderer Options Section */}
+          <div className="space-y-4">
+            <div>
+              <h4 className="text-sm font-medium mb-1">Renderer Options</h4>
+              <p className="text-xs text-muted-foreground">Configure iframe rendering behavior</p>
+            </div>
+
+            {/* Auto-Resize Iframe */}
+            {currentResource.contentType !== 'remoteDom' && (
+              <div className="space-y-2">
+                <Label htmlFor="autoResize">Auto-Resize Iframe</Label>
+                <Select
+                  value={
+                    typeof currentResource.uiMetadata?.['auto-resize-iframe'] === 'boolean'
+                      ? currentResource.uiMetadata['auto-resize-iframe']
+                        ? 'both'
+                        : 'disabled'
+                      : typeof currentResource.uiMetadata?.['auto-resize-iframe'] === 'object'
+                        ? currentResource.uiMetadata['auto-resize-iframe'].width && currentResource.uiMetadata['auto-resize-iframe'].height
+                          ? 'both'
+                          : currentResource.uiMetadata['auto-resize-iframe'].width
+                            ? 'width'
+                            : 'height'
+                        : 'disabled'
+                  }
+                  onValueChange={(value) => {
+                    const autoResize =
+                      value === 'disabled' ? false :
+                      value === 'both' ? true :
+                      value === 'width' ? { width: true } :
+                      { height: true };
+                    updateResource({
+                      uiMetadata: {
+                        ...currentResource.uiMetadata,
+                        'auto-resize-iframe': autoResize
+                      }
+                    });
+                  }}
+                >
+                  <SelectTrigger id="autoResize">
+                    <SelectValue placeholder="Choose resize behavior" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="disabled">Disabled</SelectItem>
+                    <SelectItem value="both">Both dimensions</SelectItem>
+                    <SelectItem value="width">Width only</SelectItem>
+                    <SelectItem value="height">Height only</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Automatically adjusts iframe size to fit content
+                </p>
+              </div>
+            )}
+
+            {/* Sandbox Permissions */}
+            {currentResource.contentType !== 'remoteDom' && (
+              <div className="space-y-2">
+                <Label htmlFor="sandboxPermissions">Sandbox Permissions</Label>
+                <Select
+                  value={
+                    currentResource.uiMetadata?.['sandbox-permissions'] === 'allow-scripts' ? 'strict' :
+                    currentResource.uiMetadata?.['sandbox-permissions'] === 'allow-forms allow-scripts allow-same-origin allow-popups' ? 'permissive' :
+                    currentResource.uiMetadata?.['sandbox-permissions'] &&
+                    currentResource.uiMetadata['sandbox-permissions'] !== 'allow-forms allow-scripts allow-same-origin' ? 'custom' :
+                    'standard'
+                  }
+                  onValueChange={(value) => {
+                    const permissions =
+                      value === 'strict' ? 'allow-scripts' :
+                      value === 'permissive' ? 'allow-forms allow-scripts allow-same-origin allow-popups' :
+                      value === 'custom' ? currentResource.uiMetadata?.['sandbox-permissions'] || '' :
+                      'allow-forms allow-scripts allow-same-origin';
+                    updateResource({
+                      uiMetadata: {
+                        ...currentResource.uiMetadata,
+                        'sandbox-permissions': permissions
+                      }
+                    });
+                  }}
+                >
+                  <SelectTrigger id="sandboxPermissions">
+                    <SelectValue placeholder="Choose security level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="standard">Standard (forms, scripts, same-origin)</SelectItem>
+                    <SelectItem value="strict">Strict (scripts only)</SelectItem>
+                    <SelectItem value="permissive">Permissive (includes popups)</SelectItem>
+                    <SelectItem value="custom">Custom</SelectItem>
+                  </SelectContent>
+                </Select>
+                {(currentResource.uiMetadata?.['sandbox-permissions'] &&
+                  currentResource.uiMetadata['sandbox-permissions'] !== 'allow-scripts' &&
+                  currentResource.uiMetadata['sandbox-permissions'] !== 'allow-forms allow-scripts allow-same-origin' &&
+                  currentResource.uiMetadata['sandbox-permissions'] !== 'allow-forms allow-scripts allow-same-origin allow-popups') && (
+                  <Input
+                    value={currentResource.uiMetadata['sandbox-permissions']}
+                    onChange={(e) => updateResource({
+                      uiMetadata: {
+                        ...currentResource.uiMetadata,
+                        'sandbox-permissions': e.target.value
+                      }
+                    })}
+                    placeholder="allow-scripts allow-forms"
+                  />
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Controls iframe security restrictions
+                </p>
+              </div>
+            )}
+
+            {/* Iframe Title */}
+            <div className="space-y-2">
+              <Label htmlFor="iframeTitle">Iframe Title (Accessibility)</Label>
+              <Input
+                id="iframeTitle"
+                value={currentResource.uiMetadata?.['iframe-title'] || ''}
+                onChange={(e) => updateResource({
+                  uiMetadata: {
+                    ...currentResource.uiMetadata,
+                    'iframe-title': e.target.value
+                  }
+                })}
+                placeholder="Contact Form Interface"
+              />
+              <p className="text-xs text-muted-foreground">
+                Helps screen readers identify the iframe content
+              </p>
+            </div>
+
+            {/* Container Style */}
+            <div className="space-y-2">
+              <Label>Container Style</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label htmlFor="border" className="text-xs text-muted-foreground">
+                    Border
+                  </Label>
+                  <Input
+                    id="border"
+                    value={currentResource.uiMetadata?.['container-style']?.border || ''}
+                    onChange={(e) => updateResource({
+                      uiMetadata: {
+                        ...currentResource.uiMetadata,
+                        'container-style': {
+                          ...currentResource.uiMetadata?.['container-style'],
+                          border: e.target.value
+                        }
+                      }
+                    })}
+                    placeholder="1px solid #ccc"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="borderColor" className="text-xs text-muted-foreground">
+                    Border Color
+                  </Label>
+                  <Input
+                    id="borderColor"
+                    type="color"
+                    value={currentResource.uiMetadata?.['container-style']?.borderColor || '#cccccc'}
+                    onChange={(e) => updateResource({
+                      uiMetadata: {
+                        ...currentResource.uiMetadata,
+                        'container-style': {
+                          ...currentResource.uiMetadata?.['container-style'],
+                          borderColor: e.target.value
+                        }
+                      }
+                    })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="borderRadius" className="text-xs text-muted-foreground">
+                    Border Radius
+                  </Label>
+                  <Input
+                    id="borderRadius"
+                    value={currentResource.uiMetadata?.['container-style']?.borderRadius || ''}
+                    onChange={(e) => updateResource({
+                      uiMetadata: {
+                        ...currentResource.uiMetadata,
+                        'container-style': {
+                          ...currentResource.uiMetadata?.['container-style'],
+                          borderRadius: e.target.value
+                        }
+                      }
+                    })}
+                    placeholder="8px"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="minHeight" className="text-xs text-muted-foreground">
+                    Min Height
+                  </Label>
+                  <Input
+                    id="minHeight"
+                    value={currentResource.uiMetadata?.['container-style']?.minHeight || ''}
+                    onChange={(e) => updateResource({
+                      uiMetadata: {
+                        ...currentResource.uiMetadata,
+                        'container-style': {
+                          ...currentResource.uiMetadata?.['container-style'],
+                          minHeight: e.target.value
+                        }
+                      }
+                    })}
+                    placeholder="400px"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Visual customization for the iframe container
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
