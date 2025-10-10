@@ -77,45 +77,6 @@ export function URLInput({ value, onChange }: URLInputProps) {
               <p className="text-sm text-red-500 mt-1">Please enter a valid URL</p>
             )}
           </div>
-
-          <div className="bg-muted p-4 rounded-md">
-            <h4 className="text-sm font-medium mb-2">Examples:</h4>
-            <ul className="text-sm space-y-1 text-muted-foreground">
-              <li>
-                <button
-                  className="hover:text-foreground transition-colors"
-                  onClick={() => onChange("https://example.com")}
-                >
-                  https://example.com
-                </button>
-              </li>
-              <li>
-                <button
-                  className="hover:text-foreground transition-colors"
-                  onClick={() => onChange("https://wikipedia.org")}
-                >
-                  https://wikipedia.org
-                </button>
-              </li>
-              <li>
-                <button
-                  className="hover:text-foreground transition-colors"
-                  onClick={() => onChange("https://github.com")}
-                >
-                  https://github.com
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-md">
-            <h4 className="text-sm font-medium mb-1 text-amber-700 dark:text-amber-400">
-              Note
-            </h4>
-            <p className="text-sm text-muted-foreground">
-              Some websites may not allow embedding due to X-Frame-Options or CSP headers.
-            </p>
-          </div>
         </div>
       </div>
     </div>

@@ -102,7 +102,11 @@ export function ConfigureTab() {
   }
 
   const handleContentTypeChange = (value: ContentType) => {
-    updateResource({ contentType: value });
+    // Clear content when switching content types to avoid stale data
+    updateResource({
+      contentType: value,
+      content: '' // Reset content when changing type
+    });
   };
 
   const handleSizePresetChange = (preset: SizePreset) => {
@@ -425,79 +429,6 @@ export function ConfigureTab() {
               Automatically adjusts iframe dimensions to fit content. Iframe uses secure sandbox permissions by default.
             </p>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* MCP-UI Action Types Help */}
-      <Card className="lg:col-span-2 border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-900 dark:text-blue-100">
-            <Sparkles className="h-5 w-5" />
-            MCP-UI Action Types
-          </CardTitle>
-          <CardDescription className="text-blue-700 dark:text-blue-300">
-            Your UI can use 5 powerful action types to interact with the application
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="font-mono">tool</Badge>
-                <span className="text-sm font-medium">Execute MCP Tools</span>
-              </div>
-              <p className="text-xs text-muted-foreground ml-1">
-                Call MCP tools from UI elements (e.g., form submission, data creation)
-              </p>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="font-mono">prompt</Badge>
-                <span className="text-sm font-medium">Send AI Prompts</span>
-              </div>
-              <p className="text-xs text-muted-foreground ml-1">
-                Insert prompts into chat (e.g., help requests, contextual questions)
-              </p>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="font-mono">link</Badge>
-                <span className="text-sm font-medium">Open External Links</span>
-              </div>
-              <p className="text-xs text-muted-foreground ml-1">
-                Open URLs in new tabs (e.g., documentation, external resources)
-              </p>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="font-mono">intent</Badge>
-                <span className="text-sm font-medium">Trigger App Actions</span>
-              </div>
-              <p className="text-xs text-muted-foreground ml-1">
-                Navigate or trigger app-level actions (e.g., go to settings, custom workflows)
-              </p>
-            </div>
-
-            <div className="space-y-1.5 md:col-span-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="font-mono">notify</Badge>
-                <span className="text-sm font-medium">Show Notifications</span>
-              </div>
-              <p className="text-xs text-muted-foreground ml-1">
-                Display toast notifications (e.g., success messages, error alerts, status updates)
-              </p>
-            </div>
-          </div>
-
-          <Alert className="mt-4">
-            <Info className="h-4 w-4" />
-            <AlertDescription className="text-sm">
-              <strong>Tip:</strong> In the <strong>Design</strong> tab, use the Action Snippets library to easily add these action types to your HTML.
-            </AlertDescription>
-          </Alert>
         </CardContent>
       </Card>
 
