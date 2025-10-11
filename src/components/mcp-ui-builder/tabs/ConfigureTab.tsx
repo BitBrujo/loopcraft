@@ -320,21 +320,20 @@ export function ConfigureTab() {
 
               {/* Advanced Content Options - Nested under MCP Server Integration */}
               <Collapsible open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions} className="mt-4">
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2">
-                    <span className="flex items-center gap-2 font-semibold">
-                      <span
-                        className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
-                        style={{ backgroundColor: '#6d8d96' }}
-                      >
-                        Advanced Content Options
-                      </span>
-                    </span>
-                    <ChevronDown className={`h-4 w-4 transition-transform ${showAdvancedOptions ? '' : '-rotate-90'}`} />
-                  </Button>
-                </CollapsibleTrigger>
                 <div className="rounded-lg border bg-muted/30 p-4">
-                  <p className="text-xs text-muted-foreground mb-3">Optional advanced configuration</p>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent -m-4 mb-0 p-4 rounded-t-lg">
+                      <span className="flex items-center gap-2 font-semibold">
+                        <span
+                          className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
+                          style={{ backgroundColor: '#6d8d96' }}
+                        >
+                          Advanced Content Options
+                        </span>
+                      </span>
+                      <ChevronDown className={`h-4 w-4 transition-transform ${showAdvancedOptions ? '' : '-rotate-90'}`} />
+                    </Button>
+                  </CollapsibleTrigger>
                   <CollapsibleContent>
                     <div className="space-y-4 pt-2">
                       <TooltipProvider>
@@ -563,13 +562,12 @@ export function ConfigureTab() {
             {/* Renderer Options Section - Collapsible */}
             <Collapsible open={showRendererOptions} onOpenChange={setShowRendererOptions}>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-4">
+                <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-4 py-3">
                   <span className="flex items-center gap-2 font-semibold">
                     <span
-                      className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium text-white"
+                      className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
                       style={{ backgroundColor: '#6d8d96' }}
                     >
-                      <Settings className="h-4 w-4" />
                       Renderer Options
                     </span>
                   </span>

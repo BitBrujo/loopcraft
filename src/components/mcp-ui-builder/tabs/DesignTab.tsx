@@ -720,46 +720,6 @@ export function DesignTab() {
             </Card>
           )}
 
-          {/* Initial Render Data - Collapsible */}
-          {currentResource.contentType === 'rawHtml' && (
-            <div className="flex-shrink-0 space-y-2">
-              <Collapsible>
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2">
-                    <span className="flex items-center gap-2 font-semibold">
-                      Initial Render Data
-                      <Badge variant="secondary" className="text-xs">Optional</Badge>
-                    </span>
-                    <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="space-y-2 p-2">
-                    <Label className="text-xs text-muted-foreground">
-                      Data passed to iframe on first render
-                    </Label>
-                    <div className="border rounded-md overflow-hidden">
-                      <Editor
-                        height="120px"
-                        defaultLanguage="json"
-                        value={initialData ? JSON.stringify(initialData, null, 2) : '{}'}
-                        onChange={(value) => value && handleInitialDataChange(value)}
-                        theme="vs-dark"
-                        options={{
-                          minimap: { enabled: false },
-                          lineNumbers: 'off',
-                          scrollBeyondLastLine: false,
-                          folding: false,
-                          fontSize: 11,
-                        }}
-                      />
-                    </div>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            </div>
-          )}
-
           {/* Placeholder Test Data - Only show if placeholders exist */}
           {currentResource.templatePlaceholders && currentResource.templatePlaceholders.length > 0 && (
             <div className="flex-shrink-0">
@@ -812,7 +772,7 @@ export function DesignTab() {
           <div className="flex-shrink-0">
             <Collapsible open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2">
+                <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2 py-3">
                   <span className="flex items-center gap-2 font-semibold">
                     <span
                       className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
@@ -972,6 +932,46 @@ export function DesignTab() {
               </CollapsibleContent>
             </Collapsible>
           </div>
+
+          {/* Initial Render Data - Collapsible */}
+          {currentResource.contentType === 'rawHtml' && (
+            <div className="flex-shrink-0 space-y-2">
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2">
+                    <span className="flex items-center gap-2 font-semibold">
+                      Initial Render Data
+                      <Badge variant="secondary" className="text-xs">Optional</Badge>
+                    </span>
+                    <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="space-y-2 p-2">
+                    <Label className="text-xs text-muted-foreground">
+                      Data passed to iframe on first render
+                    </Label>
+                    <div className="border rounded-md overflow-hidden">
+                      <Editor
+                        height="120px"
+                        defaultLanguage="json"
+                        value={initialData ? JSON.stringify(initialData, null, 2) : '{}'}
+                        onChange={(value) => value && handleInitialDataChange(value)}
+                        theme="vs-dark"
+                        options={{
+                          minimap: { enabled: false },
+                          lineNumbers: 'off',
+                          scrollBeyondLastLine: false,
+                          folding: false,
+                          fontSize: 11,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+          )}
         </div>
 
         {/* Right Column: Code + Optional Preview */}
