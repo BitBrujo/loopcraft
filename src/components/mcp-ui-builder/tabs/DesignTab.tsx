@@ -559,14 +559,14 @@ export function DesignTab() {
           {/* Templates Dropdown - Only for rawHtml and remoteDom */}
           {(currentResource.contentType === 'rawHtml' || currentResource.contentType === 'remoteDom') && (
             <div>
-              <Label className="text-sm font-semibold mb-2 block">
+              <div className="mb-2">
                 <span
                   className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
                   style={{ backgroundColor: '#6d8d96' }}
                 >
                   Templates
                 </span>
-              </Label>
+              </div>
               <Select value={selectedTemplateId} onValueChange={handleTemplateSelect}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a template..." />
@@ -598,14 +598,14 @@ export function DesignTab() {
           {/* Action Category Dropdown - Only for rawHtml */}
           {currentResource.contentType === 'rawHtml' && (
             <div>
-              <Label className="text-sm font-semibold mb-2 block">
+              <div className="mb-2">
                 <span
                   className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
                   style={{ backgroundColor: '#6d8d96' }}
                 >
                   Actions
                 </span>
-              </Label>
+              </div>
               <Select value={selectedCategory} onValueChange={handleCategorySelect}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select action type..." />
@@ -773,13 +773,11 @@ export function DesignTab() {
             <Collapsible open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2 py-3">
-                  <span className="flex items-center gap-2 font-semibold">
-                    <span
-                      className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
-                      style={{ backgroundColor: '#6d8d96' }}
-                    >
-                      Resource Metadata
-                    </span>
+                  <span
+                    className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
+                    style={{ backgroundColor: '#6d8d96' }}
+                  >
+                    Resource Metadata
                   </span>
                   <ChevronDown className={`h-4 w-4 transition-transform ${showAdvancedOptions ? '' : '-rotate-90'}`} />
                 </Button>
