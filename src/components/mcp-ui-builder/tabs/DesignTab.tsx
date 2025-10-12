@@ -719,7 +719,7 @@ export function DesignTab() {
             <div className="flex-shrink-0">
               <Collapsible>
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2">
+                  <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2 py-6">
                     <span className="flex items-center gap-2 font-semibold">
                       <Sparkles className="h-4 w-4" />
                       Placeholder Test Data
@@ -931,9 +931,11 @@ export function DesignTab() {
             <div className="flex-shrink-0 space-y-2">
               <Collapsible>
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2">
-                    <span className="flex items-center gap-2 font-semibold">
-                      Initial Render Data
+                  <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2 py-6">
+                    <span className="flex items-center gap-2">
+                      <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5">
+                        Initial Render Data
+                      </Badge>
                       <Badge variant="secondary" className="text-xs">Optional</Badge>
                     </span>
                     <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />

@@ -319,7 +319,7 @@ export function ConfigureTab() {
               <Collapsible open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions} className="mt-4">
                 <div className="rounded-lg border bg-muted/30 p-4">
                   <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent -m-4 mb-0 p-4 rounded-t-lg">
+                    <Button variant="ghost" size="sm" className="flex w-full justify-between hover:bg-accent -m-4 mb-0 mr-0 p-4 py-6 rounded-t-lg">
                       <span className="flex items-center gap-2 font-semibold">
                         <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5">
                           Advanced Content Options
@@ -554,7 +554,7 @@ export function ConfigureTab() {
             {/* Renderer Options Section - Collapsible */}
             <Collapsible open={showRendererOptions} onOpenChange={setShowRendererOptions}>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-4 py-3">
+                <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-4 py-6">
                   <span className="flex items-center gap-2 font-semibold">
                     <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5">
                       Renderer Options
