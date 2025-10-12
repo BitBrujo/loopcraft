@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChatLayout } from "@/components/chat/ChatLayout";
 import { PencilRuler, Server, MessageCircle } from "lucide-react";
+import Artwork33 from "@/components/Artwork33";
 
 export function HomePage() {
   const router = useRouter();
@@ -63,6 +64,9 @@ export function HomePage() {
               Build, test, and deploy MCP servers with ease
             </p>
           </div>
+
+          {/* Artwork */}
+          <Artwork33 />
 
           {/* Feature Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
