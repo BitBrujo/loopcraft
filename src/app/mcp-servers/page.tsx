@@ -268,7 +268,11 @@ export default function MCPServersPage() {
                 <p className="text-sm text-muted-foreground mb-4">
                   Get started by adding your first MCP server
                 </p>
-                <Button onClick={openAddServerDialog} variant="outline">
+                <Button
+                  onClick={openAddServerDialog}
+                  variant="outline"
+                  className="hover:!bg-orange-500 hover:!text-white hover:!border-orange-500 transition-all"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Server
                 </Button>

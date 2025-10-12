@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { Info, Check, AlertCircle, Server, Sparkles, ChevronDown, Component, Puzzle, Settings } from 'lucide-react';
+import { Info, Check, AlertCircle, Server, ChevronDown, Component, Puzzle, Settings } from 'lucide-react';
 import type { ContentType } from '@/types/ui-builder';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -438,7 +438,6 @@ export function ConfigureTab() {
                         {currentResource.contentType === 'remoteDom' && (
                           <div className="space-y-2 pt-2 border-t">
                             <div className="flex items-center gap-2 mb-2">
-                              <Sparkles className="h-4 w-4 text-primary" />
                               <Label className="text-base font-medium">Remote DOM Framework</Label>
                             </div>
                             <div className="space-y-2">

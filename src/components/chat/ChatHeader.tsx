@@ -69,12 +69,12 @@ export function ChatHeader() {
         {/* Left: Branding */}
         <div className="flex items-center space-x-3 flex-1">
           <MobileSidebar />
-          <div className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <MessageSquare className="h-4 w-4 text-primary-foreground" />
             </div>
             <h1 className="text-lg font-semibold tracking-tight">LoopCraft</h1>
-          </div>
+          </Link>
           <Separator orientation="vertical" className="h-6 hidden sm:block" />
           <Badge variant="secondary" className="text-xs hidden sm:block">
             {modelName}
