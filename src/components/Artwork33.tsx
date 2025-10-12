@@ -96,7 +96,7 @@ const Artwork33 = () => {
         this.phase = initialPhase || random(TWO_PI);
         this.radius = random(90, 110);
         this.yOffset = random(-300, 300);
-        this.ySpeed = random(0.3, 0.6) * (random() > 0.5 ? 1 : -1);
+        this.ySpeed = random(0.3, 0.6) * (Math.random() > 0.5 ? 1 : -1);
         this.rotationSpeed = random(0.005, 0.0075);
         this.size = random(3, 6); // Slightly larger points
         this.opacity = random(120, 180);
