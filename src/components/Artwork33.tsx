@@ -18,12 +18,13 @@ const Artwork33 = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Make canvas responsive
+    // Make canvas responsive with max height of 250px
     const resizeCanvas = () => {
       const containerWidth = container.offsetWidth;
-      const aspectRatio = 4 / 3; // 800x600 original ratio
+      const maxHeight = 250; // Maximum height to fit page
+      const aspectRatio = 16 / 5; // Wider ratio for shorter canvas
       const width = Math.min(containerWidth, 800);
-      const height = width / aspectRatio;
+      const height = Math.min(width / aspectRatio, maxHeight);
 
       canvas.width = width;
       canvas.height = height;
@@ -248,7 +249,7 @@ const Artwork33 = () => {
   }, []);
 
   return (
-    <div ref={containerRef} className="w-full flex items-center justify-center mb-8">
+    <div ref={containerRef} className="w-full flex items-center justify-center">
       <canvas ref={canvasRef} className="max-w-full" />
     </div>
   );
