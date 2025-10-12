@@ -38,7 +38,7 @@ export default function LoginPage() {
         localStorage.setItem("user", JSON.stringify(data.user));
 
         // Redirect to home
-        router.push("/home");
+        router.push("/");
       } else {
         setError(data.error || "Login failed");
       }
@@ -57,7 +57,7 @@ export default function LoginPage() {
           <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <LogIn className="h-6 w-6 text-primary" />
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent whitespace-nowrap">
             Welcome to LoopCraft
           </h1>
           <p className="text-sm text-muted-foreground mt-2">
