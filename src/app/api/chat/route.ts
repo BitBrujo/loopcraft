@@ -103,9 +103,8 @@ export async function POST(req: Request) {
               if (Array.isArray(content) && content.length > 0) {
                 const firstContent = content[0] as { type?: string; resource?: unknown; text?: string };
 
-                // If it's text content, check for UI resource marker or return as-is
+                // If it's text content, return as-is
                 if (firstContent.type === "text" && firstContent.text) {
-                  // Already has the marker from hypermemory server, return as-is
                   return firstContent.text;
                 }
 

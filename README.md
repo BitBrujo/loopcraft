@@ -6,29 +6,20 @@ A Next.js 15 application that integrates the Model Context Protocol (MCP) with a
 
 ### 🤖 AI-Powered Chat Interface
 - Natural language conversations with MCP tool integration
-- User-configurable AI models and providers (Ollama)
-- Streaming responses with real-time updates
-- Per-user AI configuration (model selection, API endpoints)
+- User-configurable AI models and providers, including local Ollama
 - Interactive MCP-UI component rendering with bidirectional communication
-- Clean, modern interface with gradient styling and smooth animations
 
 ### 🔌 Model Context Protocol (MCP) Integration
 - **User-specific MCP servers** managed through Settings UI
 - Support for stdio, SSE, and HTTP transports
 - Dynamic tool registration and resource handling
-- Automatic server cleanup and error tracking
-- Authentication support (app-level JWT + MCP-level env vars)
-- Bidirectional communication between UI and MCP servers
 
 ### 🎨 MCP-UI Builder
 
 **Visual tool for creating UI resources following the official MCP-UI specification**
 
 #### Core Features
-- **Clean, Modern Interface**: Centered gradient title with orange accent theme
-- **Reset Functionality**: Clear all builder state with confirmation dialog
-- **Server Integration**: Select target MCP server or create standalone resources
-- **3 Content Types**: rawHtml (default), externalUrl, remoteDom (coming soon)
+- **3 Content Types**: rawHtml (default), externalUrl, remoteDom
 - **HTML Template Library**: 13 ready-to-use templates
   - Forms, Dashboards, Tables, Galleries, Charts
   - Action Examples: AI Assistant Helper, Documentation Viewer, Navigation Panel, Status Notifier, Multi-Action Demo
@@ -41,27 +32,7 @@ A Next.js 15 application that integrates the Model Context Protocol (MCP) with a
 - **Initial Render Data**: JSON editor for passing initial state
 - **Export Options**: Integration snippet OR standalone server (TypeScript/JavaScript)
 - **Live Preview**: Real-time iframe preview with MCPUIRenderer
-- **Save/Load Templates**: Persist and reuse UI resources (JWT auth required)
-
-#### 3-Tab Workflow
-
-1. **Configure Tab**
-   - Select MCP server or create standalone
-   - Set resource URI (format: `ui://server/resource`)
-   - Choose content type and size preset
-   - Configure metadata and renderer options
-
-2. **Design Tab**
-   - Browse 13 HTML templates or use action snippets library
-   - Edit content in Monaco editor with live preview
-   - Configure initial render data (collapsible)
-   - Insert action snippets at cursor position
-
-3. **Export Tab**
-   - Choose integration snippet or standalone server
-   - Select language (TypeScript/JavaScript)
-   - Copy code or download file
-   - Server-aware code generation
+- **Save/Load Templates**: Persist and reuse UI resources
 
 ### 🔄 MCP-UI Action Types
 
@@ -225,34 +196,11 @@ hyperface/
 - **Lucide React**: Icon library
 - **Zod**: Schema validation
 - **React Hook Form**: Form management
-- **React Flow**: Visual flow diagrams
-
-## 🔐 Authentication & Security
-
-### User Authentication
-- JWT token-based authentication
-- Bcrypt password hashing
-- Token expiration with configurable lifetime
-- Secure HTTP-only cookie support (optional)
-
-### MCP Server Security
-- **App-level auth**: JWT tokens for accessing user-specific database servers
-- **MCP-level auth**: Environment variables for remote server authentication
-  - Stdio: Env vars passed to spawned process
-  - SSE/HTTP: Converted to HTTP headers
-    - `API_KEY` → `Authorization: Bearer {value}`
-    - `BEARER_TOKEN` → `Authorization: Bearer {value}`
-    - `HEADER_X_Custom` → `X-Custom: {value}` custom header
 
 ## 📚 MCP Integration
 
 ### Server Management
 All MCP servers are user-specific and managed through the Settings UI:
-- Stored in MySQL `mcp_servers` table per user
-- Managed via `/settings` page with UI
-- Supports authentication via `env` field
-- Auto-connects when user is logged in
-- Automatic cleanup when servers are deleted
 
 ### Transport Types
 - **stdio**: Local process-based servers (e.g., filesystem, memory)
@@ -260,147 +208,11 @@ All MCP servers are user-specific and managed through the Settings UI:
 - **http**: HTTP streaming transport (treated as SSE)
 
 ### MCPClientManager Features
-- Connection management (idempotent connect/disconnect)
-- Error tracking with stored error messages
+- Connection management
 - User server tracking and cleanup
-- Tool & resource operations (listTools, callTool, listResources, getResource)
-- Environment variable handling for authentication
-
-## 🎯 Application Navigation
-
-### Main Routes (3-Tab Navigation)
-1. **UI Builder** (`/mcp-ui-builder`) - Visual tool for creating interactive MCP-UI components
-2. **Servers** (`/mcp-servers`) - Manage MCP server connections and configurations
-3. **Chat** (`/chat`) - Test MCP tools with AI-powered chat interface
-
-### Additional Routes
-- **Home** (`/`) - Landing page with animated artwork and feature cards
-  - **Artwork33**: Animated double helix canvas visualization
-    - Themes: balance, equilibrium, opposing forces in harmony
-    - Responsive design with smooth 60fps animations
-  - Streamlined 3-card layout with gradient styling
-  - Hover effects with orange accent transitions
-  - Direct navigation to Builder, Servers, and Chat
-- **Settings** (`/settings`) - User settings (AI config, profile, MCP servers)
-- **Login/Register** (`/login`, `/register`) - Authentication pages
-
-## 📊 Database Schema
-
-### Tables
-- **users**: User accounts with email and password_hash
-- **prompts**: User-created prompts with title and content
-- **settings**: User settings as key-value pairs (ollama_base_url, ollama_model)
-- **mcp_servers**: Per-user MCP server configurations with JSON config
-- **ui_templates**: Saved MCP-UI templates with resource data
-
-All tables include:
-- Foreign key relationships
-- Proper indexes for performance
-- Automatic timestamp management (created_at, updated_at)
-
-## 🧪 Demo MCP Servers
-
-### Demo Contact Form Server
-
-Start the demo server:
-```bash
-npm run mcp:demo  # Runs on port 3001
-```
-
-Add via Settings UI:
-- Name: `demo-ui`
-- Type: `sse`
-- URL: `http://localhost:3001/mcp`
-
-**Available Tools:**
-- `get_contact_form` - Interactive HTML contact form
-- `get_dashboard` - External URL embed
-- `submit_form` - Process form submissions
-
-### HyperMemory Knowledge Graph Server
-
-Start the HyperMemory server:
-```bash
-npm run mcp:hypermemory
-```
-
-Add via Settings UI and test entity creation, search, and relationship management.
-
-## 🔄 Bidirectional Communication Flow
-
-```
-┌─────────────┐
-│  UI (iframe) │
-│             │
-│  User Click │
-│      ↓      │
-│ postMessage │
-└──────┬──────┘
-       │
-       ↓
-┌──────────────────┐
-│  MCPUIRenderer   │
-│                  │
-│  onUIAction()    │
-│      ↓           │
-│  switch(type)    │
-└────┬─────────────┘
-     │
-     ├─→ tool     → API call → MCPClientManager → MCP Server
-     ├─→ prompt   → Chat textarea.value = prompt
-     ├─→ link     → window.open(url)
-     ├─→ intent   → router.push(path)
-     └─→ notify   → toast(message)
-```
-
-## 🚧 Recommended Workflows
-
-### Primary Workflow (via main navigation)
-1. **UI Builder** → Create UI resources following MCP-UI spec
-   - Configure: Select server, set URI, choose size preset
-   - Design: Pick template, edit HTML, configure initial data
-   - Export: Deploy to server or download standalone code
-2. **Servers** → Manage MCP server connections
-3. **Chat** → Test and interact with MCP tools
-
-### Integrated Workflow
-1. Configure MCP server in Settings
-2. Create UI resource in UI Builder
-3. Deploy to selected server
-4. Test in Chat interface
-
-### Standalone Workflow
-1. Create UI in Builder without server selection
-2. Export standalone server code
-3. Add server via Settings
-4. Test in Chat
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these guidelines:
-- Follow existing code style and conventions
-- Update CLAUDE.md files when adding new features
-- Add tests for new functionality
-- Update documentation as needed
 
 ## 📝 License
 
 MIT License - see LICENSE file for details
 
-## 📞 Support
-
-For issues and questions:
-- Check the [CLAUDE.md](./CLAUDE.md) documentation
-- Review component-specific CLAUDE.md files in `src/components/`
-
-## 🎉 Acknowledgments
-
-- [Model Context Protocol](https://modelcontextprotocol.io) - MCP specification
-- [MCP-UI](https://github.com/modelcontextprotocol/mcp-ui) - UI resource rendering
-- [Vercel AI SDK](https://sdk.vercel.ai) - AI integration
-- [Radix UI](https://radix-ui.com) - Component primitives
-- [Tailwind CSS](https://tailwindcss.com) - Styling framework
-
 ---
-
-**Built with ❤️ using Next.js 15, MCP, and modern web technologies**

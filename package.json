@@ -4,8 +4,7 @@
   "private": true,
   "type": "module",
   "bin": {
-    "loopcraft-demo": "./build/mcp-servers/demo-server.js",
-    "loopcraft-hypermemory": "./build/mcp-servers/hypermemory-server.js"
+    "loopcraft-demo": "./build/mcp-servers/demo-server.js"
   },
   "files": [
     "build/mcp-servers"
@@ -16,8 +15,7 @@
     "start": "next start",
     "lint": "eslint",
     "build:mcp": "tsc -p tsconfig.mcp.json && chmod +x build/mcp-servers/*.js",
-    "mcp:demo": "npm run build:mcp && node build/mcp-servers/demo-server.js",
-    "mcp:hypermemory": "npm run build:mcp && node build/mcp-servers/hypermemory-server.js"
+    "mcp:demo": "npm run build:mcp && node build/mcp-servers/demo-server.js"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.38",
