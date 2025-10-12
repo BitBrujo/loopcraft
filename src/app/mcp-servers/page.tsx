@@ -49,6 +49,13 @@ export default function MCPServersPage() {
         },
       });
 
+      if (response.status === 401) {
+        // Token expired or invalid - clear and redirect to login
+        localStorage.removeItem("token");
+        router.push("/login");
+        return;
+      }
+
       if (response.ok) {
         const servers = await response.json();
         setMcpServers(servers);
@@ -261,9 +268,9 @@ export default function MCPServersPage() {
                 <p className="text-sm text-muted-foreground mb-4">
                   Get started by adding your first MCP server
                 </p>
-                <Button onClick={openAddServerDialog}>
+                <Button onClick={openAddServerDialog} variant="outline">
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Your First Server
+                  Add Server
                 </Button>
               </Card>
             ) : (
