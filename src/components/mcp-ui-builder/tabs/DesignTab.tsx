@@ -766,7 +766,7 @@ export function DesignTab() {
           <div className="flex-shrink-0">
             <Collapsible open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2 py-3">
+                <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2 py-6">
                   <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5">
                     Resource Metadata
                   </Badge>
