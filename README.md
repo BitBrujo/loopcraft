@@ -10,6 +10,7 @@ A Next.js 15 application that integrates the Model Context Protocol (MCP) with a
 - Streaming responses with real-time updates
 - Per-user AI configuration (model selection, API endpoints)
 - Interactive MCP-UI component rendering with bidirectional communication
+- Clean, modern interface with gradient styling and smooth animations
 
 ### 🔌 Model Context Protocol (MCP) Integration
 - **User-specific MCP servers** managed through Settings UI
@@ -24,6 +25,8 @@ A Next.js 15 application that integrates the Model Context Protocol (MCP) with a
 **Visual tool for creating UI resources following the official MCP-UI specification**
 
 #### Core Features
+- **Clean, Modern Interface**: Centered gradient title with orange accent theme
+- **Reset Functionality**: Clear all builder state with confirmation dialog
 - **Server Integration**: Select target MCP server or create standalone resources
 - **3 Content Types**: rawHtml (default), externalUrl, remoteDom (coming soon)
 - **HTML Template Library**: 13 ready-to-use templates
@@ -171,23 +174,30 @@ hyperface/
 │   │   ├── chat/                     # Chat interface page
 │   │   └── settings/                 # Settings page
 │   ├── components/
+│   │   ├── HomePage.tsx              # Landing page with Artwork33
+│   │   ├── Artwork33.tsx             # Animated double helix canvas
 │   │   ├── mcp-ui-builder/           # Builder components
 │   │   │   ├── tabs/                 # ConfigureTab, DesignTab, ExportTab
 │   │   │   └── editors/              # HTMLEditor, URLInput
 │   │   ├── assistant-ui/             # Chat interface components
 │   │   │   └── mcp-ui-renderer.tsx   # MCP-UI rendering with actions
+│   │   ├── chat/                     # Layout and navigation
+│   │   │   ├── ChatLayout.tsx        # Main layout wrapper
+│   │   │   └── ChatHeader.tsx        # Navigation bar (3 tabs)
 │   │   └── ui/                       # Radix UI components
 │   ├── lib/
 │   │   ├── mcp-client.ts             # MCPClientManager
 │   │   ├── mcp-init.ts               # Shared MCP initialization
 │   │   ├── db.ts                     # Database utilities
 │   │   ├── auth.ts                   # JWT authentication
-│   │   ├── ui-templates.ts           # HTML templates (13 templates)
-│   │   ├── action-snippets.ts        # MCP-UI action snippets
+│   │   ├── ai-config.ts              # AI configuration with user overrides
+│   │   ├── ui-templates.ts           # HTML templates (13+ templates)
+│   │   ├── action-snippets.ts        # MCP-UI action snippets (13 snippets)
 │   │   ├── code-generation.ts        # Code export utilities
 │   │   └── stores/                   # Zustand state management
 │   ├── types/
 │   │   ├── ui-builder.ts             # MCP-UI Builder types
+│   │   ├── server-builder.ts         # Server builder types
 │   │   └── database.ts               # Database types
 │   └── mcp-servers/                  # Demo MCP servers
 │       ├── demo-server.ts            # Contact form demo
@@ -264,7 +274,13 @@ All MCP servers are user-specific and managed through the Settings UI:
 3. **Chat** (`/chat`) - Test MCP tools with AI-powered chat interface
 
 ### Additional Routes
-- **Home** (`/`) - Landing page with quick access cards
+- **Home** (`/`) - Landing page with animated artwork and feature cards
+  - **Artwork33**: Animated double helix canvas visualization
+    - Themes: balance, equilibrium, opposing forces in harmony
+    - Responsive design with smooth 60fps animations
+  - Streamlined 3-card layout with gradient styling
+  - Hover effects with orange accent transitions
+  - Direct navigation to Builder, Servers, and Chat
 - **Settings** (`/settings`) - User settings (AI config, profile, MCP servers)
 - **Login/Register** (`/login`, `/register`) - Authentication pages
 
