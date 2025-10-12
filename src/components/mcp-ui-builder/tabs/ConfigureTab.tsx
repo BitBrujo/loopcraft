@@ -370,7 +370,7 @@ export function ConfigureTab() {
                               value={currentResource.encoding || 'text'}
                               onValueChange={(value: 'text' | 'base64') => updateResource({ encoding: value === 'text' ? undefined : value })}
                             >
-                              <SelectTrigger id="encoding">
+                              <SelectTrigger id="encoding" className="-mx-4 px-4">
                                 <SelectValue placeholder="Select encoding" />
                               </SelectTrigger>
                               <SelectContent>
