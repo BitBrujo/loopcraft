@@ -73,8 +73,17 @@ export function BuilderLayout() {
                     </p>
                 </div>
 
-                {/* File Dropdown - Absolute Right */}
-                <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                {/* Reset Button and File Dropdown - Absolute Right */}
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        className="gap-2 text-destructive hover:bg-destructive/10"
+                        onClick={() => setShowResetConfirmation(true)}
+                    >
+                        <RotateCcw className="h-4 w-4" />
+                        Reset
+                    </Button>
+
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="gap-2">
@@ -94,14 +103,6 @@ export function BuilderLayout() {
                             >
                                 <FolderOpen className="h-4 w-4 mr-2" />
                                 Load Template
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                onClick={() => setShowResetConfirmation(true)}
-                                className="text-destructive"
-                            >
-                                <RotateCcw className="h-4 w-4 mr-2" />
-                                Reset All
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
