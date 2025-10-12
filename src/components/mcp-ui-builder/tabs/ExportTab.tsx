@@ -161,12 +161,9 @@ export function ExportTab() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg font-semibold">
-            <span
-              className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
-              style={{ backgroundColor: '#6d8d96' }}
-            >
+            <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5">
               Export Options
-            </span>
+            </Badge>
           </CardTitle>
           <CardDescription>
             {hasServerSelected
@@ -258,13 +255,10 @@ export function ExportTab() {
           <CardHeader>
             <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
               <CardTitle className="text-lg font-semibold">
-                <span
-                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium text-white"
-                  style={{ backgroundColor: '#6d8d96' }}
-                >
+                <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5 inline-flex items-center gap-2">
                   <BookOpen className="h-5 w-5" />
                   Quick Start Guide
-                </span>
+                </Badge>
               </CardTitle>
               <ChevronDown className={`h-4 w-4 transition-transform ${showQuickStart ? '' : '-rotate-90'}`} />
             </CollapsibleTrigger>
@@ -387,12 +381,9 @@ export function ExportTab() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg font-semibold">
-            <span
-              className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
-              style={{ backgroundColor: '#6d8d96' }}
-            >
+            <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5">
               Generated Code
-            </span>
+            </Badge>
           </CardTitle>
           <CardDescription>
             {exportFormat === 'integration'

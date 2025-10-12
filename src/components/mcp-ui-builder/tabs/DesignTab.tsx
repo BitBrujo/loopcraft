@@ -560,12 +560,9 @@ export function DesignTab() {
           {(currentResource.contentType === 'rawHtml' || currentResource.contentType === 'remoteDom') && (
             <div>
               <div className="mb-2">
-                <span
-                  className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
-                  style={{ backgroundColor: '#6d8d96' }}
-                >
+                <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5">
                   Templates
-                </span>
+                </Badge>
               </div>
               <Select value={selectedTemplateId} onValueChange={handleTemplateSelect}>
                 <SelectTrigger>
@@ -599,12 +596,9 @@ export function DesignTab() {
           {currentResource.contentType === 'rawHtml' && (
             <div>
               <div className="mb-2">
-                <span
-                  className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
-                  style={{ backgroundColor: '#6d8d96' }}
-                >
+                <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5">
                   Actions
-                </span>
+                </Badge>
               </div>
               <Select value={selectedCategory} onValueChange={handleCategorySelect}>
                 <SelectTrigger>
@@ -773,12 +767,9 @@ export function DesignTab() {
             <Collapsible open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2 py-3">
-                  <span
-                    className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
-                    style={{ backgroundColor: '#6d8d96' }}
-                  >
+                  <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5">
                     Resource Metadata
-                  </span>
+                  </Badge>
                   <ChevronDown className={`h-4 w-4 transition-transform ${showAdvancedOptions ? '' : '-rotate-90'}`} />
                 </Button>
               </CollapsibleTrigger>

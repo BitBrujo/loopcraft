@@ -188,12 +188,9 @@ export function ConfigureTab() {
         <Card className="border-primary/30">
           <CardHeader>
             <CardTitle className="text-lg font-semibold">
-              <span
-                className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
-                style={{ backgroundColor: '#6d8d96' }}
-              >
+              <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5">
                 Basic Configuration
-              </span>
+              </Badge>
             </CardTitle>
             <CardDescription>
               Core resource settings
@@ -324,12 +321,9 @@ export function ConfigureTab() {
                   <CollapsibleTrigger asChild>
                     <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent -m-4 mb-0 p-4 rounded-t-lg">
                       <span className="flex items-center gap-2 font-semibold">
-                        <span
-                          className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
-                          style={{ backgroundColor: '#6d8d96' }}
-                        >
+                        <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5">
                           Advanced Content Options
-                        </span>
+                        </Badge>
                       </span>
                       <ChevronDown className={`h-4 w-4 transition-transform ${showAdvancedOptions ? '' : '-rotate-90'}`} />
                     </Button>
@@ -438,7 +432,9 @@ export function ConfigureTab() {
                         {currentResource.contentType === 'remoteDom' && (
                           <div className="space-y-2 pt-2 border-t">
                             <div className="flex items-center gap-2 mb-2">
-                              <Label className="text-base font-medium">Remote DOM Framework</Label>
+                              <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5">
+                                Remote DOM Framework
+                              </Badge>
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="framework">Framework</Label>
@@ -492,12 +488,9 @@ export function ConfigureTab() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg font-semibold">
-              <span
-                className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
-                style={{ backgroundColor: '#6d8d96' }}
-              >
+              <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5">
                 UI Metadata
-              </span>
+              </Badge>
             </CardTitle>
             <CardDescription>Display and rendering configuration</CardDescription>
           </CardHeader>
@@ -563,12 +556,9 @@ export function ConfigureTab() {
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-4 py-3">
                   <span className="flex items-center gap-2 font-semibold">
-                    <span
-                      className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium text-white"
-                      style={{ backgroundColor: '#6d8d96' }}
-                    >
+                    <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5">
                       Renderer Options
-                    </span>
+                    </Badge>
                   </span>
                   <ChevronDown className={`h-4 w-4 transition-transform ${showRendererOptions ? '' : '-rotate-90'}`} />
                 </Button>
