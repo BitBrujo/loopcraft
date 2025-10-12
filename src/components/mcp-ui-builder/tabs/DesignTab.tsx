@@ -812,14 +812,18 @@ export function DesignTab() {
 
                   {/* MIME Type - Read-only Badge */}
                   <div className="space-y-2">
-                    <Label>MIME Type</Label>
-                    <Badge variant="secondary" className="font-mono">
-                      {displayMimeType}
-                    </Badge>
+                    <div className="flex items-center gap-4">
+                      <Label>MIME Type</Label>
+                      <Badge variant="secondary" className="font-mono">
+                        {displayMimeType}
+                      </Badge>
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       Auto-determined from content type (read-only)
                     </p>
                   </div>
+
+                  <Separator className="my-4" />
 
                   {/* Audience Targeting */}
                   <div className="space-y-2">
