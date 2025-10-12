@@ -15,7 +15,7 @@ export function ChatLayout({ children, className }: ChatLayoutProps) {
     <div className={cn("flex h-screen flex-col bg-background", className)}>
       <ChatHeader />
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1">
           {children}
         </div>
         <RightSidebar />

@@ -53,7 +53,7 @@ export function HomePage() {
 
   return (
     <ChatLayout>
-      <div className="flex-1 overflow-y-auto">
+      <div className="h-full overflow-y-auto">
         <div className="container max-w-4xl mx-auto py-4 px-4">
           {/* Artwork */}
           <div className="mb-4">
