@@ -337,14 +337,14 @@ export function ExportTab() {
                   <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
                     <li>Download the generated server file</li>
                     <li>Save it as <code className="bg-muted px-1 rounded">
-                      {companionMode === 'enabled' ? `${targetServerName}-ui-server.js` : 'server.js'}
-                    </code> (or .ts)</li>
+                      {companionMode === 'enabled' ? `${targetServerName}-ui-server.ts` : 'server.ts'}
+                    </code> (or .js)</li>
                     <li>Install dependencies: <code className="bg-muted px-1 rounded">
                       npm install fastmcp {companionMode === 'disabled' ? 'zod' : ''} @mcp-ui/server
                     </code></li>
-                    <li>Test locally: <code className="bg-muted px-1 rounded">node {companionMode === 'enabled' ? `${targetServerName}-ui-server.js` : 'server.js'}</code></li>
+                    <li>Test locally: <code className="bg-muted px-1 rounded">npx tsx {companionMode === 'enabled' ? `${targetServerName}-ui-server.ts` : 'server.ts'}</code></li>
                     <li>Add to your app via Settings &gt; MCP Servers</li>
-                    <li>Configure as stdio server with command: <code className="bg-muted px-1 rounded">{`["node", "/path/to/${companionMode === 'enabled' ? `${targetServerName}-ui-server.js` : 'server.js'}"]`}</code></li>
+                    <li>Configure as stdio server with command: <code className="bg-muted px-1 rounded">{`["npx", "-y", "tsx", "/path/to/${companionMode === 'enabled' ? `${targetServerName}-ui-server.ts` : 'server.ts'}"]`}</code></li>
                     {companionMode === 'enabled' && (
                       <li className="text-orange-600 dark:text-orange-400 font-medium">
                         Make sure both <strong>{targetServerName}-ui</strong> and <strong>{targetServerName}</strong> servers are enabled
@@ -375,11 +375,11 @@ export function ExportTab() {
                   <h4 className="font-semibold">Standalone Server Steps:</h4>
                   <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
                     <li>Download the generated server file</li>
-                    <li>Save it as <code className="bg-muted px-1 rounded">server.js</code> (or .ts)</li>
+                    <li>Save it as <code className="bg-muted px-1 rounded">server.ts</code> (or .js)</li>
                     <li>Install dependencies: <code className="bg-muted px-1 rounded">npm install @mcp-ui/server @modelcontextprotocol/sdk</code></li>
-                    <li>Test locally: <code className="bg-muted px-1 rounded">node server.js</code></li>
+                    <li>Test locally: <code className="bg-muted px-1 rounded">npx tsx server.ts</code></li>
                     <li>Add to your app via Settings &gt; MCP Servers</li>
-                    <li>Configure as stdio server with command: <code className="bg-muted px-1 rounded">{`["node", "/path/to/server.js"]`}</code></li>
+                    <li>Configure as stdio server with command: <code className="bg-muted px-1 rounded">{`["npx", "-y", "tsx", "/path/to/server.ts"]`}</code></li>
                     <li>Enable the server and test in chat</li>
                   </ol>
                   <Alert>
