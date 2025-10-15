@@ -203,6 +203,30 @@ export interface Template {
   thumbnail?: string;
 }
 
+/**
+ * MCP Tool schema information
+ * Used for companion mode to display available tools from target server
+ */
+export interface ToolSchema {
+  name: string;
+  description?: string;
+  inputSchema?: {
+    type: string;
+    properties?: Record<string, {
+      type: string;
+      description?: string;
+      enum?: string[];
+    }>;
+    required?: string[];
+  };
+}
+
+/**
+ * Companion server mode
+ * Creates a UI-only server that interacts with an existing MCP server's tools
+ */
+export type CompanionMode = 'disabled' | 'enabled';
+
 export interface UIBuilderState {
   currentResource: UIResource | null;
   savedTemplates: Template[];
@@ -210,6 +234,12 @@ export interface UIBuilderState {
   showPreview: boolean;
   isLoading: boolean;
   error: string | null;
+
+  // Companion mode state
+  companionMode: CompanionMode;
+  targetServerName: string | null;
+  availableTools: ToolSchema[];
+  selectedTools: string[]; // Array of tool names to interact with
 }
 
 export interface ValidationError {

@@ -4,6 +4,8 @@ import type {
   UIResource,
   Template,
   TabId,
+  CompanionMode,
+  ToolSchema,
 } from '@/types/ui-builder';
 
 interface UIBuilderStore {
@@ -24,6 +26,12 @@ interface UIBuilderStore {
   // Active tab (simplified to 3 tabs)
   activeTab: TabId;
 
+  // Companion mode state
+  companionMode: CompanionMode;
+  targetServerName: string | null;
+  availableTools: ToolSchema[];
+  selectedTools: string[];
+
   // Actions - Basic
   setCurrentResource: (resource: UIResource | null) => void;
   updateResource: (updates: Partial<UIResource>) => void;
@@ -43,6 +51,13 @@ interface UIBuilderStore {
 
   // Actions - Tabs
   setActiveTab: (tab: TabId) => void;
+
+  // Actions - Companion Mode
+  setCompanionMode: (mode: CompanionMode) => void;
+  setTargetServerName: (serverName: string | null) => void;
+  setAvailableTools: (tools: ToolSchema[]) => void;
+  setSelectedTools: (tools: string[]) => void;
+  toggleToolSelection: (toolName: string) => void;
 }
 
 const defaultResource: UIResource = {
@@ -101,6 +116,12 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
       error: null,
       activeTab: 'configure',
 
+      // Companion mode initial state
+      companionMode: 'disabled',
+      targetServerName: null,
+      availableTools: [],
+      selectedTools: [],
+
       // Actions
       setCurrentResource: (resource) =>
         set({ currentResource: resource }),
@@ -152,6 +173,26 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
 
       setActiveTab: (tab) =>
         set({ activeTab: tab }),
+
+      // Companion mode actions
+      setCompanionMode: (mode) =>
+        set({ companionMode: mode }),
+
+      setTargetServerName: (serverName) =>
+        set({ targetServerName: serverName }),
+
+      setAvailableTools: (tools) =>
+        set({ availableTools: tools }),
+
+      setSelectedTools: (tools) =>
+        set({ selectedTools: tools }),
+
+      toggleToolSelection: (toolName) =>
+        set((state) => ({
+          selectedTools: state.selectedTools.includes(toolName)
+            ? state.selectedTools.filter((t) => t !== toolName)
+            : [...state.selectedTools, toolName],
+        })),
     }),
     {
       name: 'ui-builder-storage',
@@ -159,6 +200,9 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         currentResource: state.currentResource,
         showPreview: state.showPreview,
         activeTab: state.activeTab,
+        companionMode: state.companionMode,
+        targetServerName: state.targetServerName,
+        selectedTools: state.selectedTools,
       }),
     }
   )
