@@ -14,6 +14,7 @@ import type { ExportFormat, ExportLanguage } from '@/types/ui-builder';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { DeploymentProgressModal } from '@/components/mcp-ui-builder/DeploymentProgressModal';
 
 export function ExportTab() {
   const {
@@ -25,7 +26,7 @@ export function ExportTab() {
   const [exportFormat, setExportFormat] = useState<ExportFormat>('integration');
   const [language, setLanguage] = useState<ExportLanguage>('typescript');
   const [copied, setCopied] = useState(false);
-  const [isDeploying, setIsDeploying] = useState(false);
+  const [showDeploymentModal, setShowDeploymentModal] = useState(false);
   const [showQuickStart, setShowQuickStart] = useState(false); // Collapsed by default
 
   if (!currentResource) {
@@ -85,19 +86,15 @@ export function ExportTab() {
     URL.revokeObjectURL(url);
   };
 
-  const handleDeploy = async () => {
-    if (!hasServerSelected) return;
-
-    setIsDeploying(true);
-    try {
-      // TODO: Implement deployment to selected server
-      // This will add the tool to the existing MCP server configuration
-      alert('Deployment feature coming soon! For now, use the Integration Snippet to manually add to your server.');
-    } catch (error) {
-      console.error('Deployment failed:', error);
-    } finally {
-      setIsDeploying(false);
+  const handleDeploy = () => {
+    // Only allow deployment for standalone/fastmcp formats
+    if (exportFormat === 'integration') {
+      alert('Quick Deploy is only available for Standalone and FastMCP formats. Integration Snippet requires manual integration.');
+      return;
     }
+
+    // Open deployment modal
+    setShowDeploymentModal(true);
   };
 
   const getEditorLanguage = () => {
@@ -149,8 +146,8 @@ export function ExportTab() {
         </Alert>
       )}
 
-      {/* Quick Deploy Option - Only if server selected */}
-      {hasServerSelected && (
+      {/* Quick Deploy Option - Only for standalone/fastmcp */}
+      {(exportFormat === 'standalone' || exportFormat === 'fastmcp') && (
         <Card className="border-primary/50 bg-primary/5">
           <CardHeader>
             <CardTitle className="text-lg font-semibold">
@@ -163,31 +160,56 @@ export function ExportTab() {
               </span>
             </CardTitle>
             <CardDescription>
-              Deploy this UI resource to <strong>{currentResource.selectedServerName}</strong> server instantly
+              Automatically deploy this {exportFormat === 'fastmcp' ? 'FastMCP' : 'standalone'} server with one click
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
-                This will add the <code className="bg-muted px-1 rounded">get_ui</code> tool to your server configuration
+                This will:
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  <li>Write server file to disk</li>
+                  <li>Install dependencies</li>
+                  <li>Test server startup</li>
+                  <li>Add to your MCP servers</li>
+                </ul>
               </div>
               <Button
                 onClick={handleDeploy}
-                disabled={isDeploying}
                 className="gap-2"
               >
                 <Rocket className="h-4 w-4" />
-                {isDeploying ? 'Deploying...' : 'Deploy Now'}
+                Deploy Now
               </Button>
             </div>
             <Alert className="mt-4">
               <Info className="h-4 w-4" />
               <AlertDescription className="text-xs">
-                <strong>Note:</strong> Deployment feature coming soon. For now, use the Integration Snippet below to manually add to your server.
+                <strong>Note:</strong> Deployment is fully automated. The server will be ready to use in chat within seconds.
               </AlertDescription>
             </Alert>
           </CardContent>
         </Card>
+      )}
+
+      {/* Deployment Progress Modal */}
+      {currentResource && (
+        <DeploymentProgressModal
+          open={showDeploymentModal}
+          onOpenChange={setShowDeploymentModal}
+          resource={currentResource}
+          format={exportFormat as 'standalone' | 'fastmcp'}
+          language={language}
+          onDeploymentComplete={(result) => {
+            if (result.success) {
+              // Show success message
+              console.log('Deployment successful:', result);
+            } else {
+              // Show error message
+              console.error('Deployment failed:', result.error);
+            }
+          }}
+        />
       )}
 
       {/* Export Options */}
