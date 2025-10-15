@@ -404,6 +404,9 @@ export function DesignTab() {
     setActiveTab,
     currentResource,
     updateResource,
+    companionMode,
+    targetServerName,
+    selectedTools,
   } = useUIBuilderStore();
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -546,6 +549,46 @@ export function DesignTab() {
   // Get snippets for selected category
   const categorySnippets = selectedCategory ? getSnippetsByCategory(selectedCategory as ActionSnippet['category']) : [];
 
+  // Generate companion snippets if in companion mode
+  const companionSnippets: ActionSnippet[] = [];
+  if (companionMode === 'enabled' && selectedTools && selectedTools.length > 0 && targetServerName) {
+    selectedTools.forEach(toolName => {
+      const snippet: ActionSnippet = {
+        id: `companion-${toolName}`,
+        name: `Call ${toolName}`,
+        category: 'tool',
+        description: `Execute ${toolName} from ${targetServerName} server`,
+        code: `<!-- Call ${toolName} from ${targetServerName} -->
+<button
+  onclick="call_${toolName.replace(/[^a-zA-Z0-9]/g, '_')}()"
+  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+>
+  Execute ${toolName}
+</button>
+
+<script>
+  function call_${toolName.replace(/[^a-zA-Z0-9]/g, '_')}() {
+    window.parent.postMessage({
+      type: 'tool',
+      payload: {
+        toolName: 'mcp_${targetServerName}_${toolName}',
+        params: {
+          // Add tool parameters here based on the tool's schema
+        }
+      }
+    }, '*');
+  }
+</script>`
+      };
+      companionSnippets.push(snippet);
+    });
+  }
+
+  // Merge companion snippets into categorySnippets for the 'tool' category
+  const enhancedCategorySnippets = selectedCategory === 'tool'
+    ? [...companionSnippets, ...categorySnippets]
+    : categorySnippets;
+
   // Get display MIME type
   const displayMimeType = getDisplayMimeType(currentResource.contentType);
 
@@ -630,6 +673,24 @@ export function DesignTab() {
                   <SelectValue placeholder="Select action snippet..." />
                 </SelectTrigger>
                 <SelectContent>
+                  {companionSnippets.length > 0 && selectedCategory === 'tool' && (
+                    <>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-orange-600 dark:text-orange-400">
+                        Companion Tools ({targetServerName})
+                      </div>
+                      {companionSnippets.map((snippet) => (
+                        <SelectItem key={snippet.id} value={snippet.id} className="bg-orange-50/30 dark:bg-orange-950/10">
+                          <div className="flex items-center gap-2">
+                            <span>🧩</span>
+                            {snippet.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t">
+                        Standard Actions
+                      </div>
+                    </>
+                  )}
                   {categorySnippets.map((snippet) => (
                     <SelectItem key={snippet.id} value={snippet.id}>
                       {snippet.name}

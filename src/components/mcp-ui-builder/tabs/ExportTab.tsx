@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Copy, Download, Check, Info, FileCode, Server, Rocket, BookOpen, ChevronDown } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Copy, Download, Check, Info, FileCode, Server, Rocket, BookOpen, ChevronDown, Puzzle } from 'lucide-react';
 import { Editor } from '@monaco-editor/react';
 import { generateServerCode, generateTypeScriptCode, generateFastMCPCode } from '@/lib/code-generation';
 import type { ExportFormat, ExportLanguage } from '@/types/ui-builder';
@@ -16,7 +16,12 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export function ExportTab() {
-  const { currentResource } = useUIBuilderStore();
+  const {
+    currentResource,
+    companionMode,
+    targetServerName,
+    selectedTools,
+  } = useUIBuilderStore();
   const [exportFormat, setExportFormat] = useState<ExportFormat>('integration');
   const [language, setLanguage] = useState<ExportLanguage>('typescript');
   const [copied, setCopied] = useState(false);
@@ -36,15 +41,23 @@ export function ExportTab() {
 
   // Generate code based on selected format and language
   const generateCode = (): string => {
+    const options = companionMode === 'enabled' && targetServerName
+      ? {
+          companionMode: true,
+          targetServerName,
+          selectedTools: selectedTools || [],
+        }
+      : undefined;
+
     if (exportFormat === 'integration') {
-      // Integration snippet - just the createUIResource call
+      // Integration snippet - just the createUIResource call (not available in companion mode)
       return generateTypeScriptCode(currentResource);
     } else if (exportFormat === 'fastmcp') {
       // FastMCP server - using fastmcp framework
-      return generateFastMCPCode(currentResource);
+      return generateFastMCPCode(currentResource, options);
     } else {
       // Standalone server - complete runnable server
-      return generateServerCode(currentResource);
+      return generateServerCode(currentResource, options);
     }
   };
 
@@ -107,11 +120,31 @@ export function ExportTab() {
         </Alert>
       )}
 
-      {!hasServerSelected && (
+      {!hasServerSelected && companionMode === 'disabled' && (
         <Alert>
           <Info className="h-4 w-4" />
           <AlertDescription>
             <strong>Standalone Resource</strong> - No server selected. You can deploy this as a new server or integrate it later.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Companion Mode Alert */}
+      {companionMode === 'enabled' && targetServerName && (
+        <Alert className="border-orange-500/30 bg-orange-50/30 dark:bg-orange-950/10">
+          <Puzzle className="h-4 w-4 text-orange-600" />
+          <AlertTitle className="text-orange-900 dark:text-orange-100">Companion Server Mode</AlertTitle>
+          <AlertDescription>
+            This will create a UI-only server that interacts with tools from{' '}
+            <strong className="text-orange-900 dark:text-orange-100">{targetServerName}</strong>.
+            {selectedTools && selectedTools.length > 0 && (
+              <span className="block mt-2 text-sm">
+                <strong>Selected Tools:</strong> {selectedTools.join(', ')}
+              </span>
+            )}
+            <span className="block mt-2 text-sm italic">
+              Note: Both servers (companion UI + {targetServerName}) must be connected in Settings.
+            </span>
           </AlertDescription>
         </Alert>
       )}
@@ -177,23 +210,26 @@ export function ExportTab() {
           <div className="space-y-3">
             <Label>Export Format</Label>
             <RadioGroup value={exportFormat} onValueChange={(v) => setExportFormat(v as ExportFormat)}>
-              <div className={`flex items-start space-x-3 p-4 border rounded-lg hover:bg-accent/50 cursor-pointer ${hasServerSelected ? 'border-primary/50 bg-primary/5' : ''}`}>
-                <RadioGroupItem value="integration" id="integration" className="mt-1" />
-                <div className="flex-1">
-                  <Label htmlFor="integration" className="font-semibold cursor-pointer flex items-center gap-2">
-                    <FileCode className="h-4 w-4" />
-                    Integration Snippet
-                    {hasServerSelected && <Badge variant="default">Best for {currentResource.selectedServerName}</Badge>}
-                  </Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {hasServerSelected
-                      ? `Code snippet to manually add this UI to ${currentResource.selectedServerName} server.`
-                      : 'Code snippet to add this UI resource to any MCP server.'
-                    }
-                    Copy and paste into your server&apos;s tool handler.
-                  </p>
+              {/* Hide Integration Snippet option in companion mode */}
+              {companionMode === 'disabled' && (
+                <div className={`flex items-start space-x-3 p-4 border rounded-lg hover:bg-accent/50 cursor-pointer ${hasServerSelected ? 'border-primary/50 bg-primary/5' : ''}`}>
+                  <RadioGroupItem value="integration" id="integration" className="mt-1" />
+                  <div className="flex-1">
+                    <Label htmlFor="integration" className="font-semibold cursor-pointer flex items-center gap-2">
+                      <FileCode className="h-4 w-4" />
+                      Integration Snippet
+                      {hasServerSelected && <Badge variant="default">Best for {currentResource.selectedServerName}</Badge>}
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {hasServerSelected
+                        ? `Code snippet to manually add this UI to ${currentResource.selectedServerName} server.`
+                        : 'Code snippet to add this UI resource to any MCP server.'
+                      }
+                      Copy and paste into your server&apos;s tool handler.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-accent/50 cursor-pointer">
                 <RadioGroupItem value="standalone" id="standalone" className="mt-1" />
@@ -209,17 +245,18 @@ export function ExportTab() {
                 </div>
               </div>
 
-              <div className={`flex items-start space-x-3 p-4 border rounded-lg hover:bg-accent/50 cursor-pointer ${!hasServerSelected ? 'border-primary/50 bg-primary/5' : ''}`}>
+              <div className={`flex items-start space-x-3 p-4 border rounded-lg hover:bg-accent/50 cursor-pointer ${!hasServerSelected || companionMode === 'enabled' ? 'border-primary/50 bg-primary/5' : ''}`}>
                 <RadioGroupItem value="fastmcp" id="fastmcp" className="mt-1" />
                 <div className="flex-1">
                   <Label htmlFor="fastmcp" className="font-semibold cursor-pointer flex items-center gap-2">
                     <Server className="h-4 w-4" />
                     FastMCP Server
-                    {!hasServerSelected && <Badge variant="default">Recommended</Badge>}
+                    {(companionMode === 'enabled' || !hasServerSelected) && <Badge variant="default">Recommended</Badge>}
                   </Label>
                   <p className="text-sm text-muted-foreground mt-1">
                     Modern MCP framework with cleaner code, built-in error handling, and better developer experience.
-                    {hasServerSelected && ' Perfect for production deployments.'}
+                    {companionMode === 'enabled' && ' Perfect for companion servers.'}
+                    {hasServerSelected && companionMode === 'disabled' && ' Perfect for production deployments.'}
                   </p>
                 </div>
               </div>
@@ -294,22 +331,41 @@ export function ExportTab() {
                 </div>
               ) : exportFormat === 'fastmcp' ? (
                 <div className="space-y-3 text-sm">
-                  <h4 className="font-semibold">FastMCP Server Steps:</h4>
+                  <h4 className="font-semibold">
+                    {companionMode === 'enabled' ? 'Companion Server Setup:' : 'FastMCP Server Steps:'}
+                  </h4>
                   <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
                     <li>Download the generated server file</li>
-                    <li>Save it as <code className="bg-muted px-1 rounded">server.js</code> (or .ts)</li>
-                    <li>Install dependencies: <code className="bg-muted px-1 rounded">npm install fastmcp zod @mcp-ui/server</code></li>
-                    <li>Test locally: <code className="bg-muted px-1 rounded">node server.js</code></li>
+                    <li>Save it as <code className="bg-muted px-1 rounded">
+                      {companionMode === 'enabled' ? `${targetServerName}-ui-server.js` : 'server.js'}
+                    </code> (or .ts)</li>
+                    <li>Install dependencies: <code className="bg-muted px-1 rounded">
+                      npm install fastmcp {companionMode === 'disabled' ? 'zod' : ''} @mcp-ui/server
+                    </code></li>
+                    <li>Test locally: <code className="bg-muted px-1 rounded">node {companionMode === 'enabled' ? `${targetServerName}-ui-server.js` : 'server.js'}</code></li>
                     <li>Add to your app via Settings &gt; MCP Servers</li>
-                    <li>Configure as stdio server with command: <code className="bg-muted px-1 rounded">{`["node", "/path/to/server.js"]`}</code></li>
+                    <li>Configure as stdio server with command: <code className="bg-muted px-1 rounded">{`["node", "/path/to/${companionMode === 'enabled' ? `${targetServerName}-ui-server.js` : 'server.js'}"]`}</code></li>
+                    {companionMode === 'enabled' && (
+                      <li className="text-orange-600 dark:text-orange-400 font-medium">
+                        Make sure both <strong>{targetServerName}-ui</strong> and <strong>{targetServerName}</strong> servers are enabled
+                      </li>
+                    )}
                     <li>Enable the server and test in chat</li>
                   </ol>
-                  <Alert>
+                  <Alert className={companionMode === 'enabled' ? 'border-orange-500/30' : ''}>
                     <Info className="h-4 w-4" />
                     <AlertDescription>
-                      <strong>FastMCP Benefits:</strong> Cleaner code (~60% less boilerplate), built-in error handling, type-safe parameters with Zod, and better developer experience.{' '}
-                      {hasServerSelected && (
-                        <>Once tested, you can use the Integration Snippet format to add to {currentResource.selectedServerName}.</>
+                      {companionMode === 'enabled' ? (
+                        <>
+                          <strong>Companion Pattern:</strong> This UI-only server provides a visual interface for {targetServerName} tools. Both servers must be connected for the UI to function properly.
+                        </>
+                      ) : (
+                        <>
+                          <strong>FastMCP Benefits:</strong> Cleaner code (~60% less boilerplate), built-in error handling, type-safe parameters with Zod, and better developer experience.{' '}
+                          {hasServerSelected && (
+                            <>Once tested, you can use the Integration Snippet format to add to {currentResource.selectedServerName}.</>
+                          )}
+                        </>
                       )}
                     </AlertDescription>
                   </Alert>
