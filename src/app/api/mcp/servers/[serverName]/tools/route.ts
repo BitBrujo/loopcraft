@@ -4,13 +4,13 @@ import { initializeAllMCPServers } from '@/lib/mcp-init';
 
 export async function GET(
   request: Request,
-  { params }: { params: { serverName: string } }
+  { params }: { params: Promise<{ serverName: string }> }
 ) {
   try {
     // Initialize all MCP servers (user-specific only)
     await initializeAllMCPServers(request);
 
-    const { serverName } = params;
+    const { serverName } = await params;
 
     // Check if server is connected
     if (!mcpClientManager.isConnected(serverName)) {
