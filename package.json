@@ -25,7 +25,7 @@
     "@assistant-ui/react-markdown": "^0.11.0",
     "@hookform/resolvers": "^5.2.2",
     "@mcp-ui/client": "^5.12.0",
-    "@mcp-ui/server": "^5.11.0",
+    "@mcp-ui/server": "^5.12.0",
     "@modelcontextprotocol/sdk": "^1.18.2",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-avatar": "^1.1.10",
@@ -49,7 +49,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dagre": "^0.8.5",
-    "fastmcp": "^3.19.1",
+    "fastmcp": "^3.19.3",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.544.0",
     "mysql2": "^3.15.1",
@@ -63,7 +63,7 @@
     "reactflow": "^11.11.4",
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.3.1",
-    "zod": "^4.1.11",
+    "zod": "^4.1.12",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
