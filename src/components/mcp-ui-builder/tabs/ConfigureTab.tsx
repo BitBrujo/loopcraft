@@ -84,7 +84,7 @@ export function ConfigureTab() {
 
         if (response.ok) {
           const data = await response.json();
-          setMcpServers(data.servers || []);
+          setMcpServers(data || []);
         }
       } catch (error) {
         console.error('Failed to fetch MCP servers:', error);
