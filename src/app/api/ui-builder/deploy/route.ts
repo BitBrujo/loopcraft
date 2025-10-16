@@ -12,6 +12,10 @@ interface DeployRequest {
   resource: UIResource;
   format: 'standalone' | 'fastmcp';
   language: 'typescript' | 'javascript';
+  // Companion mode settings
+  companionMode?: 'disabled' | 'enabled';
+  targetServerName?: string | null;
+  selectedTools?: string[];
 }
 
 interface DeploymentStep {
@@ -105,7 +109,7 @@ function categorizeError(error: Error): CategorizedError {
   }
 
   // Port conflicts
-  if (errorMsg.includes('eaddrinuse') || errorMsg.includes('port') && errorMsg.includes('already in use')) {
+  if (errorMsg.includes('eaddrinuse') || (errorMsg.includes('port') && errorMsg.includes('already in use'))) {
     return {
       category: 'port',
       message: 'Port is already in use by another process',
@@ -473,7 +477,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body: DeployRequest = await request.json();
-    const { resource, format, language } = body;
+    const { resource, format, language, companionMode, targetServerName, selectedTools } = body;
 
     // Validate input
     if (!resource || !format || !language) {
@@ -541,10 +545,19 @@ export async function POST(request: NextRequest) {
           // Ensure directory exists
           await mkdir(serverDir, { recursive: true });
 
-          // Generate code
+          // Prepare options for companion mode if enabled
+          const codeGenOptions = companionMode === 'enabled' && targetServerName
+            ? {
+                companionMode: true,
+                targetServerName: targetServerName,
+                selectedTools: selectedTools || []
+              }
+            : undefined;
+
+          // Generate code with companion mode support
           const code = format === 'fastmcp'
-            ? generateFastMCPCode(resource)
-            : generateServerCode(resource);
+            ? generateFastMCPCode(resource, codeGenOptions)
+            : generateServerCode(resource, codeGenOptions);
 
           // Write file
           await writeFile(filePath, code, 'utf-8');
@@ -902,25 +915,18 @@ async function testServerStartup(
       }
     });
 
-    // Timeout - assume success if no errors after timeout
+    // Timeout - fail if no success signal received
     const timeoutId = setTimeout(() => {
       if (!resolved) {
         resolved = true;
         serverProcess.kill();
         if (processTracker) processTracker.delete(serverProcess);
-        // If no errors and server is still running, consider it a success
-        if (errorOutput.includes('Error') || errorOutput.includes('error')) {
-          resolve({
-            success: false,
-            output: output || errorOutput,
-            error: 'Server startup errors detected'
-          });
-        } else {
-          resolve({
-            success: true,
-            output: output || errorOutput || 'Server started (no output)'
-          });
-        }
+        // Timeout without explicit success signal is a failure
+        resolve({
+          success: false,
+          output: output || errorOutput || 'No output received',
+          error: `Server startup timeout (${timeout}ms) - no success signal detected. The server may be slow to start or may not be starting correctly.`
+        });
       }
     }, timeout);
 

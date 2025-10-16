@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle2, Circle, Loader2, AlertCircle, ExternalLink, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
+import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import type { UIResource } from '@/types/ui-builder';
 
 interface DeploymentStep {
@@ -62,6 +63,9 @@ export function DeploymentProgressModal({
   language,
   onDeploymentComplete
 }: DeploymentProgressModalProps) {
+  // Get companion mode state from store
+  const { companionMode, targetServerName, selectedTools } = useUIBuilderStore();
+
   const [steps, setSteps] = useState<DeploymentStep[]>(
     DEPLOYMENT_STEPS.map((message, index) => ({
       step: index + 1,
@@ -106,7 +110,11 @@ export function DeploymentProgressModal({
         body: JSON.stringify({
           resource,
           format,
-          language
+          language,
+          // Include companion mode data for proper code generation
+          companionMode: companionMode || 'disabled',
+          targetServerName: targetServerName || null,
+          selectedTools: selectedTools || []
         })
       });
 
