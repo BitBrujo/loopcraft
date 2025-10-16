@@ -15,50 +15,56 @@ const server = new FastMCP({
 // Add UI tool
 server.addTool({
   name: 'get_ui',
-  description: 'ask thinking',
+  description: 'get help',
   parameters: z.object({}),
   execute: async (args) => {
     // Prepare content
     let htmlContent = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Contact Form</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New UI Resource</title>
   <style>
-    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; font-weight: 500; }
-    input, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-    button { background: #0066cc; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
-    button:hover { background: #0052a3; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 { color: #2563eb; }
   </style>
 </head>
 <body>
- 
-<button onclick="askAI()" class="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600">
-  Ask AI
-</button>
+  <h1>Hello from MCP-UI!</h1>
+  <p>Edit this HTML to create your custom UI resource.</p>
+  <p>Use the <strong>Configure</strong> tab to set metadata and frame size.</p>
+
+<div class="space-y-2">
+  <p class="font-semibold">Quick Help:</p>
+  <button onclick="askHelp('getting-started')" class="block w-full text-left px-3 py-2 hover:bg-gray-100 rounded">
+    How do I get started?
+  </button>
+  <button onclick="askHelp('features')" class="block w-full text-left px-3 py-2 hover:bg-gray-100 rounded">
+    What features are available?
+  </button>
+  <button onclick="askHelp('troubleshoot')" class="block w-full text-left px-3 py-2 hover:bg-gray-100 rounded">
+    Help me troubleshoot
+  </button>
+</div>
 
 <script>
-  function askAI() {
+  const prompts = {
+    'getting-started': 'How do I get started with this feature?',
+    'features': 'What features are available in this tool?',
+    'troubleshoot': 'I need help troubleshooting an issue'
+  };
+
+  function askHelp(key) {
     window.parent.postMessage({
       type: 'prompt',
       payload: {
-        prompt: 'Explain how this feature works'
-      }
-    }, '*');
-  }
-</script>
-
-<button onclick="askAI()" class="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600">
-  Ask AI
-</button>
-
-<script>
-  function askAI() {
-    window.parent.postMessage({
-      type: 'prompt',
-      payload: {
-        prompt: 'Explain how this feature works'
+        prompt: prompts[key]
       }
     }, '*');
   }
@@ -68,18 +74,20 @@ server.addTool({
 </html>`;
 
     const uiResource = createUIResource({
-      uri: 'ui://loopcraft/com-sev',
+      uri: 'ui://loopcraft/new-resource',
       content: { type: 'rawHtml', htmlString: htmlContent },
       // mimeType: 'text/html' (default)
       encoding: 'text',
       metadata: {
-        title: 'ask thinking',
-        description: 'ask thinking',
-        lastModified: '2025-10-16T21:15:07.134Z'
+        title: 'help',
+        description: 'get help',
+        lastModified: '2025-10-16T21:47:37.749Z'
       },
       uiMetadata: {
-        'preferred-frame-size': ['800px', '600px']
-      } as any
+        'preferred-frame-size': ['800px', '600px'],
+        'auto-resize-iframe': true,
+        'container-style': {"borderColor":"#ff0000"}
+      }
     });
 
     return {
