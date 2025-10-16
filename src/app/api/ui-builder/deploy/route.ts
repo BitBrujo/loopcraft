@@ -70,6 +70,22 @@ function categorizeError(error: Error): CategorizedError {
     };
   }
 
+  // Node.js version issues (File global missing)
+  if (errorMsg.includes('file is not defined') || errorMsg.includes('referenceerror: file')) {
+    return {
+      category: 'dependency',
+      message: 'Node.js version too old (requires v20+)',
+      troubleshooting: [
+        'The MCP SDK requires Node.js v20 or higher',
+        'Your current Node.js version is too old and missing required globals',
+        'Install Node.js v20+ from https://nodejs.org',
+        'Or use nvm: nvm install 20 && nvm use 20',
+        'Restart your terminal/IDE after upgrading'
+      ],
+      fixCommand: 'nvm install 20 && nvm use 20'
+    };
+  }
+
   // Permission errors
   if (errorMsg.includes('permission denied') || errorMsg.includes('eacces')) {
     return {
@@ -437,6 +453,58 @@ async function validateEnvironment(sendUpdate: (update: DeploymentStep) => void)
       });
       return false;
     }
+  }
+
+  // Check Node.js version (need v20+ for MCP SDK)
+  try {
+    const nodeVersionOutput = await runCommand('node', ['--version'], 5000);
+    if (!nodeVersionOutput.success) {
+      sendUpdate({
+        step: 0,
+        total: 7,
+        message: 'Environment validation failed',
+        status: 'error',
+        logs: `✗ Could not determine Node.js version`
+      });
+      return false;
+    }
+
+    const nodeVersion = nodeVersionOutput.output.trim();
+    const versionMatch = nodeVersion.match(/v(\d+)\./);
+    const majorVersion = versionMatch ? parseInt(versionMatch[1], 10) : 0;
+
+    if (majorVersion < 20) {
+      sendUpdate({
+        step: 0,
+        total: 7,
+        message: 'Environment validation failed',
+        status: 'error',
+        logs: `✗ Node.js version check failed
+
+Current version: ${nodeVersion}
+Required version: v20.0.0 or higher
+
+The MCP SDK requires Node.js v20+ for the File global API.
+
+Fix:
+1. Install Node.js v20+ from https://nodejs.org
+2. Or use nvm: nvm install 20 && nvm use 20
+3. Restart your terminal/IDE after installation
+4. Try deployment again`
+      });
+      return false;
+    }
+
+    logs.push(`✓ Node.js version: ${nodeVersion} (>= v20 required)`);
+  } catch (error) {
+    sendUpdate({
+      step: 0,
+      total: 7,
+      message: 'Environment validation failed',
+      status: 'error',
+      logs: `✗ Node.js version check failed\n\n${error instanceof Error ? error.message : 'Unknown error'}`
+    });
+    return false;
   }
 
   // Check write permissions to mcp-servers directory
@@ -904,11 +972,17 @@ async function testServerStartup(
     let resolved = false;
 
     serverProcess.stdout?.on('data', (data) => {
-      output += data.toString();
+      const chunk = data.toString();
+      output += chunk;
+
+      // Log stdout output for debugging
+      console.log('[TEST SERVER STDOUT]:', chunk);
+
       // Look for success indicators
       if ((output.includes('MCP server running') || output.includes('Server started')) && !resolved) {
         resolved = true;
-        // Add delay to prevent race condition with close event
+        console.error('[TEST] Success message detected in stdout');
+        // Add delay to ensure server stabilizes before killing
         setTimeout(() => {
           serverProcess.kill();
           if (processTracker) processTracker.delete(serverProcess);
@@ -916,16 +990,22 @@ async function testServerStartup(
             success: true,
             output
           });
-        }, 200);
+        }, 500);
       }
     });
 
     serverProcess.stderr?.on('data', (data) => {
-      errorOutput += data.toString();
+      const chunk = data.toString();
+      errorOutput += chunk;
+
+      // Log stderr output for debugging
+      console.error('[TEST SERVER STDERR]:', chunk);
+
       // Check for startup messages (some servers log to stderr)
       if ((errorOutput.includes('MCP server running') || errorOutput.includes('Server started')) && !resolved) {
         resolved = true;
-        // Add delay to prevent race condition with close event
+        console.error('[TEST] Success message detected in stderr');
+        // Add delay to ensure server stabilizes before killing
         setTimeout(() => {
           serverProcess.kill();
           if (processTracker) processTracker.delete(serverProcess);
@@ -933,7 +1013,7 @@ async function testServerStartup(
             success: true,
             output: errorOutput
           });
-        }, 200);
+        }, 500);
       }
     });
 
@@ -969,24 +1049,15 @@ async function testServerStartup(
         resolved = true;
         clearTimeout(timeoutId);
         if (processTracker) processTracker.delete(serverProcess);
-        // Accept if exit code is 0 OR if success message was detected in output
-        const hasSuccessMessage = output.includes('MCP server running') ||
-                                  output.includes('Server started') ||
-                                  errorOutput.includes('MCP server running') ||
-                                  errorOutput.includes('Server started');
 
-        if (code === 0 || hasSuccessMessage) {
-          resolve({
-            success: true,
-            output: output || errorOutput
-          });
-        } else {
-          resolve({
-            success: false,
-            output: output || errorOutput,
-            error: `Server exited with code ${code}`
-          });
-        }
+        // If we reach here, no success message was detected in time
+        // This is a genuine failure - provide detailed error info
+        const errorInfo = errorOutput || output || 'No output received';
+        resolve({
+          success: false,
+          output: errorInfo,
+          error: `Server exited with code ${code}. Output: ${errorInfo}`
+        });
       }
     });
   });

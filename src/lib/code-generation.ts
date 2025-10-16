@@ -113,127 +113,6 @@ const uiResource = createUIResource({
 export default uiResource;`;
 }
 
-export function generateCompanionServerCode(
-  resource: UIResource,
-  targetServerName: string,
-  selectedTools: string[]
-): string {
-  const serverName = `${targetServerName}-ui`;
-
-  // Generate content configuration based on type
-  let contentConfig: string;
-  let contentVariable = 'content';
-
-  if (resource.contentType === 'rawHtml') {
-    contentVariable = 'htmlContent';
-    contentConfig = `const ${contentVariable} = \`${resource.content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;`;
-  } else if (resource.contentType === 'externalUrl') {
-    contentConfig = `const ${contentVariable} = { type: 'externalUrl', iframeUrl: '${resource.content}' };`;
-  } else {
-    // remoteDom
-    const framework = resource.remoteDomConfig?.framework || 'react';
-    contentConfig = `const ${contentVariable} = {
-      type: 'remoteDom',
-      script: \`${resource.content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`,
-      framework: '${framework}'
-    };`;
-  }
-
-  // Determine encoding and MIME type
-  const encoding = resource.encoding || 'text';
-  const mimeType = resource.mimeType || getDefaultMimeType(resource.contentType);
-  const useCustomMimeType = resource.mimeType && resource.mimeType !== getDefaultMimeType(resource.contentType);
-
-  let code = `#!/usr/bin/env node
-import { FastMCP } from "fastmcp";
-import { createUIResource } from '@mcp-ui/server';
-
-// Companion UI Server for ${targetServerName}
-// Provides visual interface for ${targetServerName} tools
-// NOTE: Both this server AND ${targetServerName} must be connected
-
-const server = new FastMCP({
-  name: '${serverName}',
-  version: '1.0.0',
-});
-
-server.addResource({
-  uri: '${resource.uri}',
-  name: '${resource.metadata?.title || serverName}',
-  description: '${resource.metadata?.description || 'UI for ' + targetServerName}',
-  mimeType: '${mimeType}',
-
-  async read() {
-    // Prepare content
-    ${contentConfig}
-
-    return createUIResource({
-      uri: '${resource.uri}',
-      content: ${resource.contentType === 'rawHtml' ? `{ type: 'rawHtml', htmlString: ${contentVariable} }` : contentVariable},
-      ${useCustomMimeType ? `mimeType: '${mimeType}',` : `// mimeType: '${mimeType}' (default)`}
-      encoding: '${encoding}'`;
-
-  // Add metadata if present
-  const hasMetadata = resource.metadata?.title || resource.metadata?.description;
-  if (hasMetadata) {
-    code += `,
-      metadata: {`;
-    const metadataParts: string[] = [];
-    if (resource.metadata?.title) metadataParts.push(`title: '${resource.metadata.title}'`);
-    if (resource.metadata?.description) metadataParts.push(`description: '${resource.metadata.description}'`);
-    code += `\n        ${metadataParts.join(',\n        ')}`;
-    code += `\n      }`;
-  }
-
-  // Add UI metadata if present
-  const hasUiMetadata = resource.uiMetadata?.['preferred-frame-size'] ||
-                        resource.uiMetadata?.['initial-render-data'] ||
-                        resource.uiMetadata?.['auto-resize-iframe'] ||
-                        resource.uiMetadata?.['sandbox-permissions'] ||
-                        resource.uiMetadata?.['iframe-title'] ||
-                        resource.uiMetadata?.['container-style'];
-  if (hasUiMetadata) {
-    code += `,
-      uiMetadata: {`;
-    const uiMetadataParts: string[] = [];
-    if (resource.uiMetadata?.['preferred-frame-size']) {
-      uiMetadataParts.push(`'preferred-frame-size': ['${resource.uiMetadata['preferred-frame-size'][0]}', '${resource.uiMetadata['preferred-frame-size'][1]}']`);
-    }
-    if (resource.uiMetadata?.['initial-render-data']) {
-      uiMetadataParts.push(`'initial-render-data': ${JSON.stringify(resource.uiMetadata['initial-render-data'])}`);
-    }
-    if (resource.uiMetadata?.['auto-resize-iframe'] !== undefined) {
-      uiMetadataParts.push(`'auto-resize-iframe': ${JSON.stringify(resource.uiMetadata['auto-resize-iframe'])}`);
-    }
-    if (resource.uiMetadata?.['sandbox-permissions']) {
-      uiMetadataParts.push(`'sandbox-permissions': '${resource.uiMetadata['sandbox-permissions']}'`);
-    }
-    if (resource.uiMetadata?.['iframe-title']) {
-      uiMetadataParts.push(`'iframe-title': '${resource.uiMetadata['iframe-title']}'`);
-    }
-    if (resource.uiMetadata?.['container-style']) {
-      uiMetadataParts.push(`'container-style': ${JSON.stringify(resource.uiMetadata['container-style'])}`);
-    }
-    code += `\n        ${uiMetadataParts.join(',\n        ')}`;
-    code += `\n      }`;
-  }
-
-  code += `
-    });
-  }
-});
-
-// Start server with stdio transport
-server.start({
-  transportType: "stdio",
-}).then(() => {
-  console.error('${serverName} MCP server running on stdio');
-});
-`;
-
-  return code;
-}
-
 export function generateServerCode(
   resource: UIResource,
   options?: {
@@ -437,7 +316,8 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('Server error:', error);
+  console.error('FATAL SERVER ERROR:', error.message);
+  console.error('Stack:', error.stack);
   process.exit(1);
 });
 `;
@@ -453,12 +333,10 @@ export function generateFastMCPCode(
     selectedTools?: string[];
   }
 ): string {
-  // Check if companion mode is enabled
-  if (options?.companionMode && options?.targetServerName && options?.selectedTools) {
-    return generateCompanionServerCode(resource, options.targetServerName, options.selectedTools);
-  }
-
-  const serverName = resource.uri.split('/')[2] || 'my-ui-server';
+  // Handle server naming for companion mode
+  const serverName = options?.companionMode && options?.targetServerName
+    ? `${options.targetServerName}-ui`
+    : resource.uri.split('/')[2] || 'my-ui-server';
   const agentPlaceholders = resource.templatePlaceholders || [];
 
   // Generate content configuration based on type
@@ -480,15 +358,24 @@ export function generateFastMCPCode(
     };`;
   }
 
+  // Generate companion-specific comments if in companion mode
+  const companionComment = options?.companionMode && options?.targetServerName
+    ? `// Companion UI Server for ${options.targetServerName}
+// Provides visual interface for ${options.targetServerName} tools
+// NOTE: Both this server AND ${options.targetServerName} must be connected
+
+`
+    : `// MCP Server for ${resource.uri}
+// Built with FastMCP framework for cleaner code and built-in features
+
+`;
+
   let code = `#!/usr/bin/env node
 import { FastMCP } from "fastmcp";
 import { z } from "zod";
 import { createUIResource } from '@mcp-ui/server';
 
-// MCP Server for ${resource.uri}
-// Built with FastMCP framework for cleaner code and built-in features
-
-const server = new FastMCP({
+${companionComment}const server = new FastMCP({
   name: '${serverName}',
   version: '1.0.0',
 });
@@ -620,12 +507,22 @@ server.addTool({
   },
 });
 
+// Add error handler for uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('FATAL SERVER ERROR:', error.message);
+  console.error('Stack:', error.stack);
+  process.exit(1);
+});
+
 // Start server with stdio transport
 server.start({
   transportType: "stdio",
-}).then(() => {
-  console.error('${serverName} MCP server running on stdio');
 });
+
+// Log after a small delay to ensure transport is initialized
+setTimeout(() => {
+  console.error('${serverName} MCP server running on stdio');
+}, 100);
 `;
 
   return code;
