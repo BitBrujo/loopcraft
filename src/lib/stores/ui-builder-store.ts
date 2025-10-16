@@ -138,7 +138,17 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         })),
 
       resetResource: () =>
-        set({ currentResource: defaultResource, previewKey: Date.now() }),
+        set({
+          currentResource: defaultResource,
+          previewKey: Date.now(),
+          companionMode: 'disabled',
+          targetServerName: null,
+          availableTools: [],
+          selectedTools: [],
+          activeTab: 'configure',
+          showPreview: true,
+          error: null,
+        }),
 
       setSavedTemplates: (templates) =>
         set({ savedTemplates: templates }),
