@@ -6,6 +6,7 @@ import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { Button } from '@/components/ui/button';
 import { PreviewPanel } from '../PreviewPanel';
 import { extractTemplatePlaceholders } from '@/lib/html-parser';
+import { smartInsertHTML } from '@/lib/smart-html-insert';
 import { HTMLEditor } from '../editors/HTMLEditor';
 import { URLInput } from '../editors/URLInput';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -503,34 +504,24 @@ export function DesignTab() {
 
   const initialData = currentResource.uiMetadata?.['initial-render-data'];
 
-  // Handle code insertion at cursor position in Monaco editor
+  // Handle smart HTML-aware code insertion
   const handleInsertCode = (code: string) => {
-    if (!editorRef.current) return;
+    if (!editorRef.current || !currentResource) return;
 
     const editor = editorRef.current;
-    const selection = editor.getSelection();
-    const position = selection ? selection.getStartPosition() : editor.getPosition();
+    const currentContent = editor.getValue();
 
-    if (position) {
-      editor.executeEdits('insert-snippet', [
-        {
-          range: {
-            startLineNumber: position.lineNumber,
-            startColumn: position.column,
-            endLineNumber: position.lineNumber,
-            endColumn: position.column,
-          },
-          text: '\n' + code + '\n',
-        },
-      ]);
+    // Use smart insertion to place code in the correct location
+    const newContent = smartInsertHTML(currentContent, code);
 
-      // Update the resource with the new content
-      const newContent = editor.getValue();
-      updateResource({ content: newContent });
+    // Update the editor with the new content
+    editor.setValue(newContent);
 
-      // Focus editor after insertion
-      editor.focus();
-    }
+    // Update the resource
+    updateResource({ content: newContent });
+
+    // Focus editor after insertion
+    editor.focus();
   };
 
   // Group templates by category for dropdown (filtered by content type)

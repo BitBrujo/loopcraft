@@ -186,7 +186,7 @@ export function ActionSnippets({ onInsert, companionMode, targetServerName, sele
 
       <div className="p-3 border-t bg-muted/30">
         <p className="text-xs text-muted-foreground">
-          💡 <strong>Tip:</strong> Click &quot;Insert&quot; to add code at cursor position
+          💡 <strong>Tip:</strong> Click &quot;Insert Code&quot; to add snippets in the correct location
         </p>
       </div>
     </div>
@@ -263,7 +263,7 @@ function SnippetCard({ snippet, isCopied, onCopy, onInsert }: SnippetCardProps) 
             onClick={() => onInsert(snippet.code)}
             className="text-xs h-7 ml-auto"
           >
-            Insert at Cursor
+            Insert Code
           </Button>
         )}
       </div>

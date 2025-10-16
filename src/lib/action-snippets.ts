@@ -20,7 +20,7 @@ export const actionSnippets: ActionSnippet[] = [
     id: 'tool-button',
     name: 'Tool Call Button',
     category: 'tool',
-    description: 'Execute an MCP tool when button is clicked',
+    description: 'Simple button that calls an MCP tool when clicked',
     code: `<button onclick="executeTool()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
   Execute Tool
 </button>
@@ -44,7 +44,7 @@ export const actionSnippets: ActionSnippet[] = [
     id: 'tool-form',
     name: 'Form Submission Tool',
     category: 'tool',
-    description: 'Submit form data to an MCP tool',
+    description: 'Form that collects user input and sends it to an MCP tool',
     code: `<form id="myForm" class="space-y-4">
   <input type="text" name="name" placeholder="Enter name" class="border rounded px-3 py-2 w-full">
   <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
@@ -73,7 +73,7 @@ export const actionSnippets: ActionSnippet[] = [
     id: 'tool-async',
     name: 'Async Tool with Response',
     category: 'tool',
-    description: 'Call tool and handle response asynchronously',
+    description: 'Call a tool and display the response in the UI',
     code: `<button onclick="callAsyncTool()" class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">
   Call Tool
 </button>
@@ -110,7 +110,7 @@ export const actionSnippets: ActionSnippet[] = [
     id: 'prompt-button',
     name: 'Ask AI Button',
     category: 'prompt',
-    description: 'Send a prompt to the AI assistant',
+    description: 'Button that sends a question to the AI assistant',
     code: `<button onclick="askAI()" class="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600">
   Ask AI
 </button>
@@ -131,7 +131,7 @@ export const actionSnippets: ActionSnippet[] = [
     id: 'prompt-dynamic',
     name: 'Dynamic AI Prompt',
     category: 'prompt',
-    description: 'Build prompt from user input',
+    description: 'Text input that lets users ask custom AI questions',
     code: `<div class="space-y-2">
   <input type="text" id="question" placeholder="What do you want to know?"
          class="border rounded px-3 py-2 w-full">
@@ -158,7 +158,7 @@ export const actionSnippets: ActionSnippet[] = [
     id: 'prompt-contextual',
     name: 'Contextual Help Prompts',
     category: 'prompt',
-    description: 'Pre-defined help questions for users',
+    description: 'Pre-written help questions users can click',
     code: `<div class="space-y-2">
   <p class="font-semibold">Quick Help:</p>
   <button onclick="askHelp('getting-started')" class="block w-full text-left px-3 py-2 hover:bg-gray-100 rounded">
@@ -195,7 +195,7 @@ export const actionSnippets: ActionSnippet[] = [
     id: 'link-button',
     name: 'Open External Link',
     category: 'link',
-    description: 'Open a URL in new browser tab',
+    description: 'Button that opens a website in a new browser tab',
     code: `<button onclick="openLink()" class="px-4 py-2 bg-cyan-500 text-white rounded hover:bg-cyan-600">
   Open Documentation
 </button>
@@ -216,7 +216,7 @@ export const actionSnippets: ActionSnippet[] = [
     id: 'link-list',
     name: 'Link List',
     category: 'link',
-    description: 'List of external resources',
+    description: 'Multiple clickable links to external resources',
     code: `<div class="space-y-2">
   <p class="font-semibold">External Resources:</p>
   <a href="#" onclick="openExternal('https://docs.example.com'); return false;"
@@ -248,7 +248,7 @@ export const actionSnippets: ActionSnippet[] = [
     id: 'intent-nav',
     name: 'App Navigation',
     category: 'intent',
-    description: 'Navigate to app pages',
+    description: 'Navigation buttons to switch between app pages',
     code: `<div class="space-y-2">
   <button onclick="navigate('settings')" class="block w-full px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
     ⚙️ Settings
@@ -280,7 +280,7 @@ export const actionSnippets: ActionSnippet[] = [
     id: 'intent-custom',
     name: 'Custom Intent with Params',
     category: 'intent',
-    description: 'Trigger custom app action',
+    description: 'Trigger custom app actions with parameters',
     code: `<button onclick="customAction()" class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600">
   Trigger Custom Action
 </button>
@@ -307,7 +307,7 @@ export const actionSnippets: ActionSnippet[] = [
     id: 'notify-success',
     name: 'Success Notification',
     category: 'notify',
-    description: 'Show success toast message',
+    description: 'Show a green success toast notification',
     code: `<button onclick="showSuccess()" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
   Show Success
 </button>
@@ -328,7 +328,7 @@ export const actionSnippets: ActionSnippet[] = [
     id: 'notify-error',
     name: 'Error Notification',
     category: 'notify',
-    description: 'Show error toast message',
+    description: 'Show a red error toast notification',
     code: `<button onclick="showError()" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
   Show Error
 </button>
@@ -349,7 +349,7 @@ export const actionSnippets: ActionSnippet[] = [
     id: 'notify-variants',
     name: 'All Notification Variants',
     category: 'notify',
-    description: 'Demo all toast notification types',
+    description: 'Demo all 4 toast types (success, error, warning, info)',
     code: `<div class="space-y-2">
   <button onclick="notify('Changes saved successfully!')" class="block w-full px-3 py-2 bg-green-500 text-white rounded">
     Success (auto-detected)

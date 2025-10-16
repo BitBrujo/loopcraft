@@ -107,14 +107,20 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content, serverNam
       }
     } else if (result.type === 'prompt') {
       console.log(`💬 Prompt from UI:`, result.payload.prompt);
-      // Insert prompt into chat input
+      // Insert prompt into chat input using native value setter for React compatibility
       const chatInput = document.querySelector('textarea[placeholder*="Message"]') as HTMLTextAreaElement;
       if (chatInput) {
-        chatInput.value = result.payload.prompt;
-        chatInput.focus();
-        // Trigger input event to notify React
-        const event = new Event('input', { bubbles: true });
-        chatInput.dispatchEvent(event);
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+          window.HTMLTextAreaElement.prototype,
+          'value'
+        )?.set;
+
+        if (nativeInputValueSetter) {
+          nativeInputValueSetter.call(chatInput, result.payload.prompt);
+          const event = new Event('input', { bubbles: true });
+          chatInput.dispatchEvent(event);
+          chatInput.focus();
+        }
       }
     } else if (result.type === 'link') {
       console.log(`Link from UI:`, result.payload.url);
