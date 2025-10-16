@@ -78,9 +78,8 @@ server.addTool({
         lastModified: '2025-10-16T21:15:07.134Z'
       },
       uiMetadata: {
-        'auto-resize-iframe': true,
-        'container-style': {"borderColor":"#06c12b"}
-      }
+        'preferred-frame-size': ['800px', '600px']
+      } as any
     });
 
     return {
