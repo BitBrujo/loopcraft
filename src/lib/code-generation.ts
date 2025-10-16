@@ -226,6 +226,8 @@ server.addResource({
 // Start server with stdio transport
 server.start({
   transportType: "stdio",
+}).then(() => {
+  console.error('${serverName} MCP server running on stdio');
 });
 `;
 
@@ -621,6 +623,8 @@ server.addTool({
 // Start server with stdio transport
 server.start({
   transportType: "stdio",
+}).then(() => {
+  console.error('${serverName} MCP server running on stdio');
 });
 `;
 

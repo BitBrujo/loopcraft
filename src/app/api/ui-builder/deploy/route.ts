@@ -54,6 +54,22 @@ interface CategorizedError {
 function categorizeError(error: Error): CategorizedError {
   const errorMsg = error.message.toLowerCase();
 
+  // Server startup failures with exit code 1
+  if (errorMsg.includes('server exited with code 1') || errorMsg.includes('exited with code 1')) {
+    return {
+      category: 'validation',
+      message: 'Server startup failed with exit code 1',
+      troubleshooting: [
+        'The server process started but exited unexpectedly',
+        'This often indicates a runtime error in the generated code',
+        'Check for syntax errors or missing dependencies in the generated server file',
+        'Review the server logs above for specific error messages',
+        'Try running the generated server manually to see detailed error output'
+      ],
+      fixCommand: 'npx tsx mcp-servers/[server-name]-server.ts  # Replace [server-name] with your server name'
+    };
+  }
+
   // Permission errors
   if (errorMsg.includes('permission denied') || errorMsg.includes('eacces')) {
     return {
@@ -892,12 +908,15 @@ async function testServerStartup(
       // Look for success indicators
       if ((output.includes('MCP server running') || output.includes('Server started')) && !resolved) {
         resolved = true;
-        serverProcess.kill();
-        if (processTracker) processTracker.delete(serverProcess);
-        resolve({
-          success: true,
-          output
-        });
+        // Add delay to prevent race condition with close event
+        setTimeout(() => {
+          serverProcess.kill();
+          if (processTracker) processTracker.delete(serverProcess);
+          resolve({
+            success: true,
+            output
+          });
+        }, 200);
       }
     });
 
@@ -906,12 +925,15 @@ async function testServerStartup(
       // Check for startup messages (some servers log to stderr)
       if ((errorOutput.includes('MCP server running') || errorOutput.includes('Server started')) && !resolved) {
         resolved = true;
-        serverProcess.kill();
-        if (processTracker) processTracker.delete(serverProcess);
-        resolve({
-          success: true,
-          output: errorOutput
-        });
+        // Add delay to prevent race condition with close event
+        setTimeout(() => {
+          serverProcess.kill();
+          if (processTracker) processTracker.delete(serverProcess);
+          resolve({
+            success: true,
+            output: errorOutput
+          });
+        }, 200);
       }
     });
 
@@ -947,8 +969,13 @@ async function testServerStartup(
         resolved = true;
         clearTimeout(timeoutId);
         if (processTracker) processTracker.delete(serverProcess);
-        // Early exit with code 0 is acceptable for some MCP servers
-        if (code === 0 || !errorOutput) {
+        // Accept if exit code is 0 OR if success message was detected in output
+        const hasSuccessMessage = output.includes('MCP server running') ||
+                                  output.includes('Server started') ||
+                                  errorOutput.includes('MCP server running') ||
+                                  errorOutput.includes('Server started');
+
+        if (code === 0 || hasSuccessMessage) {
           resolve({
             success: true,
             output: output || errorOutput
