@@ -121,9 +121,9 @@ export function generateServerCode(
     selectedTools?: string[];
   }
 ): string {
-  // Check if companion mode is enabled
+  // Check if companion mode is enabled - companion mode should use FastMCP format
   if (options?.companionMode && options?.targetServerName && options?.selectedTools) {
-    return generateCompanionServerCode(resource, options.targetServerName, options.selectedTools);
+    return generateFastMCPCode(resource, options);
   }
 
   const serverName = resource.uri.split('/')[2] || 'my-ui-server';

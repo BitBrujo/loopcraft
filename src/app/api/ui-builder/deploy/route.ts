@@ -331,8 +331,8 @@ async function validateCompanionMode(
 
   // 1. Check if target server exists in database
   try {
-    const serverResults = await query<{ id: number; name: string; config: string; is_enabled: boolean }>(
-      'SELECT id, name, config, is_enabled FROM mcp_servers WHERE id = ? AND user_id = ?',
+    const serverResults = await query<{ id: number; name: string; config: string; enabled: boolean }>(
+      'SELECT id, name, config, enabled FROM mcp_servers WHERE id = ? AND user_id = ?',
       [resource.selectedServerId, userId]
     );
 
@@ -351,7 +351,7 @@ async function validateCompanionMode(
     logs.push(`✓ Target server found: ${targetServer.name}`);
 
     // 2. Check if server is enabled
-    if (!targetServer.is_enabled) {
+    if (!targetServer.enabled) {
       sendUpdate({
         step: 0,
         total: 7,
@@ -775,7 +775,7 @@ export async function POST(request: NextRequest) {
           };
 
           const dbResult = await query(
-            `INSERT INTO mcp_servers (user_id, name, config, is_enabled, created_at)
+            `INSERT INTO mcp_servers (user_id, name, config, enabled, created_at)
              VALUES (?, ?, ?, true, NOW())`,
             [user.userId, finalServerName, JSON.stringify(serverConfig)]
           ) as { insertId: number };
