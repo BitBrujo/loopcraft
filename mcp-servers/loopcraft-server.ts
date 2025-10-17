@@ -15,7 +15,7 @@ const server = new FastMCP({
 // Add UI tool
 server.addTool({
   name: 'get_ui',
-  description: 'get help',
+  description: 'call think button',
   parameters: z.object({}),
   execute: async (args) => {
     // Prepare content
@@ -40,31 +40,19 @@ server.addTool({
   <p>Edit this HTML to create your custom UI resource.</p>
   <p>Use the <strong>Configure</strong> tab to set metadata and frame size.</p>
 
-<div class="space-y-2">
-  <p class="font-semibold">Quick Help:</p>
-  <button onclick="askHelp('getting-started')" class="block w-full text-left px-3 py-2 hover:bg-gray-100 rounded">
-    How do I get started?
-  </button>
-  <button onclick="askHelp('features')" class="block w-full text-left px-3 py-2 hover:bg-gray-100 rounded">
-    What features are available?
-  </button>
-  <button onclick="askHelp('troubleshoot')" class="block w-full text-left px-3 py-2 hover:bg-gray-100 rounded">
-    Help me troubleshoot
-  </button>
-</div>
+<button onclick="executeTool()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+  Execute Tool
+</button>
 
 <script>
-  const prompts = {
-    'getting-started': 'How do I get started with this feature?',
-    'features': 'What features are available in this tool?',
-    'troubleshoot': 'I need help troubleshooting an issue'
-  };
-
-  function askHelp(key) {
+  function executeTool() {
     window.parent.postMessage({
-      type: 'prompt',
+      type: 'tool',
       payload: {
-        prompt: prompts[key]
+        toolName: 'mcp_sequentialthining_sequentialthinking',
+        params: {
+          key: 'value'
+        }
       }
     }, '*');
   }
@@ -79,14 +67,12 @@ server.addTool({
       // mimeType: 'text/html' (default)
       encoding: 'text',
       metadata: {
-        title: 'help',
-        description: 'get help',
-        lastModified: '2025-10-16T21:47:37.749Z'
+        title: 'call think button',
+        description: 'call think button',
+        lastModified: '2025-10-17T02:03:47.387Z'
       },
       uiMetadata: {
-        'preferred-frame-size': ['800px', '600px'],
-        'auto-resize-iframe': true,
-        'container-style': {"borderColor":"#ff0000"}
+        'preferred-frame-size': ['800px', '600px']
       }
     });
 

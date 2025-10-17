@@ -306,11 +306,11 @@ export function ConfigureTab() {
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="disabled" id="integration" />
                   <Label htmlFor="integration" className="font-normal cursor-pointer">
-                    Server Integration
+                    Standalone Resource
                   </Label>
                 </div>
                 <p className="text-sm text-muted-foreground ml-6 mb-2">
-                  Add this UI resource to an existing MCP server
+                  Creating standalone resource - you can deploy it as a new server
                 </p>
 
                 <div className="flex items-center space-x-2">
@@ -340,7 +340,7 @@ export function ConfigureTab() {
                   onValueChange={handleServerChange}
                 >
                   <SelectTrigger id="server">
-                    <SelectValue placeholder="Select a server or create standalone" />
+                    <SelectValue placeholder="Select server" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">
