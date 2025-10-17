@@ -415,8 +415,22 @@ export function DesignTab() {
   const [selectedAction, setSelectedAction] = useState<ActionSnippet | null>(null);
   const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [showUIMetadata, setShowUIMetadata] = useState(true);
+  const [showRendererOptions, setShowRendererOptions] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
+
+  // Size preset state
+  type SizePreset = 'small' | 'medium' | 'large' | 'full' | 'custom';
+  const [sizePreset, setSizePreset] = useState<SizePreset>('medium');
+
+  const SIZE_PRESETS = {
+    small: { width: '400px', height: '300px', label: 'Small (400×300)' },
+    medium: { width: '800px', height: '600px', label: 'Medium (800×600)' },
+    large: { width: '1200px', height: '800px', label: 'Large (1200×800)' },
+    full: { width: '100%', height: '600px', label: 'Full Width (100%×600)' },
+    custom: { width: '800px', height: '600px', label: 'Custom Size' },
+  };
 
   // Auto-detect template placeholders when HTML content changes
   useEffect(() => {
@@ -427,6 +441,25 @@ export function DesignTab() {
       }
     }
   }, [currentResource?.content, currentResource?.contentType, updateResource, currentResource?.templatePlaceholders]);
+
+  // Detect current size preset from currentResource
+  useEffect(() => {
+    if (!currentResource) return;
+
+    const currentSize = currentResource.uiMetadata?.['preferred-frame-size'] || ['800px', '600px'];
+    const [width, height] = currentSize;
+
+    // Check which preset matches
+    for (const [preset, config] of Object.entries(SIZE_PRESETS)) {
+      if (config.width === width && config.height === height) {
+        setSizePreset(preset as SizePreset);
+        return;
+      }
+    }
+
+    // If no match, it's custom
+    setSizePreset('custom');
+  }, [currentResource]);
 
   if (!currentResource) {
     return (
@@ -502,7 +535,35 @@ export function DesignTab() {
     }
   };
 
+  const handleSizePresetChange = (preset: SizePreset) => {
+    setSizePreset(preset);
+    if (preset !== 'custom') {
+      const { width, height } = SIZE_PRESETS[preset];
+      updateResource({
+        uiMetadata: {
+          ...currentResource.uiMetadata,
+          'preferred-frame-size': [width, height]
+        }
+      });
+    }
+  };
+
+  const handleCustomSizeChange = (dimension: 'width' | 'height', value: string) => {
+    const currentSize = currentResource.uiMetadata?.['preferred-frame-size'] || ['800px', '600px'];
+    const newSize: [string, string] = dimension === 'width'
+      ? [value, currentSize[1]]
+      : [currentSize[0], value];
+
+    updateResource({
+      uiMetadata: {
+        ...currentResource.uiMetadata,
+        'preferred-frame-size': newSize
+      }
+    });
+  };
+
   const initialData = currentResource.uiMetadata?.['initial-render-data'];
+  const preferredSize = currentResource.uiMetadata?.['preferred-frame-size'] || ['800px', '600px'];
 
   // Handle smart HTML-aware code insertion
   const handleInsertCode = (code: string) => {
@@ -971,6 +1032,306 @@ export function DesignTab() {
 
                     <p className="text-xs text-muted-foreground">
                       Priority affects display order when multiple UI resources are available. May not apply if resource is linked to a single server.
+                    </p>
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+
+          {/* UI Metadata - Collapsible */}
+          <div className="flex-shrink-0">
+            <Collapsible open={showUIMetadata} onOpenChange={setShowUIMetadata}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2 py-6">
+                  <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5">
+                    UI Metadata
+                  </Badge>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${showUIMetadata ? '' : '-rotate-90'}`} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="p-2 space-y-4">
+                  {/* Size Preset */}
+                  <div className="space-y-2">
+                    <Label htmlFor="sizePreset">Preferred Frame Size</Label>
+                    <Select value={sizePreset} onValueChange={handleSizePresetChange}>
+                      <SelectTrigger id="sizePreset">
+                        <SelectValue placeholder="Choose a size preset" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(SIZE_PRESETS).map(([key, config]) => (
+                          <SelectItem key={key} value={key}>
+                            {config.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      Initial size for the iframe when rendered
+                    </p>
+                  </div>
+
+                  {/* Custom Size Inputs */}
+                  {sizePreset === 'custom' && (
+                    <div className="space-y-2">
+                      <Label>Custom Size</Label>
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <Label htmlFor="width" className="text-sm text-muted-foreground">
+                            Width
+                          </Label>
+                          <Input
+                            id="width"
+                            value={preferredSize[0]}
+                            onChange={(e) => handleCustomSizeChange('width', e.target.value)}
+                            placeholder="800px"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <Label htmlFor="height" className="text-sm text-muted-foreground">
+                            Height
+                          </Label>
+                          <Input
+                            id="height"
+                            value={preferredSize[1]}
+                            onChange={(e) => handleCustomSizeChange('height', e.target.value)}
+                            placeholder="600px"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Use CSS units (px, %, vh, vw, etc.)
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+
+          {/* Renderer Options - Collapsible */}
+          <div className="flex-shrink-0">
+            <Collapsible open={showRendererOptions} onOpenChange={setShowRendererOptions}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-full justify-between hover:bg-accent mb-2 py-6">
+                  <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5">
+                    Renderer Options
+                  </Badge>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${showRendererOptions ? '' : '-rotate-90'}`} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="space-y-4 p-2">
+                  <p className="text-xs text-muted-foreground">Configure iframe rendering behavior</p>
+
+                  {/* Auto-Resize Iframe */}
+                  {currentResource.contentType !== 'remoteDom' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="autoResize">Auto-Resize Iframe</Label>
+                      <Select
+                        value={
+                          typeof currentResource.uiMetadata?.['auto-resize-iframe'] === 'boolean'
+                            ? currentResource.uiMetadata['auto-resize-iframe']
+                              ? 'both'
+                              : 'disabled'
+                            : typeof currentResource.uiMetadata?.['auto-resize-iframe'] === 'object'
+                              ? currentResource.uiMetadata['auto-resize-iframe'].width && currentResource.uiMetadata['auto-resize-iframe'].height
+                                ? 'both'
+                                : currentResource.uiMetadata['auto-resize-iframe'].width
+                                  ? 'width'
+                                  : 'height'
+                              : 'disabled'
+                        }
+                        onValueChange={(value) => {
+                          const autoResize =
+                            value === 'disabled' ? false :
+                            value === 'both' ? true :
+                            value === 'width' ? { width: true } :
+                            { height: true };
+                          updateResource({
+                            uiMetadata: {
+                              ...currentResource.uiMetadata,
+                              'auto-resize-iframe': autoResize
+                            }
+                          });
+                        }}
+                      >
+                        <SelectTrigger id="autoResize">
+                          <SelectValue placeholder="Choose resize behavior" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="disabled">Disabled</SelectItem>
+                          <SelectItem value="both">Both dimensions</SelectItem>
+                          <SelectItem value="width">Width only</SelectItem>
+                          <SelectItem value="height">Height only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Automatically adjusts iframe size to fit content
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Sandbox Permissions */}
+                  {currentResource.contentType !== 'remoteDom' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="sandboxPermissions">Sandbox Permissions</Label>
+                      <Select
+                        value={
+                          currentResource.uiMetadata?.['sandbox-permissions'] === 'allow-scripts' ? 'strict' :
+                          currentResource.uiMetadata?.['sandbox-permissions'] === 'allow-forms allow-scripts allow-same-origin allow-popups' ? 'permissive' :
+                          currentResource.uiMetadata?.['sandbox-permissions'] &&
+                          currentResource.uiMetadata['sandbox-permissions'] !== 'allow-forms allow-scripts allow-same-origin' ? 'custom' :
+                          'standard'
+                        }
+                        onValueChange={(value) => {
+                          const permissions =
+                            value === 'strict' ? 'allow-scripts' :
+                            value === 'permissive' ? 'allow-forms allow-scripts allow-same-origin allow-popups' :
+                            value === 'custom' ? currentResource.uiMetadata?.['sandbox-permissions'] || '' :
+                            'allow-forms allow-scripts allow-same-origin';
+                          updateResource({
+                            uiMetadata: {
+                              ...currentResource.uiMetadata,
+                              'sandbox-permissions': permissions
+                            }
+                          });
+                        }}
+                      >
+                        <SelectTrigger id="sandboxPermissions">
+                          <SelectValue placeholder="Choose security level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="standard">Standard (forms, scripts, same-origin)</SelectItem>
+                          <SelectItem value="strict">Strict (scripts only)</SelectItem>
+                          <SelectItem value="permissive">Permissive (includes popups)</SelectItem>
+                          <SelectItem value="custom">Custom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {(currentResource.uiMetadata?.['sandbox-permissions'] &&
+                        currentResource.uiMetadata['sandbox-permissions'] !== 'allow-scripts' &&
+                        currentResource.uiMetadata['sandbox-permissions'] !== 'allow-forms allow-scripts allow-same-origin' &&
+                        currentResource.uiMetadata['sandbox-permissions'] !== 'allow-forms allow-scripts allow-same-origin allow-popups') && (
+                        <Input
+                          value={currentResource.uiMetadata['sandbox-permissions']}
+                          onChange={(e) => updateResource({
+                            uiMetadata: {
+                              ...currentResource.uiMetadata,
+                              'sandbox-permissions': e.target.value
+                            }
+                          })}
+                          placeholder="allow-scripts allow-forms"
+                        />
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Controls iframe security restrictions
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Iframe Title */}
+                  <div className="space-y-2">
+                    <Label htmlFor="iframeTitle">Iframe Title (Accessibility)</Label>
+                    <Input
+                      id="iframeTitle"
+                      value={currentResource.uiMetadata?.['iframe-title'] || ''}
+                      onChange={(e) => updateResource({
+                        uiMetadata: {
+                          ...currentResource.uiMetadata,
+                          'iframe-title': e.target.value
+                        }
+                      })}
+                      placeholder="Contact Form Interface"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Helps screen readers identify the iframe content
+                    </p>
+                  </div>
+
+                  {/* Container Style */}
+                  <div className="space-y-2">
+                    <Label>Container Style</Label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <Label htmlFor="border" className="text-xs text-muted-foreground">
+                          Border
+                        </Label>
+                        <Input
+                          id="border"
+                          value={currentResource.uiMetadata?.['container-style']?.border || ''}
+                          onChange={(e) => updateResource({
+                            uiMetadata: {
+                              ...currentResource.uiMetadata,
+                              'container-style': {
+                                ...currentResource.uiMetadata?.['container-style'],
+                                border: e.target.value
+                              }
+                            }
+                          })}
+                          placeholder="1px solid #ccc"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="borderColor" className="text-xs text-muted-foreground">
+                          Border Color
+                        </Label>
+                        <Input
+                          id="borderColor"
+                          type="color"
+                          value={currentResource.uiMetadata?.['container-style']?.borderColor || '#cccccc'}
+                          onChange={(e) => updateResource({
+                            uiMetadata: {
+                              ...currentResource.uiMetadata,
+                              'container-style': {
+                                ...currentResource.uiMetadata?.['container-style'],
+                                borderColor: e.target.value
+                              }
+                            }
+                          })}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="borderRadius" className="text-xs text-muted-foreground">
+                          Border Radius
+                        </Label>
+                        <Input
+                          id="borderRadius"
+                          value={currentResource.uiMetadata?.['container-style']?.borderRadius || ''}
+                          onChange={(e) => updateResource({
+                            uiMetadata: {
+                              ...currentResource.uiMetadata,
+                              'container-style': {
+                                ...currentResource.uiMetadata?.['container-style'],
+                                borderRadius: e.target.value
+                              }
+                            }
+                          })}
+                          placeholder="8px"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="minHeight" className="text-xs text-muted-foreground">
+                          Min Height
+                        </Label>
+                        <Input
+                          id="minHeight"
+                          value={currentResource.uiMetadata?.['container-style']?.minHeight || ''}
+                          onChange={(e) => updateResource({
+                            uiMetadata: {
+                              ...currentResource.uiMetadata,
+                              'container-style': {
+                                ...currentResource.uiMetadata?.['container-style'],
+                                minHeight: e.target.value
+                              }
+                            }
+                          })}
+                          placeholder="400px"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Visual customization for the iframe container
                     </p>
                   </div>
                 </div>
