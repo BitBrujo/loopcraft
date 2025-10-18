@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { ArrowRight, Sparkles, Info, Copy, Check, X, Eye, Wrench, MessageSquare, Link as LinkIcon, Target, Bell, ChevronDown } from 'lucide-react';
+import { ArrowRight, Sparkles, Info, Copy, Check, X, Eye, Wrench, MessageSquare, Link as LinkIcon, Target, Bell, ChevronDown, Code2, Monitor } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { Button } from '@/components/ui/button';
 import { PreviewPanel } from '../PreviewPanel';
@@ -32,6 +32,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
 import { Editor } from '@monaco-editor/react';
 import { uiTemplates } from '@/lib/ui-templates';
 import { actionSnippets, categoryMetadata, getSnippetsByCategory } from '@/lib/action-snippets';
@@ -415,9 +421,10 @@ export function DesignTab() {
   const [selectedAction, setSelectedAction] = useState<ActionSnippet | null>(null);
   const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-  const [showUIMetadata, setShowUIMetadata] = useState(true);
+  const [showUIMetadata, setShowUIMetadata] = useState(false);
   const [showRendererOptions, setShowRendererOptions] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [activeEditorTab, setActiveEditorTab] = useState<'code' | 'preview'>('code');
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
 
   // Size preset state
@@ -1105,6 +1112,57 @@ export function DesignTab() {
                       </p>
                     </div>
                   )}
+
+                  {/* Auto-Resize Iframe - Now in UI Metadata section */}
+                  {currentResource.contentType !== 'remoteDom' && (
+                    <>
+                      <Separator className="my-4" />
+                      <div className="space-y-2">
+                        <Label htmlFor="autoResize">Auto-Resize After Load</Label>
+                        <Select
+                          value={
+                            typeof currentResource.uiMetadata?.['auto-resize-iframe'] === 'boolean'
+                              ? currentResource.uiMetadata['auto-resize-iframe']
+                                ? 'both'
+                                : 'disabled'
+                              : typeof currentResource.uiMetadata?.['auto-resize-iframe'] === 'object'
+                                ? currentResource.uiMetadata['auto-resize-iframe'].width && currentResource.uiMetadata['auto-resize-iframe'].height
+                                  ? 'both'
+                                  : currentResource.uiMetadata['auto-resize-iframe'].width
+                                    ? 'width'
+                                    : 'height'
+                                : 'disabled'
+                          }
+                          onValueChange={(value) => {
+                            const autoResize =
+                              value === 'disabled' ? false :
+                              value === 'both' ? true :
+                              value === 'width' ? { width: true } :
+                              { height: true };
+                            updateResource({
+                              uiMetadata: {
+                                ...currentResource.uiMetadata,
+                                'auto-resize-iframe': autoResize
+                              }
+                            });
+                          }}
+                        >
+                          <SelectTrigger id="autoResize">
+                            <SelectValue placeholder="Choose resize behavior" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="disabled">Disabled</SelectItem>
+                            <SelectItem value="both">Both dimensions</SelectItem>
+                            <SelectItem value="width">Width only</SelectItem>
+                            <SelectItem value="height">Height only</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Two-phase rendering: Shows at <span className="font-medium">preferred size</span> initially → Auto-resizes to <span className="font-medium">content size</span> after load
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </div>
               </CollapsibleContent>
             </Collapsible>
@@ -1123,55 +1181,7 @@ export function DesignTab() {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="space-y-4 p-2">
-                  <p className="text-xs text-muted-foreground">Configure iframe rendering behavior</p>
-
-                  {/* Auto-Resize Iframe */}
-                  {currentResource.contentType !== 'remoteDom' && (
-                    <div className="space-y-2">
-                      <Label htmlFor="autoResize">Auto-Resize Iframe</Label>
-                      <Select
-                        value={
-                          typeof currentResource.uiMetadata?.['auto-resize-iframe'] === 'boolean'
-                            ? currentResource.uiMetadata['auto-resize-iframe']
-                              ? 'both'
-                              : 'disabled'
-                            : typeof currentResource.uiMetadata?.['auto-resize-iframe'] === 'object'
-                              ? currentResource.uiMetadata['auto-resize-iframe'].width && currentResource.uiMetadata['auto-resize-iframe'].height
-                                ? 'both'
-                                : currentResource.uiMetadata['auto-resize-iframe'].width
-                                  ? 'width'
-                                  : 'height'
-                              : 'disabled'
-                        }
-                        onValueChange={(value) => {
-                          const autoResize =
-                            value === 'disabled' ? false :
-                            value === 'both' ? true :
-                            value === 'width' ? { width: true } :
-                            { height: true };
-                          updateResource({
-                            uiMetadata: {
-                              ...currentResource.uiMetadata,
-                              'auto-resize-iframe': autoResize
-                            }
-                          });
-                        }}
-                      >
-                        <SelectTrigger id="autoResize">
-                          <SelectValue placeholder="Choose resize behavior" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="disabled">Disabled</SelectItem>
-                          <SelectItem value="both">Both dimensions</SelectItem>
-                          <SelectItem value="width">Width only</SelectItem>
-                          <SelectItem value="height">Height only</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground">
-                        Automatically adjusts iframe size to fit content
-                      </p>
-                    </div>
-                  )}
+                  <p className="text-xs text-muted-foreground">Configure iframe rendering behavior and security</p>
 
                   {/* Sandbox Permissions */}
                   {currentResource.contentType !== 'remoteDom' && (
@@ -1382,122 +1392,57 @@ export function DesignTab() {
           )}
         </div>
 
-        {/* Right Column: Code + Optional Preview */}
+        {/* Right Column: Code + Preview Tabs */}
         <div className="flex-1 overflow-hidden flex flex-col min-w-0">
+          <Tabs value={activeEditorTab} onValueChange={(value) => setActiveEditorTab(value as 'code' | 'preview')} className="flex-1 flex flex-col overflow-hidden">
+            <TabsList className="w-full justify-start rounded-none border-b bg-muted/5 h-auto p-0">
+              <TabsTrigger value="code" className="gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
+                <Code2 className="h-4 w-4" />
+                Code
+              </TabsTrigger>
+              <TabsTrigger value="preview" className="gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
+                <Monitor className="h-4 w-4" />
+                Preview
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Top Bar with Preview Toggle */}
-          <div className="border-b p-2 flex items-center justify-end gap-2 bg-muted/5">
-            <Button
-              size="sm"
-              variant={showPreview ? 'default' : 'outline'}
-              onClick={() => setShowPreview(!showPreview)}
-              className="gap-2"
-            >
-              <Eye className="h-4 w-4" />
-              {showPreview ? 'Hide Preview' : 'Show Preview'}
-            </Button>
-          </div>
+            {/* Code Tab */}
+            <TabsContent value="code" className="flex-1 overflow-hidden mt-0 data-[state=inactive]:hidden">
+              <div className="h-full overflow-hidden flex flex-col">
+                {currentResource.contentType === 'rawHtml' && (
+                  <>
+                    <HTMLEditor
+                      value={currentResource.content}
+                      onChange={(value) => updateResource({ content: value })}
+                      onMount={(editor) => {
+                        editorRef.current = editor;
+                      }}
+                    />
 
-          {/* Code + Preview Area */}
-          {!showPreview ? (
-            /* Full-height editor when preview hidden */
-            <div className="flex-1 overflow-hidden">
-              {currentResource.contentType === 'rawHtml' && (
-                <>
-                  <HTMLEditor
-                    value={currentResource.content}
-                    onChange={(value) => updateResource({ content: value })}
-                    onMount={(editor) => {
-                      editorRef.current = editor;
-                    }}
-                  />
-
-                  {/* Detected Template Placeholders - Fixed position at bottom */}
-                  {currentResource.templatePlaceholders && currentResource.templatePlaceholders.length > 0 && (
-                    <div className="border-t p-4 bg-blue-50/50 dark:bg-blue-950/20">
-                      <div className="flex items-start gap-2 mb-2">
-                        <Info className="h-4 w-4 text-blue-600 mt-0.5" />
-                        <div className="flex-1">
-                          <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                            Detected Template Placeholders
-                          </h4>
-                          <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                            These placeholders will be filled by the AI with contextual data
-                          </p>
+                    {/* Detected Template Placeholders - Fixed position at bottom */}
+                    {currentResource.templatePlaceholders && currentResource.templatePlaceholders.length > 0 && (
+                      <div className="border-t p-4 bg-blue-50/50 dark:bg-blue-950/20">
+                        <div className="flex items-start gap-2 mb-2">
+                          <Info className="h-4 w-4 text-blue-600 mt-0.5" />
+                          <div className="flex-1">
+                            <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                              Detected Template Placeholders
+                            </h4>
+                            <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                              These placeholders will be filled by the AI with contextual data
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 mt-3">
+                          {currentResource.templatePlaceholders.map((placeholder) => (
+                            <Badge key={placeholder} variant="secondary" className="font-mono text-xs">
+                              {`{{${placeholder}}}`}
+                            </Badge>
+                          ))}
                         </div>
                       </div>
-                      <div className="flex flex-wrap gap-1.5 mt-3">
-                        {currentResource.templatePlaceholders.map((placeholder) => (
-                          <Badge key={placeholder} variant="secondary" className="font-mono text-xs">
-                            {`{{${placeholder}}}`}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {currentResource.contentType === 'externalUrl' && (
-                <div className="h-full p-6 overflow-y-auto">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>External URL Configuration</CardTitle>
-                      <CardDescription>
-                        Embed an external website or web application
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <URLInput
-                        value={currentResource.content}
-                        onChange={(value) => updateResource({ content: value })}
-                      />
-                      <Alert className="mt-4">
-                        <Info className="h-4 w-4" />
-                        <AlertDescription>
-                          The external site will be rendered in an iframe. Ensure the site allows iframe embedding.
-                        </AlertDescription>
-                      </Alert>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-
-              {currentResource.contentType === 'remoteDom' && (
-                <Editor
-                  height="100%"
-                  defaultLanguage="javascript"
-                  value={currentResource.content}
-                  onChange={(value) => value !== undefined && updateResource({ content: value })}
-                  theme="vs-dark"
-                  options={{
-                    minimap: { enabled: true },
-                    fontSize: 14,
-                    lineNumbers: 'on',
-                    scrollBeyondLastLine: false,
-                    wordWrap: 'on',
-                    formatOnPaste: true,
-                    formatOnType: true,
-                  }}
-                  onMount={(editor) => {
-                    editorRef.current = editor;
-                  }}
-                />
-              )}
-            </div>
-          ) : (
-            /* Resizable split view when preview shown */
-            <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Top: Code Editor (50%) */}
-              <div className="flex-1 min-h-[200px] overflow-hidden border-b">
-                {currentResource.contentType === 'rawHtml' && (
-                  <HTMLEditor
-                    value={currentResource.content}
-                    onChange={(value) => updateResource({ content: value })}
-                    onMount={(editor) => {
-                      editorRef.current = editor;
-                    }}
-                  />
+                    )}
+                  </>
                 )}
 
                 {currentResource.contentType === 'externalUrl' && (
@@ -1547,15 +1492,15 @@ export function DesignTab() {
                   />
                 )}
               </div>
+            </TabsContent>
 
-              {/* Bottom: Preview (50%) */}
-              <div className="flex-1 min-h-[200px] overflow-hidden">
-                {(currentResource.contentType === 'rawHtml' || currentResource.contentType === 'externalUrl' || currentResource.contentType === 'remoteDom') && (
-                  <PreviewPanel />
-                )}
+            {/* Preview Tab */}
+            <TabsContent value="preview" className="flex-1 overflow-hidden mt-0 data-[state=inactive]:hidden">
+              <div className="h-full overflow-hidden">
+                <PreviewPanel />
               </div>
-            </div>
-          )}
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 

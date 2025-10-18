@@ -61,7 +61,13 @@ export interface ContainerStyle {
 export interface UIMetadata {
   /**
    * Preferred initial frame size as [width, height] strings
+   * Sets the initial dimensions when iframe first renders
+   *
    * Example: ['800px', '600px']
+   *
+   * Works with auto-resize-iframe for two-phase rendering:
+   * 1. Initial render at preferred size (loading state)
+   * 2. Auto-resize to content if enabled (final state)
    */
   'preferred-frame-size'?: [string, string];
 
@@ -72,8 +78,23 @@ export interface UIMetadata {
   'initial-render-data'?: Record<string, unknown>;
 
   /**
-   * Auto-resize iframe to content size
+   * Auto-resize iframe to content size after initial render
    * Can be boolean (both dimensions) or object for granular control
+   *
+   * Examples:
+   * - false: Iframe stays at preferred-frame-size (default behavior)
+   * - true: Resizes both width and height to match content
+   * - { width: true }: Only width adjusts, height stays at preferred size
+   * - { height: true }: Only height adjusts, width stays at preferred size
+   *
+   * Two-phase rendering timeline:
+   * 1. Iframe renders at preferred-frame-size: ['800px', '600px']
+   * 2. After 100ms delay, auto-resize adjusts to content dimensions
+   *
+   * Common patterns:
+   * - Fixed size: preferred-frame-size + auto-resize: false
+   * - Dynamic height: preferred-frame-size + auto-resize: { height: true }
+   * - Fully responsive: preferred-frame-size + auto-resize: true
    */
   'auto-resize-iframe'?: boolean | { width?: boolean; height?: boolean };
 

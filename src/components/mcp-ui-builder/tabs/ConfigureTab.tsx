@@ -64,6 +64,7 @@ export function ConfigureTab() {
   } = useUIBuilderStore();
   const [mcpServers, setMcpServers] = useState<MCPServer[]>([]);
   const [isLoadingServers, setIsLoadingServers] = useState(true);
+  const [serverFetchError, setServerFetchError] = useState<string | null>(null);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
   // Fetch MCP servers on mount
@@ -72,6 +73,7 @@ export function ConfigureTab() {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
+          setServerFetchError('Please log in to load your MCP servers');
           setIsLoadingServers(false);
           return;
         }
@@ -85,9 +87,15 @@ export function ConfigureTab() {
         if (response.ok) {
           const data = await response.json();
           setMcpServers(data || []);
+          setServerFetchError(null);
+        } else if (response.status === 401) {
+          setServerFetchError('Session expired. Please log in again.');
+        } else {
+          setServerFetchError(`Failed to load servers (${response.status}). Please try again.`);
         }
       } catch (error) {
         console.error('Failed to fetch MCP servers:', error);
+        setServerFetchError('Network error. Please check your connection and try again.');
       } finally {
         setIsLoadingServers(false);
       }
@@ -275,6 +283,18 @@ export function ConfigureTab() {
               </Label>
               {isLoadingServers ? (
                 <div className="text-sm text-muted-foreground">Loading servers...</div>
+              ) : serverFetchError ? (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Error loading servers:</strong> {serverFetchError}
+                    {serverFetchError.includes('log in') && (
+                      <a href="/login" className="block mt-2 underline text-sm">
+                        Go to Login →
+                      </a>
+                    )}
+                  </AlertDescription>
+                </Alert>
               ) : (
                 <Select
                   value={currentResource.selectedServerId?.toString() || 'none'}
@@ -300,7 +320,7 @@ export function ConfigureTab() {
                   </SelectContent>
                 </Select>
               )}
-              {enabledServers.length === 0 && !isLoadingServers && (
+              {enabledServers.length === 0 && !isLoadingServers && !serverFetchError && (
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription>

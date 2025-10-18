@@ -146,52 +146,6 @@ export function ExportTab() {
         </Alert>
       )}
 
-      {/* Quick Deploy Option - Only for standalone/fastmcp */}
-      {(exportFormat === 'standalone' || exportFormat === 'fastmcp') && (
-        <Card className="border-primary/50 bg-primary/5">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">
-              <span
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium text-white"
-                style={{ backgroundColor: '#6d8d96' }}
-              >
-                <Rocket className="h-4 w-4" />
-                Quick Deploy
-              </span>
-            </CardTitle>
-            <CardDescription>
-              Automatically deploy this {exportFormat === 'fastmcp' ? 'FastMCP' : 'standalone'} server with one click
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                This will:
-                <ul className="list-disc list-inside mt-1 space-y-1">
-                  <li>Write server file to disk</li>
-                  <li>Install dependencies</li>
-                  <li>Test server startup</li>
-                  <li>Add to your MCP servers</li>
-                </ul>
-              </div>
-              <Button
-                onClick={handleDeploy}
-                className="gap-2"
-              >
-                <Rocket className="h-4 w-4" />
-                Deploy Now
-              </Button>
-            </div>
-            <Alert className="mt-4">
-              <Info className="h-4 w-4" />
-              <AlertDescription className="text-xs">
-                <strong>Note:</strong> Deployment is fully automated. The server will be ready to use in chat within seconds.
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Deployment Progress Modal */}
       {currentResource && (
         <DeploymentProgressModal
@@ -284,6 +238,55 @@ export function ExportTab() {
               </div>
             </RadioGroup>
           </div>
+
+          {/* Quick Deploy Section - Only for standalone/fastmcp */}
+          {(exportFormat === 'standalone' || exportFormat === 'fastmcp') && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base font-semibold flex items-center gap-2">
+                      <Rocket className="h-4 w-4" />
+                      Quick Deploy
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Automatically deploy this {exportFormat === 'fastmcp' ? 'FastMCP' : 'standalone'} server with one click
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-primary/50 bg-primary/5 p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="text-sm text-muted-foreground flex-1">
+                      <p className="font-medium text-foreground mb-2">Deployment steps:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>Write server file to disk</li>
+                        <li>Install dependencies</li>
+                        <li>Test server startup</li>
+                        <li>Validate MCP protocol</li>
+                        <li>Add to database</li>
+                        <li>Enable and connect server</li>
+                      </ul>
+                    </div>
+                    <Button
+                      onClick={handleDeploy}
+                      className="gap-2 whitespace-nowrap"
+                    >
+                      <Rocket className="h-4 w-4" />
+                      Deploy Now
+                    </Button>
+                  </div>
+                  <Alert className="mt-4 bg-background/50">
+                    <Info className="h-4 w-4" />
+                    <AlertDescription className="text-xs">
+                      <strong>Note:</strong> Deployment is fully automated. The server will be ready to use in chat within seconds.
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              </div>
+            </>
+          )}
 
           <Separator />
 

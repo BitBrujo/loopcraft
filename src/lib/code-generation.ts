@@ -5,7 +5,7 @@
  * Functions for generating TypeScript, JSON, server code, etc.
  */
 
-import type { UIResource, ContentType } from '@/types/ui-builder';
+import type { UIResource, ContentType, ContainerStyle } from '@/types/ui-builder';
 
 /**
  * Get default MIME type for a content type
@@ -21,6 +21,33 @@ function getDefaultMimeType(contentType: ContentType): string {
     default:
       return 'text/html';
   }
+}
+
+/**
+ * Clean container style by removing empty/undefined values
+ * Only includes properties that have non-empty string values
+ */
+function cleanContainerStyle(style: ContainerStyle | undefined): ContainerStyle | undefined {
+  if (!style) return undefined;
+
+  const cleaned: Partial<ContainerStyle> = {};
+
+  // Only include properties with non-empty string values
+  if (style.border && style.border.trim() !== '') {
+    cleaned.border = style.border;
+  }
+  if (style.borderColor && style.borderColor.trim() !== '') {
+    cleaned.borderColor = style.borderColor;
+  }
+  if (style.borderRadius && style.borderRadius.trim() !== '') {
+    cleaned.borderRadius = style.borderRadius;
+  }
+  if (style.minHeight && style.minHeight.trim() !== '') {
+    cleaned.minHeight = style.minHeight;
+  }
+
+  // Return undefined if no valid properties, otherwise return cleaned object
+  return Object.keys(cleaned).length > 0 ? cleaned as ContainerStyle : undefined;
 }
 
 export function generateTypeScriptCode(resource: UIResource): string {
@@ -65,22 +92,27 @@ export function generateTypeScriptCode(resource: UIResource): string {
     : "";
 
   // Generate UI metadata (prefixed with mcpui.dev/ui-)
+  // Clean container style to remove empty values before checking
+  const cleanedContainerStyle = cleanContainerStyle(resource.uiMetadata?.['container-style']);
+
   const hasUiMetadata = resource.uiMetadata?.['preferred-frame-size'] ||
                         resource.uiMetadata?.['initial-render-data'] ||
                         resource.uiMetadata?.['auto-resize-iframe'] ||
                         resource.uiMetadata?.['sandbox-permissions'] ||
                         resource.uiMetadata?.['iframe-title'] ||
-                        resource.uiMetadata?.['container-style'];
+                        cleanedContainerStyle;
 
   const uiMetadataParams: string[] = [];
   if (resource.uiMetadata?.['preferred-frame-size']) {
-    uiMetadataParams.push(`'preferred-frame-size': ['${resource.uiMetadata['preferred-frame-size'][0]}', '${resource.uiMetadata['preferred-frame-size'][1]}']`);
+    uiMetadataParams.push(`'preferred-frame-size': ['${resource.uiMetadata['preferred-frame-size'][0]}', '${resource.uiMetadata['preferred-frame-size'][1]}'] // Initial iframe dimensions`);
   }
   if (resource.uiMetadata?.['initial-render-data']) {
     uiMetadataParams.push(`'initial-render-data': ${JSON.stringify(resource.uiMetadata['initial-render-data'])}`);
   }
   if (resource.uiMetadata?.['auto-resize-iframe'] !== undefined) {
-    uiMetadataParams.push(`'auto-resize-iframe': ${JSON.stringify(resource.uiMetadata['auto-resize-iframe'])}`);
+    // Two-phase rendering: preferred-frame-size (initial) → auto-resize-iframe (after load)
+    // Iframe shows at preferred size first, then auto-resizes to content dimensions
+    uiMetadataParams.push(`'auto-resize-iframe': ${JSON.stringify(resource.uiMetadata['auto-resize-iframe'])} // Resizes to content after initial render`);
   }
   if (resource.uiMetadata?.['sandbox-permissions']) {
     uiMetadataParams.push(`'sandbox-permissions': '${resource.uiMetadata['sandbox-permissions']}'`);
@@ -88,8 +120,9 @@ export function generateTypeScriptCode(resource: UIResource): string {
   if (resource.uiMetadata?.['iframe-title']) {
     uiMetadataParams.push(`'iframe-title': '${resource.uiMetadata['iframe-title']}'`);
   }
-  if (resource.uiMetadata?.['container-style']) {
-    uiMetadataParams.push(`'container-style': ${JSON.stringify(resource.uiMetadata['container-style'])}`);
+  // Only include container-style if it has non-empty values
+  if (cleanedContainerStyle) {
+    uiMetadataParams.push(`'container-style': ${JSON.stringify(cleanedContainerStyle)}`);
   }
 
   const uiMetadataParam = hasUiMetadata
