@@ -5,7 +5,11 @@ import React, { useEffect, useRef } from 'react';
 // Themes: power of softness, water's way, universal truth
 // Visualization: Bars that yield and flow like water, demonstrating how gentleness overcomes the rigid
 
-const Artwork33 = () => {
+interface Artwork33Props {
+  opacity?: number;
+}
+
+const Artwork33 = ({ opacity = 1 }: Artwork33Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const timeRef = useRef(0);
   const animationFrameRef = useRef<number | null>(null);
@@ -37,8 +41,8 @@ const Artwork33 = () => {
     const numLines = Math.floor(50 * (canvas.height / 550));
     const lineSpacing = canvas.height / numLines;
 
-    // Orange brand color
-    const ORANGE = '#f97316';
+    // Orange brand color with opacity
+    const ORANGE_RGB = { r: 249, g: 115, b: 22 }; // #f97316
 
     const animate = () => {
       timeRef.current += 0.0005;
@@ -50,15 +54,15 @@ const Artwork33 = () => {
       for (let i = 0; i < numLines; i++) {
         const y = i * lineSpacing + lineSpacing / 2;
 
-        // Draw horizontal line in orange
+        // Draw horizontal line in orange with opacity
         ctx.beginPath();
-        ctx.strokeStyle = ORANGE;
+        ctx.strokeStyle = `rgba(${ORANGE_RGB.r}, ${ORANGE_RGB.g}, ${ORANGE_RGB.b}, ${opacity})`;
         ctx.lineWidth = 1;
         ctx.moveTo(0, y);
         ctx.lineTo(canvas.width, y);
         ctx.stroke();
 
-        // Draw bars based on noise in orange
+        // Draw bars based on noise in orange with opacity
         for (let x = 0; x < canvas.width; x += 8) {
           const noiseVal = noise(x, y, timeRef.current);
 
@@ -67,7 +71,7 @@ const Artwork33 = () => {
             const barHeight = 2 + noiseVal * 3;
             const animatedX = x + Math.sin(timeRef.current + y * 0.0375) * 20 * noiseVal;
 
-            ctx.fillStyle = ORANGE;
+            ctx.fillStyle = `rgba(${ORANGE_RGB.r}, ${ORANGE_RGB.g}, ${ORANGE_RGB.b}, ${opacity})`;
             ctx.fillRect(animatedX - barWidth/2, y - barHeight/2, barWidth, barHeight);
           }
         }
@@ -92,7 +96,7 @@ const Artwork33 = () => {
 
       timeRef.current = 0;
     };
-  }, []);
+  }, [opacity]);
 
   return (
     <canvas

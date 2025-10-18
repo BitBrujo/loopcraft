@@ -70,7 +70,7 @@ export default function RegisterPage() {
           <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <UserPlus className="h-6 w-6 text-primary" />
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Create Account</h1>
+          <h1 className="text-4xl font-bold text-orange-500">Create Account</h1>
           <p className="text-sm text-muted-foreground mt-2">
             Sign up for a LoopCraft account
           </p>

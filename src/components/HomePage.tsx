@@ -53,33 +53,46 @@ export function HomePage() {
 
   return (
     <ChatLayout>
-      <div className="flex flex-col h-full w-full">
-        {/* Artwork - FULL WIDTH - stretches to fill entire viewport width */}
-        <div className="w-full flex-shrink-0 mb-4">
-          <Artwork33 />
+      <div className="flex flex-col h-full w-full overflow-y-auto">
+        {/* Row 1: Top Artwork - FULL WIDTH - full opacity */}
+        <div className="w-full flex-shrink-0">
+          <Artwork33 opacity={1} />
         </div>
 
-        {/* Content area with constrained width */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="container max-w-4xl mx-auto py-4 px-4">
-            {/* Title */}
-            <div className="text-center mb-4">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-3">
+        {/* Row 2: Title with animation background - 0.1 opacity */}
+        <div className="relative w-full flex-shrink-0">
+          {/* Background animation at 0.1 opacity - fixed background */}
+          <div className="absolute inset-0 w-full h-full overflow-hidden">
+            <Artwork33 opacity={0.1} />
+          </div>
+          {/* Title content on top */}
+          <div className="relative z-10 container max-w-4xl mx-auto py-6 px-4">
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-orange-500 mb-3">
                 LoopCraft
               </h1>
               <p className="text-base text-muted-foreground">
                 Build, test, and deploy MCP servers with ease
               </p>
             </div>
+          </div>
+        </div>
 
-            {/* Feature Cards */}
+        {/* Row 3: Feature Cards with animation background - 0.1 opacity */}
+        <div className="relative w-full flex-shrink-0">
+          {/* Background animation at 0.1 opacity - fixed background */}
+          <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
+            <Artwork33 opacity={0.1} />
+          </div>
+          {/* Cards content on top */}
+          <div className="relative z-10 container max-w-4xl mx-auto py-6 px-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {features.map((feature) => {
                 const Icon = feature.icon;
                 return (
                   <Card
                     key={feature.href}
-                    className="p-3 hover:shadow-lg transition-all cursor-pointer border-2 hover:border-primary/50"
+                    className="p-4 hover:shadow-lg transition-all cursor-pointer border-2 hover:border-primary/50 bg-background/95 backdrop-blur-sm"
                     onClick={() => router.push(feature.href)}
                   >
                     <div className="flex flex-col items-center text-center space-y-2">
@@ -105,9 +118,9 @@ export function HomePage() {
           </div>
         </div>
 
-        {/* Bottom Artwork - FULL WIDTH - stretches to fill entire viewport width */}
-        <div className="w-full flex-shrink-0 mt-4">
-          <Artwork33 />
+        {/* Row 4: Bottom Artwork - FULL WIDTH - full opacity */}
+        <div className="w-full flex-shrink-0">
+          <Artwork33 opacity={1} />
         </div>
       </div>
     </ChatLayout>
