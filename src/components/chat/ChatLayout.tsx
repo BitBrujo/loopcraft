@@ -12,10 +12,10 @@ interface ChatLayoutProps {
 
 export function ChatLayout({ children, className }: ChatLayoutProps) {
   return (
-    <div className={cn("flex h-screen flex-col bg-background", className)}>
+    <div className={cn("flex h-screen w-full flex-col bg-background", className)}>
       <ChatHeader />
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1">
+      <div className="flex flex-1 w-full overflow-hidden">
+        <div className="flex-1 w-full">
           {children}
         </div>
         <RightSidebar />
