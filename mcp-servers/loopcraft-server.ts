@@ -12,7 +12,7 @@ const server = new FastMCP({
 });
 
 // Helper function to replace agent placeholders in HTML
-function fillAgentPlaceholders(html, agentContext) {
+function fillAgentPlaceholders(html: string, agentContext: Record<string, string>): string {
   let result = html;
   if (agentContext['user.avatar'] !== undefined) {
     result = result.replace(/\{\{user\.avatar\}\}/g, agentContext['user.avatar']);
@@ -109,8 +109,7 @@ server.addTool({
         lastModified: '2025-10-18T15:06:49.594Z'
       },
       uiMetadata: {
-        'preferred-frame-size': ['800px', '600px'],
-        'auto-resize-iframe': false
+        'preferred-frame-size': ['800px', '600px']
       }
     });
 
