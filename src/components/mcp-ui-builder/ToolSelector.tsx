@@ -55,7 +55,7 @@ export function ToolSelector({ isOpen, onClose, onToolSelect, preselectedServer 
         setTools(data.tools || []);
 
         // Expand all servers by default
-        const serverNames = new Set(data.tools.map((t: ToolInfo) => t.serverName));
+        const serverNames = new Set<string>(data.tools.map((t: ToolInfo) => t.serverName));
         setExpandedServers(serverNames);
       } catch (err) {
         console.error('Error fetching tools:', err);

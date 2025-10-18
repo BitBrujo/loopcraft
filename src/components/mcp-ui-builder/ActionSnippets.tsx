@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Search,
   AlertTriangle,
-  CheckCircle2,
   Server,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -100,9 +99,6 @@ export function ActionSnippets({ onInsert, companionMode, targetServerName, sele
       onInsert(snippet.fullCode);
     }
   };
-
-  // Merge companion snippets with regular snippets
-  const allSnippets = [...companionSnippets, ...actionSnippets];
 
   const categories = Object.keys(categoryMetadata) as Array<keyof typeof categoryMetadata>;
 
@@ -263,7 +259,6 @@ function SnippetCard({ snippet, isCopied, onCopy, onInsert }: SnippetCardProps) 
   const [showCode, setShowCode] = useState(false);
 
   // Validation status for tool snippets
-  const isToolSnippet = snippet.category === 'tool';
   const requiresServer = snippet.requiresServer === true;
   const hasValidationNotes = snippet.validationNotes !== undefined;
 
