@@ -195,9 +195,15 @@ export function ConfigureTab() {
                       <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-sm">
-                      <p className="font-semibold mb-1">What is a Resource URI?</p>
-                      <p className="mb-2">A unique identifier for your MCP-UI resource following the MCP protocol standard.</p>
-                      <p className="text-xs">The URI is used by MCP clients to reference and fetch this specific UI resource from your server.</p>
+                      <p className="text-sm mb-2">
+                        <strong>Format:</strong> ui://[server-name]/[resource-name]
+                      </p>
+                      <p className="text-sm mb-2">
+                        <strong>Examples:</strong> ui://loopcraft/help-center, ui://analytics/dashboard
+                      </p>
+                      <p className="text-sm">
+                        Use lowercase, hyphens for spaces, and descriptive names that indicate the resource&apos;s purpose.
+                      </p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -208,17 +214,6 @@ export function ConfigureTab() {
                 onChange={(e) => updateResource({ uri: e.target.value })}
                 placeholder="ui://myapp/dashboard"
               />
-              <div className="space-y-1.5">
-                <p className="text-sm text-muted-foreground">
-                  <strong>Format:</strong> <code className="bg-muted px-1 rounded">ui://[server-name]/[resource-name]</code>
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  <strong>Examples:</strong> <code className="bg-muted px-1 rounded text-xs">ui://loopcraft/help-center</code>, <code className="bg-muted px-1 rounded text-xs">ui://analytics/dashboard</code>
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Use lowercase, hyphens for spaces, and descriptive names that indicate the resource&apos;s purpose.
-                </p>
-              </div>
               {!currentResource.uri.startsWith('ui://') && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
