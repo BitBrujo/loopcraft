@@ -351,11 +351,6 @@ export function ConfigureTab() {
                   Will integrate with <strong>{currentResource.selectedServerName}</strong> server
                 </div>
               )}
-              {!currentResource.selectedServerName && (
-                <div className="text-sm text-muted-foreground">
-                  Creating standalone resource - you can deploy it as a new server
-                </div>
-              )}
 
                 {/* Advanced Content Options - Nested under MCP Server Integration */}
                 <Collapsible open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions} className="mt-4">
