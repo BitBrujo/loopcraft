@@ -1,5 +1,6 @@
 // MCP-UI Action Snippets
 // Ready-to-use code examples for all 5 MCP-UI action types
+// Enhanced with validation metadata to prevent tool call failures
 
 export interface ActionSnippet {
   id: string;
@@ -7,7 +8,10 @@ export interface ActionSnippet {
   category: 'tool' | 'prompt' | 'link' | 'intent' | 'notify';
   description: string;
   code: string;
-  placeholder?: string; // Text to select after insertion
+  placeholder?: string;        // Text to select after insertion
+  requiresServer?: boolean;     // True if snippet needs MCP server connection
+  validationNotes?: string;     // Notes on how to validate this snippet
+  exampleToolName?: string;     // Example of valid MCP tool name format
 }
 
 /**
@@ -21,34 +25,45 @@ export const actionSnippets: ActionSnippet[] = [
     name: 'Tool Call Button',
     category: 'tool',
     description: 'Simple button that calls an MCP tool when clicked',
+    requiresServer: true,
+    validationNotes: 'Replace mcp_server_tool with actual tool name from connected MCP server. Use "Browse Tools" button to find valid tools.',
+    exampleToolName: 'mcp_filesystem_read_file',
     code: `<button onclick="executeTool()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
   Execute Tool
 </button>
 
 <script>
   function executeTool() {
+    // IMPORTANT: Replace 'mcp_server_tool' with actual MCP tool name
+    // Format: mcp_servername_toolname (e.g., mcp_filesystem_read_file)
+    // Use "Browse Tools" button to find valid tool names
     window.parent.postMessage({
       type: 'tool',
       payload: {
-        toolName: 'my_tool_name',
+        toolName: 'mcp_server_tool', // ⚠️ REPLACE with valid MCP tool name
         params: {
+          // Add required parameters for your tool here
           key: 'value'
         }
       }
     }, '*');
   }
 </script>`,
-    placeholder: 'my_tool_name',
+    placeholder: 'mcp_server_tool',
   },
   {
     id: 'tool-form',
     name: 'Form Submission Tool',
     category: 'tool',
     description: 'Form that collects user input and sends it to an MCP tool',
+    requiresServer: true,
+    validationNotes: 'Ensure toolName matches MCP format and params object is always valid. Form data is automatically converted to object.',
+    exampleToolName: 'mcp_database_insert_record',
     code: `<form id="myForm" class="space-y-4">
-  <input type="text" name="name" placeholder="Enter name" class="border rounded px-3 py-2 w-full">
+  <input type="text" name="name" placeholder="Enter name" class="border rounded px-3 py-2 w-full" required>
+  <input type="email" name="email" placeholder="Enter email" class="border rounded px-3 py-2 w-full" required>
   <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-    Submit
+    Submit Form
   </button>
 </form>
 
@@ -56,53 +71,71 @@ export const actionSnippets: ActionSnippet[] = [
   document.getElementById('myForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData);
+    const data = Object.fromEntries(formData); // Guaranteed to be object
 
+    // IMPORTANT: Replace 'mcp_server_tool' with actual MCP tool name
+    // Use "Browse Tools" to find tools that accept form data
     window.parent.postMessage({
       type: 'tool',
       payload: {
-        toolName: 'submit_form',
-        params: data
+        toolName: 'mcp_server_tool', // ⚠️ REPLACE with valid MCP tool name
+        params: data || {} // Always send object (never undefined/null)
       }
     }, '*');
   });
 </script>`,
-    placeholder: 'submit_form',
+    placeholder: 'mcp_server_tool',
   },
   {
     id: 'tool-async',
     name: 'Async Tool with Response',
     category: 'tool',
     description: 'Call a tool and display the response in the UI',
+    requiresServer: true,
+    validationNotes: 'Use messageId to match responses. Parent window posts result back with type "mcp-ui-tool-response".',
+    exampleToolName: 'mcp_search_query',
     code: `<button onclick="callAsyncTool()" class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">
   Call Tool
 </button>
 <div id="result" class="mt-2 p-2 bg-gray-100 rounded hidden"></div>
 
 <script>
-  const messageId = 'msg-' + Date.now();
+  const messageId = 'msg-' + Date.now(); // Unique ID for matching response
 
   function callAsyncTool() {
+    // IMPORTANT: Replace 'mcp_server_tool' with actual MCP tool name
     window.parent.postMessage({
       type: 'tool',
       payload: {
-        toolName: 'async_tool',
-        params: { data: 'value' },
-        messageId: messageId
+        toolName: 'mcp_server_tool', // ⚠️ REPLACE with valid MCP tool name
+        params: {
+          // Add your tool parameters here
+          query: 'example'
+        },
+        messageId: messageId // For matching async response
       }
     }, '*');
   }
 
-  // Listen for response
+  // Listen for tool response from parent window
   window.addEventListener('message', function(event) {
+    // Match response by messageId
     if (event.data.type === 'mcp-ui-tool-response' && event.data.messageId === messageId) {
       const result = document.getElementById('result');
-      result.textContent = JSON.stringify(event.data.result, null, 2);
-      result.classList.remove('hidden');
+
+      // Handle success or error
+      if (event.data.result) {
+        result.textContent = JSON.stringify(event.data.result, null, 2);
+        result.classList.remove('hidden');
+      } else if (event.data.error) {
+        result.textContent = 'Error: ' + event.data.error;
+        result.classList.remove('hidden');
+        result.classList.add('text-red-600');
+      }
     }
   });
 </script>`,
-    placeholder: 'async_tool',
+    placeholder: 'mcp_server_tool',
   },
 
   // ==================== PROMPT ACTIONS ====================

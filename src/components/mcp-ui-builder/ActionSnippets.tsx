@@ -1,7 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, Check, Code, ChevronDown, ChevronRight } from 'lucide-react';
+import {
+  Copy,
+  Check,
+  Code,
+  ChevronDown,
+  ChevronRight,
+  Search,
+  AlertTriangle,
+  CheckCircle2,
+  Server,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,9 +21,17 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { actionSnippets, categoryMetadata, getSnippetsByCategory } from '@/lib/action-snippets';
 import type { ActionSnippet } from '@/lib/action-snippets';
 import { copyToClipboard } from '@/lib/utils';
+import { ToolSelector } from './ToolSelector';
+import type { ToolCallSnippet } from '@/types/tool-selector';
 
 interface ActionSnippetsProps {
   onInsert?: (code: string) => void;
@@ -50,6 +68,7 @@ function generateCompanionToolSnippet(toolName: string, serverName: string): str
 export function ActionSnippets({ onInsert, companionMode, targetServerName, selectedTools }: ActionSnippetsProps) {
   const [expandedCategory, setExpandedCategory] = useState<string | null>('tool');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showToolSelector, setShowToolSelector] = useState(false);
 
   const handleCopy = async (code: string, id: string) => {
     const success = await copyToClipboard(code);
@@ -75,6 +94,13 @@ export function ActionSnippets({ onInsert, companionMode, targetServerName, sele
     });
   }
 
+  // Handle tool selection from ToolSelector
+  const handleToolSelect = (snippet: ToolCallSnippet) => {
+    if (onInsert) {
+      onInsert(snippet.fullCode);
+    }
+  };
+
   // Merge companion snippets with regular snippets
   const allSnippets = [...companionSnippets, ...actionSnippets];
 
@@ -82,15 +108,43 @@ export function ActionSnippets({ onInsert, companionMode, targetServerName, sele
 
   return (
     <div className="h-full flex flex-col">
+      {/* Header */}
       <div className="p-3 border-b bg-muted/30">
-        <h3 className="font-semibold text-sm flex items-center gap-2">
-          <Code className="h-4 w-4" />
-          MCP-UI Actions
-        </h3>
-        <p className="text-xs text-muted-foreground mt-1">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-semibold text-sm flex items-center gap-2">
+            <Code className="h-4 w-4" />
+            MCP-UI Actions
+          </h3>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  onClick={() => setShowToolSelector(true)}
+                >
+                  <Search className="h-3 w-3 mr-1" />
+                  Browse Tools
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Find valid MCP tools from connected servers</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <p className="text-xs text-muted-foreground">
           Ready-to-use code snippets for interactive UIs
         </p>
       </div>
+
+      {/* Tool Selector Modal */}
+      <ToolSelector
+        isOpen={showToolSelector}
+        onClose={() => setShowToolSelector(false)}
+        onToolSelect={handleToolSelect}
+      />
 
       <ScrollArea className="flex-1 h-0">
         <div className="p-3 space-y-2">
@@ -208,19 +262,60 @@ interface SnippetCardProps {
 function SnippetCard({ snippet, isCopied, onCopy, onInsert }: SnippetCardProps) {
   const [showCode, setShowCode] = useState(false);
 
+  // Validation status for tool snippets
+  const isToolSnippet = snippet.category === 'tool';
+  const requiresServer = snippet.requiresServer === true;
+  const hasValidationNotes = snippet.validationNotes !== undefined;
+
   return (
     <Card className="p-3">
       <div className="flex items-start justify-between mb-2">
         <div className="flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h4 className="font-medium text-sm">{snippet.name}</h4>
             <Badge variant="outline" className="text-xs">
               {snippet.category}
             </Badge>
+            {requiresServer && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                      <Server className="h-3 w-3" />
+                      MCP
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Requires connected MCP server</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             {snippet.description}
           </p>
+          {/* Validation Notes */}
+          {hasValidationNotes && (
+            <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded text-xs">
+              <div className="flex items-start gap-1">
+                <AlertTriangle className="h-3 w-3 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-amber-900 dark:text-amber-100 mb-1">
+                    Validation Required
+                  </p>
+                  <p className="text-amber-700 dark:text-amber-300">
+                    {snippet.validationNotes}
+                  </p>
+                  {snippet.exampleToolName && (
+                    <p className="text-amber-600 dark:text-amber-400 mt-1 font-mono">
+                      Example: {snippet.exampleToolName}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

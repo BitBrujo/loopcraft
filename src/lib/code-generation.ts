@@ -187,8 +187,28 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { createUIResource } from '@mcp-ui/server';
 
-// MCP Server for ${resource.uri}
-// Standalone test server with single get_ui tool
+// ============================================================
+// MCP Server: ${serverName}
+// Resource URI: ${resource.uri}
+// ============================================================
+//
+// ⚠️ IMPORTANT - MCP Tool Naming Convention:
+//   Tool names from this server will be prefixed as:
+//   mcp_${serverName}_toolname
+//
+//   Example: "get_ui" → "mcp_${serverName}_get_ui"
+//
+//   When calling tools from UIs, use the full prefixed name:
+//   window.parent.postMessage({
+//     type: 'tool',
+//     payload: {
+//       toolName: 'mcp_${serverName}_get_ui',
+//       params: {}
+//     }
+//   }, '*');
+//
+// 💡 Use "Browse Tools" in the UI Builder to find valid tool names
+// ============================================================
 
 const server = new Server(
   {
@@ -393,13 +413,55 @@ export function generateFastMCPCode(
 
   // Generate companion-specific comments if in companion mode
   const companionComment = options?.companionMode && options?.targetServerName
-    ? `// Companion UI Server for ${options.targetServerName}
-// Provides visual interface for ${options.targetServerName} tools
-// NOTE: Both this server AND ${options.targetServerName} must be connected
+    ? `// ============================================================
+// Companion UI Server for ${options.targetServerName}
+// Resource URI: ${resource.uri}
+// ============================================================
+//
+// This is a COMPANION SERVER that provides a visual UI for
+// tools from the "${options.targetServerName}" server.
+//
+// ⚠️ IMPORTANT - Both Servers Must Be Connected:
+//   1. This companion UI server: "${serverName}"
+//   2. Target server: "${options.targetServerName}"
+//
+// When calling tools from ${options.targetServerName}:
+//   window.parent.postMessage({
+//     type: 'tool',
+//     payload: {
+//       toolName: 'mcp_${options.targetServerName}_toolname',
+//       params: {}
+//     }
+//   }, '*');
+//
+// 💡 Use "Browse Tools" to see available tools from ${options.targetServerName}
+// ============================================================
 
 `
-    : `// MCP Server for ${resource.uri}
-// Built with FastMCP framework for cleaner code and built-in features
+    : `// ============================================================
+// FastMCP Server: ${serverName}
+// Resource URI: ${resource.uri}
+// ============================================================
+//
+// Built with FastMCP framework - cleaner code, built-in features
+//
+// ⚠️ IMPORTANT - MCP Tool Naming Convention:
+//   Tool names from this server will be prefixed as:
+//   mcp_${serverName}_toolname
+//
+//   Example: "get_ui" → "mcp_${serverName}_get_ui"
+//
+//   When calling tools from UIs, use the full prefixed name:
+//   window.parent.postMessage({
+//     type: 'tool',
+//     payload: {
+//       toolName: 'mcp_${serverName}_get_ui',
+//       params: {}
+//     }
+//   }, '*');
+//
+// 💡 Use "Browse Tools" in the UI Builder to find valid tool names
+// ============================================================
 
 `;
 
