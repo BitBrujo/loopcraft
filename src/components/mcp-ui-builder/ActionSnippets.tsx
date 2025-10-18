@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/collapsible';
 import { actionSnippets, categoryMetadata, getSnippetsByCategory } from '@/lib/action-snippets';
 import type { ActionSnippet } from '@/lib/action-snippets';
+import { copyToClipboard } from '@/lib/utils';
 
 interface ActionSnippetsProps {
   onInsert?: (code: string) => void;
@@ -51,9 +52,13 @@ export function ActionSnippets({ onInsert, companionMode, targetServerName, sele
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const handleCopy = async (code: string, id: string) => {
-    await navigator.clipboard.writeText(code);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+    const success = await copyToClipboard(code);
+    if (success) {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } else {
+      console.error('Failed to copy snippet to clipboard');
+    }
   };
 
   // Generate companion snippets if in companion mode

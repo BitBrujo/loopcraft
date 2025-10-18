@@ -13,7 +13,7 @@ import { type FC, memo, useState, useCallback } from "react";
 import { CheckIcon, CopyIcon } from "lucide-react";
 
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
-import { cn } from "@/lib/utils";
+import { cn, copyToClipboard as copyToClipboardUtil } from "@/lib/utils";
 
 const MarkdownTextImpl = () => {
   return (
@@ -66,13 +66,16 @@ const useCopyToClipboard = ({
 } = {}) => {
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
-  const copyToClipboard = useCallback((value: string) => {
+  const copyToClipboard = useCallback(async (value: string) => {
     if (!value) return;
 
-    navigator.clipboard.writeText(value).then(() => {
+    const success = await copyToClipboardUtil(value);
+    if (success) {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), copiedDuration);
-    });
+    } else {
+      console.error('Failed to copy to clipboard');
+    }
   }, [copiedDuration]);
 
   return { isCopied, copyToClipboard };

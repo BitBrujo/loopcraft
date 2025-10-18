@@ -15,6 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DeploymentProgressModal } from '@/components/mcp-ui-builder/DeploymentProgressModal';
+import { copyToClipboard } from '@/lib/utils';
 
 export function ExportTab() {
   const {
@@ -65,9 +66,13 @@ export function ExportTab() {
   const code = generateCode();
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const success = await copyToClipboard(code);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } else {
+      console.error('Failed to copy code to clipboard');
+    }
   };
 
   const handleDownload = () => {

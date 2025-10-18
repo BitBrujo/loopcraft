@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { PreviewPanel } from '../PreviewPanel';
 import { extractTemplatePlaceholders } from '@/lib/html-parser';
 import { smartInsertHTML } from '@/lib/smart-html-insert';
+import { copyToClipboard } from '@/lib/utils';
 import { HTMLEditor } from '../editors/HTMLEditor';
 import { URLInput } from '../editors/URLInput';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -517,9 +518,13 @@ export function DesignTab() {
   };
 
   const handleCopySnippet = async (code: string, id: string) => {
-    await navigator.clipboard.writeText(code);
-    setCopiedSnippet(id);
-    setTimeout(() => setCopiedSnippet(null), 2000);
+    const success = await copyToClipboard(code);
+    if (success) {
+      setCopiedSnippet(id);
+      setTimeout(() => setCopiedSnippet(null), 2000);
+    } else {
+      console.error('Failed to copy snippet to clipboard');
+    }
   };
 
   const clearActionSelection = () => {

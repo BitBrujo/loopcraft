@@ -9,6 +9,7 @@ import { CheckCircle2, Circle, Loader2, AlertCircle, ExternalLink, Copy, Check }
 import Link from 'next/link';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import type { UIResource } from '@/types/ui-builder';
+import { copyToClipboard } from '@/lib/utils';
 
 interface DeploymentStep {
   step: number;
@@ -207,9 +208,13 @@ export function DeploymentProgressModal({
   };
 
   const handleCopyCommand = async (command: string) => {
-    await navigator.clipboard.writeText(command);
-    setCopiedCommand(true);
-    setTimeout(() => setCopiedCommand(false), 2000);
+    const success = await copyToClipboard(command);
+    if (success) {
+      setCopiedCommand(true);
+      setTimeout(() => setCopiedCommand(false), 2000);
+    } else {
+      console.error('Failed to copy command to clipboard');
+    }
   };
 
   const handleClose = () => {
