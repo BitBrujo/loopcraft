@@ -613,11 +613,11 @@ export const builtInTemplates: Template[] = [
     id: 'external-url',
     name: 'External Website',
     category: 'media',
-    description: 'Embed an external URL',
+    description: 'Embed an external URL (provide URL in Design tab)',
     resource: {
       uri: 'ui://loopcraft/external',
       contentType: 'externalUrl',
-      content: 'https://example.com',
+      content: '',
     },
   },
   // Remote DOM Templates
