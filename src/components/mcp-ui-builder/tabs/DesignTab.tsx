@@ -41,6 +41,8 @@ import {
 import { Editor } from '@monaco-editor/react';
 import { actionSnippets, categoryMetadata, getSnippetsByCategory } from '@/lib/action-snippets';
 import type { ActionSnippet } from '@/lib/action-snippets';
+import { htmlElements, elementsByCategory, categoryInfo } from '@/lib/html-elements';
+import type { HTMLElement } from '@/lib/html-elements';
 import type { editor as MonacoEditor } from 'monaco-editor';
 import type { ContentType, InteractiveElement } from '@/types/ui-builder';
 
@@ -85,6 +87,8 @@ export function DesignTab() {
     selectedTools,
     availableTools,
   } = useUIBuilderStore();
+  const [selectedElementCategory, setSelectedElementCategory] = useState<string>('');
+  const [selectedElementId, setSelectedElementId] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedActionId, setSelectedActionId] = useState<string>('');
   const [selectedAction, setSelectedAction] = useState<ActionSnippet | null>(null);
@@ -299,6 +303,67 @@ export function DesignTab() {
 
         {/* Left Column: All Options (400px fixed) */}
         <div className="w-[400px] border-r p-4 flex flex-col gap-4 bg-muted/10 overflow-y-auto">
+          {/* HTML Elements - Only for rawHtml */}
+          {currentResource.contentType === 'rawHtml' && (
+            <div>
+              <div className="mb-2">
+                <Badge className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20 hover:bg-purple-500/20 text-sm font-medium px-4 py-1.5">
+                  HTML Elements
+                </Badge>
+              </div>
+
+              {/* Element Category Dropdown */}
+              <Select value={selectedElementCategory} onValueChange={(value) => {
+                setSelectedElementCategory(value);
+                setSelectedElementId('');
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select element type..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.keys(elementsByCategory).map((category) => {
+                    const info = categoryInfo[category as keyof typeof categoryInfo];
+                    return (
+                      <SelectItem key={category} value={category}>
+                        <div className="flex items-center gap-2">
+                          <span>{info.icon}</span>
+                          <span>{info.label}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+
+              {/* Element Selection Dropdown */}
+              {selectedElementCategory && (
+                <div className="mt-2">
+                  <Select value={selectedElementId} onValueChange={(elementId) => {
+                    setSelectedElementId(elementId);
+                    const element = htmlElements.find(e => e.id === elementId);
+                    if (element && editorRef.current) {
+                      handleInsertCode(element.html);
+                    }
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select element..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {elementsByCategory[selectedElementCategory as keyof typeof elementsByCategory]?.map((element: HTMLElement) => (
+                        <SelectItem key={element.id} value={element.id}>
+                          <div>
+                            <div className="font-medium">{element.name}</div>
+                            <div className="text-xs text-muted-foreground">{element.description}</div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Tool Action Mapper - Show when tools are selected */}
           {selectedTools.length > 0 && currentResource.contentType === 'rawHtml' && (
             <div className="mb-4">
