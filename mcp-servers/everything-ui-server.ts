@@ -25,7 +25,14 @@ import { createUIResource } from '@mcp-ui/server';
 //   }, '*');
 //
 // 💡 Use "Browse Tools" to see available tools from everything
-// ============================================================
+//
+// ⚙️  TOOL-TO-ACTION BINDINGS:
+//   This UI has 1 configured tool binding:
+//   1. printEnv → #primary-btn
+//
+//   When UI renders, these actions will call tools from everything server
+//   Tool names will be prefixed: mcp_everything_toolname
+//// ============================================================
 
 const server = new FastMCP({
   name: 'everything-ui',
@@ -35,7 +42,7 @@ const server = new FastMCP({
 // Add UI tool
 server.addTool({
   name: 'get_ui',
-  description: 'interface',
+  description: 'A new MCP-UI resource',
   parameters: z.object({}),
   execute: async (args) => {
     // Prepare content
@@ -59,6 +66,77 @@ server.addTool({
   <h1>Hello from MCP-UI!</h1>
   <p>Edit this HTML to create your custom UI resource.</p>
   <p>Use the <strong>Configure</strong> tab to set metadata and frame size.</p>
+
+<button id="primary-btn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+  Click Me
+</button>
+
+
+<!-- Call printEnv tool from everything -->
+<button
+  id="primary-btn"
+  onclick="call_printEnv()"
+  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+>
+  Click Me
+</button>
+
+
+<!-- Call printEnv tool from everything -->
+<button
+  id="primary-btn"
+  onclick="call_printEnv()"
+  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+>
+  Click Me
+</button>
+
+<script>
+  function call_printEnv() {
+    window.parent.postMessage({
+      type: 'tool',
+      payload: {
+        toolName: 'mcp_everything_printEnv',
+        params: {}
+      }
+    }, '*');
+  }
+</script>
+
+
+<!-- Call printEnv tool from everything -->
+<button
+  id="primary-btn"
+  onclick="call_printEnv()"
+  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+>
+  Click Me
+</button>
+
+<script>
+  function call_printEnv() {
+    window.parent.postMessage({
+      type: 'tool',
+      payload: {
+        toolName: 'mcp_everything_printEnv',
+        params: {}
+      }
+    }, '*');
+  }
+</script>
+
+<script>
+  function call_printEnv() {
+    window.parent.postMessage({
+      type: 'tool',
+      payload: {
+        toolName: 'mcp_everything_printEnv',
+        params: {}
+      }
+    }, '*');
+  }
+</script>
+
 </body>
 </html>`;
 
@@ -69,8 +147,8 @@ server.addTool({
       encoding: 'text',
       metadata: {
         title: 'New UI Resource',
-        description: 'interface',
-        lastModified: '2025-10-20T18:24:46.735Z'
+        description: 'A new MCP-UI resource',
+        lastModified: '2025-10-20T21:38:41.889Z'
       },
       uiMetadata: {
         'preferred-frame-size': ['800px', '600px']
