@@ -29,11 +29,11 @@ import type { TabId } from "@/types/ui-builder";
 const tabs: Array<{ id: TabId; label: string; description: string }> = [
     {
         id: "configure",
-        label: "Configure",
-        description: "Set resource URI and metadata",
+        label: "Select Server & Tools",
+        description: "Choose target server and tools",
     },
-    { id: "design", label: "Design", description: "Create your UI content" },
-    { id: "export", label: "Export", description: "Get integration code" },
+    { id: "design", label: "Design UI", description: "Create your UI content" },
+    { id: "export", label: "Deploy Companion", description: "Deploy portable server" },
 ];
 
 export function BuilderLayout() {

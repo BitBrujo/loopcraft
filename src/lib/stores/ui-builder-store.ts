@@ -4,7 +4,6 @@ import type {
   UIResource,
   Template,
   TabId,
-  CompanionMode,
   ToolSchema,
 } from '@/types/ui-builder';
 
@@ -26,8 +25,7 @@ interface UIBuilderStore {
   // Active tab (simplified to 3 tabs)
   activeTab: TabId;
 
-  // Companion mode state
-  companionMode: CompanionMode;
+  // Companion server state (always companion mode)
   targetServerName: string | null;
   availableTools: ToolSchema[];
   selectedTools: string[];
@@ -52,8 +50,7 @@ interface UIBuilderStore {
   // Actions - Tabs
   setActiveTab: (tab: TabId) => void;
 
-  // Actions - Companion Mode
-  setCompanionMode: (mode: CompanionMode) => void;
+  // Actions - Companion Server
   setTargetServerName: (serverName: string | null) => void;
   setAvailableTools: (tools: ToolSchema[]) => void;
   setSelectedTools: (tools: string[]) => void;
@@ -93,8 +90,6 @@ const defaultResource: UIResource = {
     'preferred-frame-size': ['800px', '600px']
   },
   templatePlaceholders: [],
-  selectedServerId: null,
-  selectedServerName: null,
   // Advanced Resource Options (all undefined by default)
   audience: undefined,
   priority: undefined,
@@ -116,8 +111,7 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
       error: null,
       activeTab: 'configure',
 
-      // Companion mode initial state
-      companionMode: 'disabled',
+      // Companion server initial state
       targetServerName: null,
       availableTools: [],
       selectedTools: [],
@@ -141,7 +135,6 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         set({
           currentResource: defaultResource,
           previewKey: Date.now(),
-          companionMode: 'disabled',
           targetServerName: null,
           availableTools: [],
           selectedTools: [],
@@ -184,10 +177,7 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
       setActiveTab: (tab) =>
         set({ activeTab: tab }),
 
-      // Companion mode actions
-      setCompanionMode: (mode) =>
-        set({ companionMode: mode }),
-
+      // Companion server actions
       setTargetServerName: (serverName) =>
         set({ targetServerName: serverName }),
 
@@ -210,7 +200,6 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         currentResource: state.currentResource,
         showPreview: state.showPreview,
         activeTab: state.activeTab,
-        companionMode: state.companionMode,
         targetServerName: state.targetServerName,
         selectedTools: state.selectedTools,
       }),

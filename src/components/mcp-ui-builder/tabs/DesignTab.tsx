@@ -739,8 +739,16 @@ export function DesignTab() {
                 <SelectContent>
                   {companionSnippets.length > 0 && selectedCategory === 'tool' && (
                     <>
-                      <div className="px-2 py-1.5 text-xs font-semibold text-orange-600 dark:text-orange-400">
-                        Companion Tools ({targetServerName})
+                      <div className="px-2 py-2 border-b bg-orange-50 dark:bg-orange-950/20">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-lg">🧩</span>
+                          <span className="font-semibold text-orange-600 dark:text-orange-400">
+                            Companion Tools from {targetServerName}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          These snippets call tools from {targetServerName}. When both servers connect to an MCP client, tools are automatically prefixed: <code className="text-orange-600 bg-orange-100 dark:bg-orange-900/30 px-1 rounded">mcp_{targetServerName}_toolname</code>
+                        </p>
                       </div>
                       {companionSnippets.map((snippet) => (
                         <SelectItem key={snippet.id} value={snippet.id} className="bg-orange-50/30 dark:bg-orange-950/10">

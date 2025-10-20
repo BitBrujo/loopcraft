@@ -152,36 +152,6 @@ export interface UIResource {
   /** Test data for placeholders (preview only, not used in export) */
   placeholderTestData?: Record<string, string>;
 
-  /** Selected MCP server ID for integration (optional - null means standalone) */
-  selectedServerId?: number | null;
-
-  /** Selected MCP server name for integration (optional - null means standalone) */
-  selectedServerName?: string | null;
-
-  // ==================== Companion Mode Options ====================
-
-  /**
-   * Companion mode setting
-   * When enabled, creates a UI-only server that calls tools from another MCP server
-   * - 'disabled': Regular server integration or standalone mode
-   * - 'enabled': Companion server that forwards tool calls to target server
-   */
-  companionMode?: 'disabled' | 'enabled';
-
-  /**
-   * Target server name for companion mode
-   * The name of the MCP server whose tools will be called
-   * Only used when companionMode is 'enabled'
-   */
-  companionTargetServerName?: string | null;
-
-  /**
-   * Selected tools for companion mode
-   * Array of tool names from the target server to expose via this UI
-   * Only used when companionMode is 'enabled'
-   */
-  companionSelectedTools?: string[];
-
   // ==================== Advanced Resource Options ====================
 
   /**
@@ -266,12 +236,6 @@ export interface ToolSchema {
   };
 }
 
-/**
- * Companion server mode
- * Creates a UI-only server that interacts with an existing MCP server's tools
- */
-export type CompanionMode = 'disabled' | 'enabled';
-
 export interface UIBuilderState {
   currentResource: UIResource | null;
   savedTemplates: Template[];
@@ -280,8 +244,7 @@ export interface UIBuilderState {
   isLoading: boolean;
   error: string | null;
 
-  // Companion mode state
-  companionMode: CompanionMode;
+  // Companion server state (always companion mode)
   targetServerName: string | null;
   availableTools: ToolSchema[];
   selectedTools: string[]; // Array of tool names to interact with
