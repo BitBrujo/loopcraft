@@ -37,6 +37,7 @@ export function ConfigureTab() {
     setAvailableTools,
     toggleToolSelection,
     setActiveTab,
+    setCompanionMode,
   } = useUIBuilderStore();
   const [mcpServers, setMcpServers] = useState<MCPServer[]>([]);
   const [isLoadingServers, setIsLoadingServers] = useState(true);
@@ -99,6 +100,13 @@ export function ConfigureTab() {
 
   const handleTargetServerChange = async (serverName: string) => {
     setTargetServerName(serverName);
+
+    // Enable companion mode when server is selected, disable when cleared
+    if (serverName) {
+      setCompanionMode('enabled');
+    } else {
+      setCompanionMode('disabled');
+    }
 
     // Fetch available tools from this server
     try {
