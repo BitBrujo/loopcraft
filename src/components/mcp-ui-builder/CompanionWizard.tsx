@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Puzzle, Info, CheckCircle2 } from 'lucide-react';
+import { Info, CheckCircle2 } from 'lucide-react';
 import { ToolSchema } from '@/types/ui-builder';
 import { CompanionFlowDiagram } from './CompanionFlowDiagram';
 
@@ -101,7 +101,9 @@ export function CompanionWizard({
             </div>
             {isStep2Complete && (
               <div className="flex items-center gap-2">
-                <Badge variant="secondary">{selectedTools.length} selected</Badge>
+                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-500/30">
+                  {selectedTools.length} selected
+                </Badge>
                 <CheckCircle2 className="h-5 w-5 text-green-500" />
               </div>
             )}
@@ -169,44 +171,6 @@ export function CompanionWizard({
             <>
               {/* Visual Diagram */}
               <CompanionFlowDiagram targetServerName={targetServerName} />
-
-              {/* Key Points */}
-              <div className="space-y-3">
-                <h4 className="font-semibold text-sm flex items-center gap-2">
-                  <Puzzle className="h-4 w-4 text-orange-600" />
-                  Key Points
-                </h4>
-                <div className="space-y-2">
-                  <div className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Both servers run independently as separate processes</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Both connect to the same MCP client (LoopCraft, Claude Desktop, etc.)</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>MCP client routes tools by prefix: <code className="text-xs bg-muted px-1 py-0.5 rounded">mcp_{targetServerName}_toolname</code></span>
-                  </div>
-                  <div className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Portable: Works with any MCP client, not just LoopCraft</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>No changes to {targetServerName} needed - standard MCP pattern</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Next Steps */}
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Ready to continue?</strong> Head to the Design tab to customize your UI, then deploy in the Export tab.
-                </AlertDescription>
-              </Alert>
             </>
           )}
         </CardContent>

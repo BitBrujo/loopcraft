@@ -4,17 +4,12 @@ import { useEffect, useState } from 'react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Component, Puzzle } from 'lucide-react';
+import { AlertCircle, Component, Puzzle, ArrowRight, ArrowLeft } from 'lucide-react';
 import type { ContentType } from '@/types/ui-builder';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import {
   Select,
   SelectContent,
@@ -41,10 +36,12 @@ export function ConfigureTab() {
     setTargetServerName,
     setAvailableTools,
     toggleToolSelection,
+    setActiveTab,
   } = useUIBuilderStore();
   const [mcpServers, setMcpServers] = useState<MCPServer[]>([]);
   const [isLoadingServers, setIsLoadingServers] = useState(true);
   const [serverFetchError, setServerFetchError] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
 
   // Fetch MCP servers on mount
   useEffect(() => {
@@ -120,6 +117,13 @@ export function ConfigureTab() {
       console.error('Failed to fetch tools:', error);
       setAvailableTools([]);
     }
+
+    // Auto-fill URI with server name
+    if (serverName) {
+      updateResource({
+        uri: `ui://${serverName}-ui/`
+      });
+    }
   };
 
   const enabledServers = mcpServers.filter(s => s.enabled);
@@ -152,7 +156,21 @@ export function ConfigureTab() {
           onToolToggle={toggleToolSelection}
         />
 
-        {/* Resource Configuration Card */}
+        {/* Next Button - Show only when tools selected and on step 1 */}
+        {selectedTools.length > 0 && currentStep === 1 && (
+          <div className="flex justify-end">
+            <Button
+              onClick={() => setCurrentStep(2)}
+              className="gap-2"
+            >
+              Next: Configure Resource
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
+        {/* Resource Configuration Card - Only show on step 2 */}
+        {currentStep === 2 && (
         <Card className="border-primary/30">
           <CardHeader>
             <CardTitle>Resource Configuration</CardTitle>
@@ -265,6 +283,29 @@ export function ConfigureTab() {
             )}
           </CardContent>
         </Card>
+        )}
+
+        {/* Navigation Buttons - Show on step 2 */}
+        {currentStep === 2 && (
+          <div className="flex justify-between">
+            <Button
+              variant="outline"
+              onClick={() => setCurrentStep(1)}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Tool Selection
+            </Button>
+            <Button
+              onClick={() => setActiveTab('design')}
+              disabled={!currentResource.uri.startsWith('ui://')}
+              className="gap-2"
+            >
+              Next: Design UI
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

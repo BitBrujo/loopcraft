@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { ArrowRight, Sparkles, Info, Copy, Check, X, Eye, Wrench, MessageSquare, Link as LinkIcon, Target, Bell, ChevronDown, Code2, Monitor } from 'lucide-react';
+import { ArrowRight, Sparkles, Info, Copy, Check, X, Wrench, MessageSquare, Link as LinkIcon, Target, Bell, ChevronDown, Code2, Monitor, AlertTriangle } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { Button } from '@/components/ui/button';
 import { PreviewPanel } from '../PreviewPanel';
@@ -729,8 +729,18 @@ export function DesignTab() {
             </div>
           )}
 
-          {/* Action Snippet Dropdown - Only show when category selected */}
-          {selectedCategory && currentResource.contentType === 'rawHtml' && (
+          {/* Validation Alert - Show when Tool category selected but no companion snippets */}
+          {selectedCategory === 'tool' && companionSnippets.length === 0 && (
+            <Alert className="mt-2">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                No companion tools selected. Go to Configure tab and select tools to see auto-generated snippets here.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Action Snippet Dropdown - Only show when category selected and snippets available */}
+          {selectedCategory && currentResource.contentType === 'rawHtml' && enhancedCategorySnippets.length > 0 && (
             <div>
               <Select value={selectedActionId} onValueChange={handleActionSelect}>
                 <SelectTrigger>

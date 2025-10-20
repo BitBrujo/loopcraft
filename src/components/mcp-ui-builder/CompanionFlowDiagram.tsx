@@ -84,13 +84,6 @@ export function CompanionFlowDiagram({ targetServerName }: CompanionFlowDiagramP
           </div>
         </div>
       </div>
-
-      {/* Labels */}
-      <div className="mt-6 space-y-2 text-xs text-center text-muted-foreground">
-        <p className="font-semibold">Two independent MCP servers</p>
-        <p>Connected to same MCP client</p>
-        <p className="text-orange-600 dark:text-orange-400 font-medium">Standard MCP multi-server pattern • Portable across any MCP client</p>
-      </div>
     </div>
   );
 }
