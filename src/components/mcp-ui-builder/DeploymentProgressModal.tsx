@@ -85,7 +85,8 @@ export function DeploymentProgressModal({
     if (open && !isDeploying && !result) {
       startDeployment();
     }
-  }, [open]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isDeploying, result]);
 
   const startDeployment = async () => {
     setIsDeploying(true);
@@ -240,7 +241,6 @@ export function DeploymentProgressModal({
   const currentStep = steps.find(s => s.status === 'running')?.step || 0;
   const completedSteps = steps.filter(s => s.status === 'success').length;
   const progress = (completedSteps / DEPLOYMENT_STEPS.length) * 100;
-  const hasError = result?.success === false || steps.some(s => s.status === 'error');
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>

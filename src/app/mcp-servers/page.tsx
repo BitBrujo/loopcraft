@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ChatLayout } from "@/components/chat/ChatLayout";
 import { Card } from "@/components/ui/card";
@@ -41,7 +41,7 @@ export default function MCPServersPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
 
-  const fetchMCPServers = async () => {
+  const fetchMCPServers = useCallback(async () => {
     try {
       const response = await fetch("/api/mcp-servers", {
         headers: {
@@ -63,7 +63,7 @@ export default function MCPServersPage() {
     } catch (error) {
       console.error("Failed to fetch MCP servers:", error);
     }
-  };
+  }, [router]);
 
   // Check authentication on mount
   useEffect(() => {
@@ -74,7 +74,7 @@ export default function MCPServersPage() {
       setIsAuthenticating(false);
       fetchMCPServers();
     }
-  }, [router]);
+  }, [router, fetchMCPServers]);
 
   // Don't render anything while checking auth
   if (isAuthenticating) {

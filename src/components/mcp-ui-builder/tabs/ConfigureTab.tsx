@@ -40,7 +40,6 @@ export function ConfigureTab() {
     setCompanionMode,
   } = useUIBuilderStore();
   const [mcpServers, setMcpServers] = useState<MCPServer[]>([]);
-  const [isLoadingServers, setIsLoadingServers] = useState(true);
   const [serverFetchError, setServerFetchError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<1 | 2>(1);
 
@@ -51,7 +50,6 @@ export function ConfigureTab() {
         const token = localStorage.getItem('token');
         if (!token) {
           setServerFetchError('Please log in to load your MCP servers');
-          setIsLoadingServers(false);
           return;
         }
 
@@ -73,8 +71,6 @@ export function ConfigureTab() {
       } catch (error) {
         console.error('Failed to fetch MCP servers:', error);
         setServerFetchError('Network error. Please check your connection and try again.');
-      } finally {
-        setIsLoadingServers(false);
       }
     };
 
@@ -126,10 +122,10 @@ export function ConfigureTab() {
       setAvailableTools([]);
     }
 
-    // Auto-fill URI with server name
+    // Auto-fill URI with server name and default resource name
     if (serverName) {
       updateResource({
-        uri: `ui://${serverName}-ui/`
+        uri: `ui://${serverName}-ui/resource`
       });
     }
   };

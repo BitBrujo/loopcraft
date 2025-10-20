@@ -171,7 +171,7 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content, serverNam
     }
 
     return { status: 'handled' };
-  }, [serverName]);
+  }, [serverName, router]);
 
   // Type guard to ensure content has required properties
   if (!content || !content.type || !content.resource) {

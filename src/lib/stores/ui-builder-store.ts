@@ -6,6 +6,7 @@ import type {
   TabId,
   ToolSchema,
   CompanionMode,
+  ToolBinding,
 } from '@/types/ui-builder';
 
 interface UIBuilderStore {
@@ -58,6 +59,11 @@ interface UIBuilderStore {
   setAvailableTools: (tools: ToolSchema[]) => void;
   setSelectedTools: (tools: string[]) => void;
   toggleToolSelection: (toolName: string) => void;
+
+  // Actions - Tool Bindings
+  setToolBindings: (bindings: ToolBinding[]) => void;
+  updateToolBinding: (toolName: string, updates: Partial<ToolBinding>) => void;
+  removeToolBinding: (toolName: string) => void;
 }
 
 const defaultResource: UIResource = {
@@ -200,6 +206,57 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
           selectedTools: state.selectedTools.includes(toolName)
             ? state.selectedTools.filter((t) => t !== toolName)
             : [...state.selectedTools, toolName],
+        })),
+
+      // Tool binding actions
+      setToolBindings: (bindings) =>
+        set((state) => ({
+          currentResource: state.currentResource
+            ? { ...state.currentResource, toolBindings: bindings }
+            : null,
+        })),
+
+      updateToolBinding: (toolName, updates) =>
+        set((state) => {
+          if (!state.currentResource) return {};
+
+          const bindings = state.currentResource.toolBindings || [];
+          const existingIndex = bindings.findIndex(b => b.toolName === toolName);
+
+          let newBindings: ToolBinding[];
+          if (existingIndex >= 0) {
+            // Update existing binding
+            newBindings = bindings.map((b, i) =>
+              i === existingIndex ? { ...b, ...updates } : b
+            );
+          } else {
+            // Add new binding
+            newBindings = [...bindings, {
+              toolName,
+              triggerId: null,
+              parameterMappings: {},
+              ...updates
+            } as ToolBinding];
+          }
+
+          return {
+            currentResource: {
+              ...state.currentResource,
+              toolBindings: newBindings,
+            },
+          };
+        }),
+
+      removeToolBinding: (toolName) =>
+        set((state) => ({
+          currentResource: state.currentResource
+            ? {
+                ...state.currentResource,
+                toolBindings: (state.currentResource.toolBindings || []).filter(
+                  b => b.toolName !== toolName
+                ),
+              }
+            : null,
         })),
     }),
     {

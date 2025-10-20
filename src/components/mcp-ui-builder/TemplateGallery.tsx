@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Layout, MousePointer, Table, Image, BarChart } from "lucide-react";
+import { FileText, Layout, MousePointer, Table, Image as ImageIcon, BarChart } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { builtInTemplates, getAllCategories } from "@/lib/ui-builder-templates";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
   dashboards: <BarChart className="h-4 w-4" />,
   interactive: <MousePointer className="h-4 w-4" />,
   "data-display": <Table className="h-4 w-4" />,
-  media: <Image className="h-4 w-4" />,
+  media: <ImageIcon className="h-4 w-4" />,
 };
 
 const categoryLabels: Record<string, string> = {

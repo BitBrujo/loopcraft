@@ -165,6 +165,9 @@ export interface UIResource {
   /** Target MCP server name for integration */
   selectedServerName?: string | null;
 
+  /** Tool-to-action bindings for visual configuration */
+  toolBindings?: ToolBinding[];
+
   // ==================== Advanced Resource Options ====================
 
   /**
@@ -247,6 +250,45 @@ export interface ToolSchema {
     }>;
     required?: string[];
   };
+}
+
+/**
+ * Form field information from parsed HTML
+ */
+export interface FormField {
+  id: string;
+  name: string;
+  type: string;
+  required: boolean;
+}
+
+/**
+ * Interactive HTML element that can trigger actions
+ */
+export interface InteractiveElement {
+  id: string;
+  type: 'button' | 'form' | 'input' | 'select' | 'textarea' | 'custom';
+  tagName: string;
+  text?: string;
+  formFields?: FormField[];      // For forms
+}
+
+/**
+ * How a tool parameter gets its value
+ */
+export interface ParameterMapping {
+  source: 'static' | 'form';    // Static value or form field
+  value: string;                 // Static value or form field ID
+}
+
+/**
+ * Tool-to-action binding configuration
+ * Maps a tool to an HTML element and configures parameter sources
+ */
+export interface ToolBinding {
+  toolName: string;              // Tool name (e.g., "create_contact")
+  triggerId: string | null;      // HTML element ID that triggers this tool
+  parameterMappings: Record<string, ParameterMapping>;  // How each param gets its value
 }
 
 export interface UIBuilderState {

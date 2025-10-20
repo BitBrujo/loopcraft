@@ -5,7 +5,47 @@
  * Generates FastMCP companion server code for portable MCP servers.
  */
 
-import type { UIResource, ContentType, ContainerStyle } from '@/types/ui-builder';
+import type {
+  UIResource,
+  ContentType,
+  ToolBinding,
+  InteractiveElement,
+} from '@/types/ui-builder';
+
+/**
+ * Generate tool bindings comment for server code
+ */
+function generateToolBindingsComment(resource: UIResource, targetServerName?: string): string {
+  const bindings = resource.toolBindings || [];
+  if (bindings.length === 0) return '';
+
+  const lines: string[] = [
+    '//\n// ⚙️  TOOL-TO-ACTION BINDINGS:',
+    `//   This UI has ${bindings.length} configured tool binding${bindings.length !== 1 ? 's' : ''}:`,
+  ];
+
+  bindings.forEach((binding, index) => {
+    lines.push(`//   ${index + 1}. ${binding.toolName} → #${binding.triggerId || 'unconfigured'}`);
+
+    const paramCount = Object.keys(binding.parameterMappings).length;
+    if (paramCount > 0) {
+      lines.push(`//      Parameters (${paramCount}):`);
+      Object.entries(binding.parameterMappings).forEach(([param, mapping]) => {
+        const source = mapping.source === 'static' ? `static: "${mapping.value}"` : `form field: #${mapping.value}`;
+        lines.push(`//        - ${param}: ${source}`);
+      });
+    }
+  });
+
+  if (targetServerName) {
+    lines.push('//');
+    lines.push(`//   When UI renders, these actions will call tools from ${targetServerName} server`);
+    lines.push(`//   Tool names will be prefixed: mcp_${targetServerName}_toolname`);
+  }
+
+  lines.push('//');
+  return lines.join('\n');
+}
 
 /**
  * Get default MIME type for a content type
@@ -24,30 +64,93 @@ function getDefaultMimeType(contentType: ContentType): string {
 }
 
 /**
- * Clean container style by removing empty/undefined values
- * Only includes properties that have non-empty string values
+ * Generate HTML + JavaScript code from a tool binding
+ * Creates ready-to-insert code for mapped tool actions
  */
-function cleanContainerStyle(style: ContainerStyle | undefined): ContainerStyle | undefined {
-  if (!style) return undefined;
+export function generateBindingCode(
+  binding: ToolBinding,
+  targetServerName: string,
+  element: InteractiveElement
+): string {
+  const { toolName, triggerId, parameterMappings } = binding;
+  const fullToolName = `mcp_${targetServerName}_${toolName}`;
 
-  const cleaned: Partial<ContainerStyle> = {};
+  // Build parameter extraction code
+  const paramExtraction: string[] = [];
+  Object.entries(parameterMappings).forEach(([paramName, mapping]) => {
+    if (mapping.source === 'static') {
+      paramExtraction.push(`          ${paramName}: ${JSON.stringify(mapping.value)},`);
+    } else if (mapping.source === 'form') {
+      // Form field - get value from element
+      paramExtraction.push(`          ${paramName}: document.getElementById('${mapping.value}')?.value || '',`);
+    }
+  });
 
-  // Only include properties with non-empty string values
-  if (style.border && style.border.trim() !== '') {
-    cleaned.border = style.border;
-  }
-  if (style.borderColor && style.borderColor.trim() !== '') {
-    cleaned.borderColor = style.borderColor;
-  }
-  if (style.borderRadius && style.borderRadius.trim() !== '') {
-    cleaned.borderRadius = style.borderRadius;
-  }
-  if (style.minHeight && style.minHeight.trim() !== '') {
-    cleaned.minHeight = style.minHeight;
-  }
+  const paramsCode = paramExtraction.length > 0
+    ? `{
+${paramExtraction.join('\n')}
+        }`
+    : '{}';
 
-  // Return undefined if no valid properties, otherwise return cleaned object
-  return Object.keys(cleaned).length > 0 ? cleaned as ContainerStyle : undefined;
+  // Generate code based on element type
+  if (element.type === 'button') {
+    return `<!-- Call ${toolName} tool from ${targetServerName} -->
+<button
+  id="${triggerId}"
+  onclick="call_${toolName.replace(/[^a-zA-Z0-9]/g, '_')}()"
+  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+>
+  ${element.text || 'Execute ' + toolName}
+</button>
+
+<script>
+  function call_${toolName.replace(/[^a-zA-Z0-9]/g, '_')}() {
+    window.parent.postMessage({
+      type: 'tool',
+      payload: {
+        toolName: '${fullToolName}',
+        params: ${paramsCode}
+      }
+    }, '*');
+  }
+</script>`;
+  } else if (element.type === 'form') {
+    return `<!-- Call ${toolName} tool from ${targetServerName} -->
+<form id="${triggerId}" onsubmit="handleSubmit_${toolName.replace(/[^a-zA-Z0-9]/g, '_')}(event)">
+  <!-- Your form fields here -->
+  <button type="submit" class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors">
+    Submit
+  </button>
+</form>
+
+<script>
+  function handleSubmit_${toolName.replace(/[^a-zA-Z0-9]/g, '_')}(event) {
+    event.preventDefault();
+
+    window.parent.postMessage({
+      type: 'tool',
+      payload: {
+        toolName: '${fullToolName}',
+        params: ${paramsCode}
+      }
+    }, '*');
+  }
+</script>`;
+  } else {
+    // Generic element
+    return `<!-- Call ${toolName} tool from ${targetServerName} -->
+<script>
+  document.getElementById('${triggerId}')?.addEventListener('click', function() {
+    window.parent.postMessage({
+      type: 'tool',
+      payload: {
+        toolName: '${fullToolName}',
+        params: ${paramsCode}
+      }
+    }, '*');
+  });
+</script>`;
+  }
 }
 
 /**
@@ -90,6 +193,9 @@ export function generateServerCode(
     };`;
   }
 
+  // Generate tool bindings comment
+  const toolBindingsComment = generateToolBindingsComment(resource, options?.targetServerName);
+
   let code = `#!/usr/bin/env node
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -122,7 +228,7 @@ import { createUIResource } from '@mcp-ui/server';
 //   }, '*');
 //
 // 💡 Use "Browse Tools" in the UI Builder to find valid tool names
-// ============================================================
+${toolBindingsComment}// ============================================================
 
 const server = new Server(
   {
@@ -339,6 +445,9 @@ export function generateFastMCPCode(
     };`;
   }
 
+  // Generate tool bindings comment
+  const toolBindingsComment = generateToolBindingsComment(resource, options?.targetServerName);
+
   // Generate companion-specific comments if in companion mode
   const companionComment = options?.companionMode && options?.targetServerName
     ? `// ============================================================
@@ -363,7 +472,7 @@ export function generateFastMCPCode(
 //   }, '*');
 //
 // 💡 Use "Browse Tools" to see available tools from ${options.targetServerName}
-// ============================================================
+${toolBindingsComment}// ============================================================
 
 `
     : `// ============================================================
@@ -389,7 +498,7 @@ export function generateFastMCPCode(
 //   }, '*');
 //
 // 💡 Use "Browse Tools" in the UI Builder to find valid tool names
-// ============================================================
+${toolBindingsComment}// ============================================================
 
 `;
 

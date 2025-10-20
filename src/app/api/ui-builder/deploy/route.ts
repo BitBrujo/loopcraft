@@ -443,7 +443,7 @@ async function validateEnvironment(sendUpdate: (update: DeploymentStep) => void)
         throw new Error(check.errorMsg);
       }
       logs.push(`✓ ${check.name}: ${result.output.trim()}`);
-    } catch (error) {
+    } catch {
       sendUpdate({
         step: 0,
         total: 7,

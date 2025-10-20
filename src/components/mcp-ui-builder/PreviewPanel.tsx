@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { RefreshCw, Eye, EyeOff } from "lucide-react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { ClientPreview } from "./ClientPreview";
@@ -9,7 +8,6 @@ import { Button } from "@/components/ui/button";
 export function PreviewPanel() {
   const { currentResource, previewKey, showPreview, setShowPreview, refreshPreview } =
     useUIBuilderStore();
-  const [error, setError] = useState<string | null>(null);
 
   // Validate resource before preview
   const getValidationError = (): string | null => {

@@ -26,7 +26,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { actionSnippets, categoryMetadata, getSnippetsByCategory } from '@/lib/action-snippets';
+import { categoryMetadata, getSnippetsByCategory } from '@/lib/action-snippets';
 import type { ActionSnippet } from '@/lib/action-snippets';
 import { copyToClipboard } from '@/lib/utils';
 import { ToolSelector } from './ToolSelector';

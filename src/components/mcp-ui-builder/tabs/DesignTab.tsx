@@ -5,9 +5,10 @@ import { ArrowRight, Sparkles, Info, Copy, Check, X, Wrench, MessageSquare, Link
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { Button } from '@/components/ui/button';
 import { PreviewPanel } from '../PreviewPanel';
-import { extractTemplatePlaceholders } from '@/lib/html-parser';
+import { extractTemplatePlaceholders, parseHTMLForInteractiveElements } from '@/lib/html-parser';
 import { smartInsertHTML } from '@/lib/smart-html-insert';
 import { copyToClipboard } from '@/lib/utils';
+import { ToolActionMapper } from '../ToolActionMapper';
 import { HTMLEditor } from '../editors/HTMLEditor';
 import { URLInput } from '../editors/URLInput';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -44,7 +45,7 @@ import { uiTemplates } from '@/lib/ui-templates';
 import { actionSnippets, categoryMetadata, getSnippetsByCategory } from '@/lib/action-snippets';
 import type { ActionSnippet } from '@/lib/action-snippets';
 import type { editor as MonacoEditor } from 'monaco-editor';
-import type { UIResource, ContentType, RemoteDomConfig } from '@/types/ui-builder';
+import type { UIResource, ContentType, RemoteDomConfig, InteractiveElement } from '@/types/ui-builder';
 
 // Extended template structure that supports both HTML and Remote DOM
 interface ExtendedTemplate {
@@ -407,6 +408,17 @@ ${htmlContent}
 </html>`;
 }
 
+// Size preset types and constants
+type SizePreset = 'small' | 'medium' | 'large' | 'full' | 'custom';
+
+const SIZE_PRESETS = {
+  small: { width: '400px', height: '300px', label: 'Small (400×300)' },
+  medium: { width: '800px', height: '600px', label: 'Medium (800×600)' },
+  large: { width: '1200px', height: '800px', label: 'Large (1200×800)' },
+  full: { width: '100%', height: '600px', label: 'Full Width (100%×600)' },
+  custom: { width: '800px', height: '600px', label: 'Custom Size' },
+} as const;
+
 export function DesignTab() {
   const {
     setActiveTab,
@@ -415,6 +427,7 @@ export function DesignTab() {
     companionMode,
     targetServerName,
     selectedTools,
+    availableTools,
   } = useUIBuilderStore();
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -424,21 +437,12 @@ export function DesignTab() {
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [showUIMetadata, setShowUIMetadata] = useState(false);
   const [showRendererOptions, setShowRendererOptions] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
   const [activeEditorTab, setActiveEditorTab] = useState<'code' | 'preview'>('code');
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
+  const [parsedElements, setParsedElements] = useState<InteractiveElement[]>([]);
 
   // Size preset state
-  type SizePreset = 'small' | 'medium' | 'large' | 'full' | 'custom';
   const [sizePreset, setSizePreset] = useState<SizePreset>('medium');
-
-  const SIZE_PRESETS = {
-    small: { width: '400px', height: '300px', label: 'Small (400×300)' },
-    medium: { width: '800px', height: '600px', label: 'Medium (800×600)' },
-    large: { width: '1200px', height: '800px', label: 'Large (1200×800)' },
-    full: { width: '100%', height: '600px', label: 'Full Width (100%×600)' },
-    custom: { width: '800px', height: '600px', label: 'Custom Size' },
-  };
 
   // Auto-detect template placeholders when HTML content changes
   useEffect(() => {
@@ -448,7 +452,17 @@ export function DesignTab() {
         updateResource({ templatePlaceholders: placeholders });
       }
     }
-  }, [currentResource?.content, currentResource?.contentType, updateResource, currentResource?.templatePlaceholders]);
+  }, [currentResource, updateResource]);
+
+  // Parse HTML for interactive elements when content changes
+  useEffect(() => {
+    if (currentResource && currentResource.contentType === 'rawHtml' && currentResource.content) {
+      const elements = parseHTMLForInteractiveElements(currentResource.content);
+      setParsedElements(elements);
+    } else {
+      setParsedElements([]);
+    }
+  }, [currentResource]);
 
   // Detect current size preset from currentResource
   useEffect(() => {
@@ -696,6 +710,21 @@ export function DesignTab() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {/* Tool Action Mapper - Show when tools are selected */}
+          {selectedTools.length > 0 && currentResource.contentType === 'rawHtml' && (
+            <div className="mb-4">
+              <ToolActionMapper
+                selectedTools={selectedTools}
+                availableTools={availableTools}
+                parsedElements={parsedElements}
+                toolBindings={currentResource?.toolBindings || []}
+                onBindingsChange={(bindings) => updateResource({ toolBindings: bindings })}
+                onGenerateCode={handleInsertCode}
+                targetServerName={targetServerName}
+              />
             </div>
           )}
 
