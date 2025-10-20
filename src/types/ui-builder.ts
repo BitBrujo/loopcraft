@@ -4,6 +4,13 @@
 export type ContentType = 'rawHtml' | 'externalUrl' | 'remoteDom';
 
 /**
+ * Companion mode for creating UI-only servers
+ * - 'disabled': Standalone server or integration with existing server
+ * - 'enabled': Create UI-only server that calls tools from another MCP server
+ */
+export type CompanionMode = 'disabled' | 'enabled';
+
+/**
  * Resource audience targeting
  * Controls who can see and interact with the UI resource
  * - 'user': End-users in production interfaces
@@ -151,6 +158,12 @@ export interface UIResource {
 
   /** Test data for placeholders (preview only, not used in export) */
   placeholderTestData?: Record<string, string>;
+
+  /** Target MCP server ID for integration (null = standalone) */
+  selectedServerId?: number | null;
+
+  /** Target MCP server name for integration */
+  selectedServerName?: string | null;
 
   // ==================== Advanced Resource Options ====================
 

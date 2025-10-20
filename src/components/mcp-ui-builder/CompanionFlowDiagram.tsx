@@ -3,7 +3,7 @@
 import { ArrowDown, Server, Layers, Globe } from 'lucide-react';
 
 interface CompanionFlowDiagramProps {
-  targetServerName: string;
+  targetServerName: string | null;
 }
 
 export function CompanionFlowDiagram({ targetServerName }: CompanionFlowDiagramProps) {

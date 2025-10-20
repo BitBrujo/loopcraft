@@ -16,7 +16,7 @@ interface MCPServer {
 }
 
 interface CompanionWizardProps {
-  targetServerName: string;
+  targetServerName: string | null;
   availableTools: ToolSchema[];
   selectedTools: string[];
   enabledServers: MCPServer[];
@@ -58,7 +58,7 @@ export function CompanionWizard({
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Target MCP Server</label>
-            <Select value={targetServerName} onValueChange={onTargetServerChange}>
+            <Select value={targetServerName ?? undefined} onValueChange={onTargetServerChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a server..." />
               </SelectTrigger>

@@ -5,6 +5,7 @@ import type {
   Template,
   TabId,
   ToolSchema,
+  CompanionMode,
 } from '@/types/ui-builder';
 
 interface UIBuilderStore {
@@ -25,7 +26,8 @@ interface UIBuilderStore {
   // Active tab (simplified to 3 tabs)
   activeTab: TabId;
 
-  // Companion server state (always companion mode)
+  // Companion server state
+  companionMode: CompanionMode;
   targetServerName: string | null;
   availableTools: ToolSchema[];
   selectedTools: string[];
@@ -51,6 +53,7 @@ interface UIBuilderStore {
   setActiveTab: (tab: TabId) => void;
 
   // Actions - Companion Server
+  setCompanionMode: (mode: CompanionMode) => void;
   setTargetServerName: (serverName: string | null) => void;
   setAvailableTools: (tools: ToolSchema[]) => void;
   setSelectedTools: (tools: string[]) => void;
@@ -112,6 +115,7 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
       activeTab: 'configure',
 
       // Companion server initial state
+      companionMode: 'disabled' as CompanionMode,
       targetServerName: null,
       availableTools: [],
       selectedTools: [],
@@ -135,6 +139,7 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         set({
           currentResource: defaultResource,
           previewKey: Date.now(),
+          companionMode: 'disabled' as CompanionMode,
           targetServerName: null,
           availableTools: [],
           selectedTools: [],
@@ -178,6 +183,9 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         set({ activeTab: tab }),
 
       // Companion server actions
+      setCompanionMode: (mode) =>
+        set({ companionMode: mode }),
+
       setTargetServerName: (serverName) =>
         set({ targetServerName: serverName }),
 
