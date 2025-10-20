@@ -31,6 +31,7 @@ import type { ActionSnippet } from '@/lib/action-snippets';
 import { copyToClipboard } from '@/lib/utils';
 import { ToolSelector } from './ToolSelector';
 import type { ToolCallSnippet } from '@/types/tool-selector';
+import { ActionConfigForm } from './ActionConfigForm';
 
 interface ActionSnippetsProps {
   onInsert?: (code: string) => void;
@@ -257,10 +258,14 @@ interface SnippetCardProps {
 
 function SnippetCard({ snippet, isCopied, onCopy, onInsert }: SnippetCardProps) {
   const [showCode, setShowCode] = useState(false);
+  const [showConfig, setShowConfig] = useState(false);
 
   // Validation status for tool snippets
   const requiresServer = snippet.requiresServer === true;
   const hasValidationNotes = snippet.validationNotes !== undefined;
+
+  // Check if this snippet supports configuration
+  const supportsConfig = snippet.category === 'prompt' || snippet.category === 'link' || snippet.category === 'notify';
 
   return (
     <Card className="p-3">
@@ -314,6 +319,19 @@ function SnippetCard({ snippet, isCopied, onCopy, onInsert }: SnippetCardProps) 
         </div>
       </div>
 
+      {/* Configuration Form (for prompt, link, notify) */}
+      {supportsConfig && showConfig && onInsert && (
+        <div className="mt-2 mb-3">
+          <ActionConfigForm
+            snippet={snippet}
+            onInsert={(configuredCode) => {
+              onInsert(configuredCode);
+              setShowConfig(false);
+            }}
+          />
+        </div>
+      )}
+
       {showCode && (
         <div className="mt-2 mb-3">
           <pre className="text-xs bg-muted p-2 rounded overflow-x-auto max-h-32">
@@ -352,7 +370,18 @@ function SnippetCard({ snippet, isCopied, onCopy, onInsert }: SnippetCardProps) 
           )}
         </Button>
 
-        {onInsert && (
+        {onInsert && supportsConfig && (
+          <Button
+            size="sm"
+            variant={showConfig ? 'secondary' : 'default'}
+            onClick={() => setShowConfig(!showConfig)}
+            className="text-xs h-7 ml-auto"
+          >
+            {showConfig ? 'Cancel' : 'Configure & Insert'}
+          </Button>
+        )}
+
+        {onInsert && !supportsConfig && (
           <Button
             size="sm"
             onClick={() => onInsert(snippet.code)}
