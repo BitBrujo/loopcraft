@@ -28,9 +28,7 @@ import {
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -41,323 +39,11 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 import { Editor } from '@monaco-editor/react';
-import { uiTemplates } from '@/lib/ui-templates';
 import { actionSnippets, categoryMetadata, getSnippetsByCategory } from '@/lib/action-snippets';
 import type { ActionSnippet } from '@/lib/action-snippets';
 import type { editor as MonacoEditor } from 'monaco-editor';
-import type { UIResource, ContentType, RemoteDomConfig, InteractiveElement } from '@/types/ui-builder';
+import type { ContentType, InteractiveElement } from '@/types/ui-builder';
 
-// Extended template structure that supports both HTML and Remote DOM
-interface ExtendedTemplate {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  resource: {
-    contentType: ContentType;
-    content: string;
-    remoteDomConfig?: RemoteDomConfig;
-  };
-}
-
-// HTML templates - mapped from ui-templates.ts with enhanced Tailwind CSS
-const HTML_TEMPLATES: ExtendedTemplate[] = [
-  // Forms
-  ...uiTemplates
-    .filter(t => t.category === 'forms')
-    .map(t => ({
-      id: t.id,
-      name: t.name,
-      category: t.category.charAt(0).toUpperCase() + t.category.slice(1),
-      description: t.description,
-      resource: {
-        contentType: 'rawHtml' as ContentType,
-        content: wrapWithTailwind(t.htmlContent),
-      },
-    })),
-  // Dashboards
-  ...uiTemplates
-    .filter(t => t.category === 'dashboards')
-    .map(t => ({
-      id: t.id,
-      name: t.name,
-      category: t.category.charAt(0).toUpperCase() + t.category.slice(1),
-      description: t.description,
-      resource: {
-        contentType: 'rawHtml' as ContentType,
-        content: wrapWithTailwind(t.htmlContent),
-      },
-    })),
-  // Tables
-  ...uiTemplates
-    .filter(t => t.category === 'tables')
-    .map(t => ({
-      id: t.id,
-      name: t.name,
-      category: t.category.charAt(0).toUpperCase() + t.category.slice(1),
-      description: t.description,
-      resource: {
-        contentType: 'rawHtml' as ContentType,
-        content: wrapWithTailwind(t.htmlContent),
-      },
-    })),
-  // Galleries
-  ...uiTemplates
-    .filter(t => t.category === 'galleries')
-    .map(t => ({
-      id: t.id,
-      name: t.name,
-      category: t.category.charAt(0).toUpperCase() + t.category.slice(1),
-      description: t.description,
-      resource: {
-        contentType: 'rawHtml' as ContentType,
-        content: wrapWithTailwind(t.htmlContent),
-      },
-    })),
-  // Custom
-  ...uiTemplates
-    .filter(t => t.category === 'custom')
-    .map(t => ({
-      id: t.id,
-      name: t.name,
-      category: t.category.charAt(0).toUpperCase() + t.category.slice(1),
-      description: t.description,
-      resource: {
-        contentType: 'rawHtml' as ContentType,
-        content: wrapWithTailwind(t.htmlContent),
-      },
-    })),
-  // Blank HTML template
-  {
-    id: 'blank-html',
-    name: 'Blank HTML',
-    category: 'Custom',
-    description: 'Start from scratch with basic HTML structure',
-    resource: {
-      contentType: 'rawHtml',
-      content: `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My UI</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-    }
-  </style>
-</head>
-<body class="p-8 max-w-4xl mx-auto">
-  <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">Hello World!</h1>
-  <p class="text-gray-600 dark:text-gray-400">Start building your custom UI here.</p>
-</body>
-</html>`,
-    },
-  },
-];
-
-// Remote DOM templates
-const REMOTE_DOM_TEMPLATES: ExtendedTemplate[] = [
-  {
-    id: 'react-button',
-    name: 'React Button',
-    category: 'Interactive',
-    description: 'Simple React button component using Remote DOM',
-    resource: {
-      contentType: 'remoteDom',
-      content: `import { h } from '@remote-dom/core/client';
-
-// Create a simple button component
-const button = h('button', {
-  onClick: () => {
-    window.parent.postMessage({
-      type: 'notify',
-      payload: { message: 'Button clicked!' }
-    }, '*');
-  },
-  style: {
-    padding: '12px 24px',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '16px',
-    fontWeight: '500',
-  }
-}, 'Click Me');
-
-// Render the button
-export default button;`,
-      remoteDomConfig: { framework: 'react' },
-    },
-  },
-  {
-    id: 'react-counter',
-    name: 'React Counter',
-    category: 'Interactive',
-    description: 'React counter with state using Remote DOM',
-    resource: {
-      contentType: 'remoteDom',
-      content: `import { h, useState } from '@remote-dom/core/client';
-
-function Counter() {
-  const [count, setCount] = useState(0);
-
-  return h('div', { style: { padding: '24px', fontFamily: 'system-ui' } }, [
-    h('h2', { style: { fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' } }, 'Counter'),
-    h('p', { style: { fontSize: '48px', marginBottom: '16px' } }, String(count)),
-    h('div', { style: { display: 'flex', gap: '8px' } }, [
-      h('button', {
-        onClick: () => setCount(count - 1),
-        style: {
-          padding: '8px 16px',
-          backgroundColor: '#ef4444',
-          color: 'white',
-          border: 'none',
-          borderRadius: '6px',
-          cursor: 'pointer',
-        }
-      }, '−'),
-      h('button', {
-        onClick: () => setCount(count + 1),
-        style: {
-          padding: '8px 16px',
-          backgroundColor: '#3b82f6',
-          color: 'white',
-          border: 'none',
-          borderRadius: '6px',
-          cursor: 'pointer',
-        }
-      }, '+'),
-    ]),
-  ]);
-}
-
-export default Counter;`,
-      remoteDomConfig: { framework: 'react' },
-    },
-  },
-  {
-    id: 'webcomponent-card',
-    name: 'Web Component Card',
-    category: 'Custom',
-    description: 'Custom card element using Web Components',
-    resource: {
-      contentType: 'remoteDom',
-      content: `class CardElement extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-  }
-
-  connectedCallback() {
-    const title = this.getAttribute('title') || 'Card Title';
-    const description = this.getAttribute('description') || 'Card description';
-
-    this.shadowRoot.innerHTML = \`
-      <style>
-        .card {
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          padding: 24px;
-          background: white;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-          font-family: system-ui, -apple-system, sans-serif;
-        }
-        .title {
-          font-size: 20px;
-          font-weight: 600;
-          margin-bottom: 8px;
-          color: #111827;
-        }
-        .description {
-          color: #6b7280;
-          font-size: 14px;
-        }
-      </style>
-      <div class="card">
-        <div class="title">\${title}</div>
-        <div class="description">\${description}</div>
-      </div>
-    \`;
-  }
-}
-
-customElements.define('custom-card', CardElement);
-
-// Create instance
-const card = document.createElement('custom-card');
-card.setAttribute('title', 'Welcome');
-card.setAttribute('description', 'This is a custom Web Component card');
-
-export default card;`,
-      remoteDomConfig: { framework: 'webcomponents' },
-    },
-  },
-  {
-    id: 'blank-react-remotedom',
-    name: 'Blank React Remote DOM',
-    category: 'Custom',
-    description: 'Start from scratch with React Remote DOM',
-    resource: {
-      contentType: 'remoteDom',
-      content: `import { h } from '@remote-dom/core/client';
-
-// Your React Remote DOM code here
-const component = h('div', {
-  style: { padding: '24px', fontFamily: 'system-ui' }
-}, [
-  h('h1', { style: { fontSize: '24px', fontWeight: 'bold' } }, 'Hello Remote DOM!'),
-  h('p', { style: { color: '#6b7280' } }, 'Start building your component here.'),
-]);
-
-export default component;`,
-      remoteDomConfig: { framework: 'react' },
-    },
-  },
-  {
-    id: 'blank-webcomponent-remotedom',
-    name: 'Blank Web Component',
-    category: 'Custom',
-    description: 'Start from scratch with Web Components',
-    resource: {
-      contentType: 'remoteDom',
-      content: `class MyComponent extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-  }
-
-  connectedCallback() {
-    this.shadowRoot.innerHTML = \`
-      <style>
-        .container {
-          padding: 24px;
-          font-family: system-ui, -apple-system, sans-serif;
-        }
-      </style>
-      <div class="container">
-        <h1>Hello Web Component!</h1>
-        <p>Start building your component here.</p>
-      </div>
-    \`;
-  }
-}
-
-customElements.define('my-component', MyComponent);
-
-export default document.createElement('my-component');`,
-      remoteDomConfig: { framework: 'webcomponents' },
-    },
-  },
-];
-
-// Combine all templates
-const ALL_TEMPLATES = [...HTML_TEMPLATES, ...REMOTE_DOM_TEMPLATES];
-
-// Map icon names to Lucide components
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   'wrench': Wrench,
   'message-square': MessageSquare,
@@ -379,36 +65,6 @@ function getDisplayMimeType(contentType: ContentType): string {
       return 'text/html';
   }
 }
-
-// Helper function to wrap HTML content with Tailwind CDN
-function wrapWithTailwind(htmlContent: string): string {
-  if (htmlContent.includes('<!DOCTYPE html>')) {
-    // Already has full HTML structure, just add Tailwind CDN if not present
-    if (!htmlContent.includes('tailwindcss.com')) {
-      return htmlContent.replace(
-        '</head>',
-        '  <script src="https://cdn.tailwindcss.com"></script>\n</head>'
-      );
-    }
-    return htmlContent;
-  }
-
-  // Wrap content in full HTML structure with Tailwind
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UI Template</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body>
-${htmlContent}
-</body>
-</html>`;
-}
-
-// Size preset types and constants
 type SizePreset = 'small' | 'medium' | 'large' | 'full' | 'custom';
 
 const SIZE_PRESETS = {
@@ -429,7 +85,6 @@ export function DesignTab() {
     selectedTools,
     availableTools,
   } = useUIBuilderStore();
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedActionId, setSelectedActionId] = useState<string>('');
   const [selectedAction, setSelectedAction] = useState<ActionSnippet | null>(null);
@@ -494,29 +149,6 @@ export function DesignTab() {
 
   const canProceed = currentResource.content.trim().length > 0;
   const agentSlots = currentResource.templatePlaceholders?.length || 0;
-
-  // Filter templates based on current content type
-  const relevantTemplates = ALL_TEMPLATES.filter(template =>
-    template.resource.contentType === currentResource.contentType
-  );
-
-  // Template selection handler
-  const handleTemplateSelect = (templateId: string) => {
-    const template = ALL_TEMPLATES.find(t => t.id === templateId);
-    if (template) {
-      // Update content and Remote DOM config if applicable
-      const updates: Partial<UIResource> = {
-        content: template.resource.content,
-      };
-
-      if (template.resource.contentType === 'remoteDom' && template.resource.remoteDomConfig) {
-        updates.remoteDomConfig = template.resource.remoteDomConfig;
-      }
-
-      updateResource(updates);
-      setSelectedTemplateId(''); // Clear selection after loading
-    }
-  };
 
   // Action selection handlers
   const handleCategorySelect = (category: string) => {
@@ -611,16 +243,6 @@ export function DesignTab() {
     editor.focus();
   };
 
-  // Group templates by category for dropdown (filtered by content type)
-  const templatesByCategory = relevantTemplates.reduce((acc, template) => {
-    const category = template.category;
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(template);
-    return acc;
-  }, {} as Record<string, typeof relevantTemplates>);
-
   // Get action categories
   const actionCategories = Object.keys(categoryMetadata) as Array<keyof typeof categoryMetadata>;
 
@@ -677,42 +299,6 @@ export function DesignTab() {
 
         {/* Left Column: All Options (400px fixed) */}
         <div className="w-[400px] border-r p-4 flex flex-col gap-4 bg-muted/10 overflow-y-auto">
-          {/* Templates Dropdown - Only for rawHtml and remoteDom */}
-          {(currentResource.contentType === 'rawHtml' || currentResource.contentType === 'remoteDom') && (
-            <div>
-              <div className="mb-2">
-                <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20 text-sm font-medium px-4 py-1.5">
-                  Templates
-                </Badge>
-              </div>
-              <Select value={selectedTemplateId} onValueChange={handleTemplateSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a template..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(templatesByCategory).map(([category, templates]) => (
-                    <SelectGroup key={category}>
-                      <SelectLabel>{category}</SelectLabel>
-                      {templates.map((template) => (
-                        <SelectItem key={template.id} value={template.id}>
-                          <div className="flex items-center gap-2">
-                            <span>{template.name}</span>
-                            {/* Framework badge for Remote DOM templates */}
-                            {template.resource.contentType === 'remoteDom' && template.resource.remoteDomConfig && (
-                              <Badge variant="secondary" className="text-xs h-4">
-                                {template.resource.remoteDomConfig.framework === 'react' ? '⚛️' : '🧩'}
-                              </Badge>
-                            )}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
           {/* Tool Action Mapper - Show when tools are selected */}
           {selectedTools.length > 0 && currentResource.contentType === 'rawHtml' && (
             <div className="mb-4">

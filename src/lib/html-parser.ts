@@ -50,16 +50,28 @@ export function parseHTMLForInteractiveElements(htmlContent: string): Interactiv
 
   // Counter for auto-generating IDs
   let autoIdCounter = 1;
+  // Track used IDs to ensure uniqueness
+  const usedIds = new Set<string>();
 
   // Helper to get or generate ID
   const getElementId = (el: Element): string => {
-    if (el.id) return el.id;
-    if (el.getAttribute('name')) return el.getAttribute('name')!;
-    if (el.getAttribute('data-action-id')) return el.getAttribute('data-action-id')!;
+    let id = el.id || el.getAttribute('name') || el.getAttribute('data-action-id') || '';
 
-    // Auto-generate ID
-    const autoId = `auto-${el.tagName.toLowerCase()}-${autoIdCounter++}`;
-    return autoId;
+    // If no ID found, auto-generate one
+    if (!id) {
+      id = `auto-${el.tagName.toLowerCase()}-${autoIdCounter++}`;
+    }
+
+    // Ensure uniqueness by appending suffix if needed
+    let uniqueId = id;
+    let counter = 2;
+    while (usedIds.has(uniqueId)) {
+      uniqueId = `${id}-${counter}`;
+      counter++;
+    }
+
+    usedIds.add(uniqueId);
+    return uniqueId;
   };
 
   // Helper to extract text content
