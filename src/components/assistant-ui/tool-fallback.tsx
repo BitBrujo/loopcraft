@@ -140,11 +140,56 @@ export const ToolFallback: ToolCallMessagePartComponent = ({
               <p className="aui-tool-fallback-result-header font-semibold">
                 Result:
               </p>
-              <pre className="aui-tool-fallback-result-content whitespace-pre-wrap">
-                {typeof result === "string"
-                  ? result
-                  : JSON.stringify(result, null, 2)}
-              </pre>
+              {/* Check if result is MCP content array format */}
+              {(() => {
+                // Parse MCP content array: { content: [{ type: "text" | "image" | ..., ... }] }
+                if (result && typeof result === 'object' && 'content' in result && Array.isArray((result as {content: unknown[]}).content)) {
+                  const content = (result as {content: {type?: string; text?: string; data?: string; mimeType?: string}[]}).content;
+
+                  return (
+                    <div className="space-y-2">
+                      {content.map((item, idx) => {
+                        // Render text content
+                        if (item.type === 'text' && item.text) {
+                          return (
+                            <p key={idx} className="whitespace-pre-wrap">
+                              {item.text}
+                            </p>
+                          );
+                        }
+
+                        // Render image content
+                        if (item.type === 'image' && item.data && item.mimeType) {
+                          return (
+                            <img
+                              key={idx}
+                              src={`data:${item.mimeType};base64,${item.data}`}
+                              alt={item.text || 'MCP image'}
+                              className="max-w-full h-auto rounded border"
+                            />
+                          );
+                        }
+
+                        // Fallback for unknown content types
+                        return (
+                          <pre key={idx} className="whitespace-pre-wrap text-xs">
+                            {JSON.stringify(item, null, 2)}
+                          </pre>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+
+                // Fallback to original behavior for non-MCP formats
+                return (
+                  <pre className="aui-tool-fallback-result-content whitespace-pre-wrap">
+                    {typeof result === "string"
+                      ? result
+                      : JSON.stringify(result, null, 2)}
+                  </pre>
+                );
+              })()}
             </div>
           )}
         </div>

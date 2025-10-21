@@ -34,11 +34,10 @@ export function ExportTab() {
     );
   }
 
-  // Always use FastMCP format for companion servers
+  // Always use FastMCP format (companion-only mode)
   const generateCode = (): string => {
     const options = targetServerName
       ? {
-          companionMode: true,
           targetServerName,
           selectedTools: selectedTools || [],
         }

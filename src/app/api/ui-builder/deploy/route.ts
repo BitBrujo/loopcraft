@@ -12,8 +12,7 @@ interface DeployRequest {
   resource: UIResource;
   format: 'standalone' | 'fastmcp';
   language: 'typescript' | 'javascript';
-  // Companion mode settings
-  companionMode?: 'disabled' | 'enabled';
+  // Companion server settings (always companion mode now)
   targetServerName?: string | null;
   selectedTools?: string[];
 }
@@ -561,7 +560,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body: DeployRequest = await request.json();
-    const { resource, format, language, companionMode, targetServerName, selectedTools } = body;
+    const { resource, format, language, targetServerName, selectedTools } = body;
 
     // Validate input
     if (!resource || !format || !language) {
@@ -629,10 +628,9 @@ export async function POST(request: NextRequest) {
           // Ensure directory exists
           await mkdir(serverDir, { recursive: true });
 
-          // Prepare options for companion mode if enabled
-          const codeGenOptions = companionMode === 'enabled' && targetServerName
+          // Prepare options for companion server (always companion mode now)
+          const codeGenOptions = targetServerName
             ? {
-                companionMode: true,
                 targetServerName: targetServerName,
                 selectedTools: selectedTools || []
               }

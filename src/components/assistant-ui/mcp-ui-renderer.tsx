@@ -37,9 +37,27 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content, serverNam
     if (result.type === 'tool') {
       console.log(`🔧 Tool call from UI: ${result.payload.toolName}`, result.payload.params);
 
-      // Execute tool call via API
-      if (!serverName) {
-        console.error('No server name provided for tool call');
+      // Parse mcp_ prefix to extract target server and tool name
+      // Format: mcp_{serverName}_{toolName}
+      let targetServerName = serverName;
+      let actualToolName = result.payload.toolName;
+
+      // Check if tool name has mcp_ prefix (companion UI pattern)
+      if (actualToolName.startsWith('mcp_')) {
+        const parts = actualToolName.split('_');
+        if (parts.length >= 3) {
+          // parts[0] = "mcp"
+          // parts[1] = server name
+          // parts[2+] = tool name (may contain underscores)
+          targetServerName = parts[1];
+          actualToolName = parts.slice(2).join('_');
+          console.log(`🔀 Routing tool call: ${result.payload.toolName} → ${targetServerName}.${actualToolName}`);
+        }
+      }
+
+      // Validate target server exists
+      if (!targetServerName) {
+        console.error('No server name available for tool call');
         return { status: 'error', error: 'Server name not available' };
       }
 
@@ -53,13 +71,13 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content, serverNam
           headers["Authorization"] = `Bearer ${token}`;
         }
 
-        // Call the tool via API
+        // Call the tool via API with parsed server and tool names
         const response = await fetch('/api/mcp/call-tool', {
           method: 'POST',
           headers,
           body: JSON.stringify({
-            serverName,
-            toolName: result.payload.toolName,
+            serverName: targetServerName,
+            toolName: actualToolName,
             arguments: result.payload.params || {}
           })
         });

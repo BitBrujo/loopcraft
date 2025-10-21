@@ -64,8 +64,8 @@ export function DeploymentProgressModal({
   language,
   onDeploymentComplete
 }: DeploymentProgressModalProps) {
-  // Get companion mode state from store
-  const { companionMode, targetServerName, selectedTools } = useUIBuilderStore();
+  // Get companion server state from store (always companion mode now)
+  const { targetServerName, selectedTools } = useUIBuilderStore();
 
   const [steps, setSteps] = useState<DeploymentStep[]>(
     DEPLOYMENT_STEPS.map((message, index) => ({
@@ -113,8 +113,7 @@ export function DeploymentProgressModal({
           resource,
           format,
           language,
-          // Include companion mode data for proper code generation
-          companionMode: companionMode || 'disabled',
+          // Include companion server data for proper code generation
           targetServerName: targetServerName || null,
           selectedTools: selectedTools || []
         })

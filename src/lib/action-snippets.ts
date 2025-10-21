@@ -1,11 +1,11 @@
 // MCP-UI Action Snippets
-// Ready-to-use code examples for all 5 MCP-UI action types
-// Enhanced with validation metadata to prevent tool call failures
+// Ready-to-use code examples for 4 action types (prompt, link, intent, notify)
+// Tool actions are auto-generated in companion mode from selected MCP server tools
 
 export interface ActionSnippet {
   id: string;
   name: string;
-  category: 'tool' | 'prompt' | 'link' | 'intent' | 'notify';
+  category: 'prompt' | 'link' | 'intent' | 'notify';
   description: string;
   code: string;
   placeholder?: string;        // Text to select after insertion
@@ -15,14 +15,10 @@ export interface ActionSnippet {
 }
 
 /**
- * All 5 MCP-UI action types with ready-to-use examples
- * These snippets can be inserted into HTML in the UI Builder
+ * MCP-UI action snippets (4 types: prompt, link, intent, notify)
+ * Tool actions are auto-generated in companion mode from selected tools
  */
 export const actionSnippets: ActionSnippet[] = [
-  // ==================== TOOL ACTIONS ====================
-  // Note: Tool actions are accessed via "Browse Tools" button
-  // Generic tool snippets removed - users select real MCP tools instead
-
   // ==================== PROMPT ACTIONS ====================
   {
     id: 'prompt-button',
@@ -302,16 +298,11 @@ export function getSnippetsByCategory(category: ActionSnippet['category']) {
 }
 
 /**
- * Category metadata for UI display
+ * Category metadata for UI display (4 action types)
+ * Tool actions are handled separately via companion mode auto-generation
  * Icons are Lucide icon names (rendered by consuming components)
  */
 export const categoryMetadata = {
-  tool: {
-    label: 'Tool Actions',
-    icon: 'wrench',
-    description: 'Execute MCP tools from buttons and forms',
-    color: 'bg-blue-500',
-  },
   prompt: {
     label: 'Prompt Actions',
     icon: 'message-square',

@@ -160,268 +160,27 @@ ${paramExtraction.join('\n')}
 export function generateServerCode(
   resource: UIResource,
   options?: {
-    companionMode?: boolean;
     targetServerName?: string;
     selectedTools?: string[];
   }
 ): string {
-  // If companion mode is enabled, use FastMCP format instead
-  if (options?.companionMode) {
-    return generateFastMCPCode(resource, options);
-  }
-
-  // Handle server naming
-  const serverName = resource.uri.split('/')[2] || 'my-ui-server';
-  const agentPlaceholders = resource.templatePlaceholders || [];
-
-  // Generate content configuration based on type
-  let contentConfig: string;
-  let contentVariable = 'content';
-
-  if (resource.contentType === 'rawHtml') {
-    contentVariable = 'htmlContent';
-    contentConfig = `let ${contentVariable} = \`${resource.content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;`;
-  } else if (resource.contentType === 'externalUrl') {
-    contentConfig = `const ${contentVariable} = { type: 'externalUrl', iframeUrl: '${resource.content}' };`;
-  } else {
-    // remoteDom
-    const framework = resource.remoteDomConfig?.framework || 'react';
-    contentConfig = `const ${contentVariable} = {
-      type: 'remoteDom',
-      script: \`${resource.content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`,
-      framework: '${framework}'
-    };`;
-  }
-
-  // Generate tool bindings comment
-  const toolBindingsComment = generateToolBindingsComment(resource, options?.targetServerName);
-
-  let code = `#!/usr/bin/env node
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
-import { createUIResource } from '@mcp-ui/server';
-
-// ============================================================
-// Standalone MCP Server: ${serverName}
-// Resource URI: ${resource.uri}
-// ============================================================
-//
-// Built with @modelcontextprotocol/sdk - full control and flexibility
-//
-// ⚠️ IMPORTANT - MCP Tool Naming Convention:
-//   Tool names from this server will be prefixed as:
-//   mcp_${serverName}_toolname
-//
-//   Example: "get_ui" → "mcp_${serverName}_get_ui"
-//
-//   When calling tools from UIs, use the full prefixed name:
-//   window.parent.postMessage({
-//     type: 'tool',
-//     payload: {
-//       toolName: 'mcp_${serverName}_get_ui',
-//       params: {}
-//     }
-//   }, '*');
-//
-// 💡 Use "Browse Tools" in the UI Builder to find valid tool names
-${toolBindingsComment}// ============================================================
-
-const server = new Server(
-  {
-    name: '${serverName}',
-    version: '1.0.0',
-  },
-  {
-    capabilities: {
-      tools: {},
-    },
-  }
-);
-`;
-
-  // Add helper function for placeholder replacement if needed (HTML only)
-  if (agentPlaceholders.length > 0 && resource.contentType === 'rawHtml') {
-    code += `
-// Helper function to replace agent placeholders in HTML
-function fillAgentPlaceholders(html, agentContext) {
-  let result = html;
-`;
-    agentPlaceholders.forEach(placeholder => {
-      const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      code += `  if (agentContext['${placeholder}'] !== undefined) {
-    result = result.replace(/\\{\\{${escapedPlaceholder}\\}\\}/g, agentContext['${placeholder}']);
-  }
-`;
-    });
-    code += `  return result;
-}
-`;
-  }
-
-  // Add tool list handler
-  code += `
-// List available tools
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: [
-      {
-        name: 'get_ui',
-        description: '${resource.metadata?.description || 'Get the UI resource'}',
-        inputSchema: {
-          type: 'object',
-          properties: {`;
-
-  if (agentPlaceholders.length > 0) {
-    code += '\n';
-    agentPlaceholders.forEach((placeholder, index) => {
-      code += `            '${placeholder}': {
-              type: 'string',
-              description: 'Value for ${placeholder} placeholder'
-            }`;
-      if (index < agentPlaceholders.length - 1) code += ',';
-      code += '\n';
-    });
-    code += '          ';
-  }
-
-  code += `},
-        },
-      },
-    ],
-  };
-});
-
-// Handle tool calls
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  if (request.params.name === 'get_ui') {
-    // Prepare content
-    ${contentConfig}
-`;
-
-  // Add placeholder filling for HTML
-  if (agentPlaceholders.length > 0 && resource.contentType === 'rawHtml') {
-    code += `
-    // Fill agent placeholders
-    htmlContent = fillAgentPlaceholders(htmlContent, request.params.arguments || {});
-`;
-  }
-
-  // Build createUIResource call
-  const hasMetadata = resource.metadata?.title || resource.metadata?.description ||
-                      resource.audience || resource.priority !== undefined || resource.lastModified;
-  const hasUiMetadata = resource.uiMetadata?.['preferred-frame-size'] ||
-                        resource.uiMetadata?.['initial-render-data'] ||
-                        resource.uiMetadata?.['auto-resize-iframe'] ||
-                        resource.uiMetadata?.['sandbox-permissions'] ||
-                        resource.uiMetadata?.['iframe-title'] ||
-                        resource.uiMetadata?.['container-style'];
-
-  const encoding = resource.encoding || 'text';
-  const mimeType = resource.mimeType || getDefaultMimeType(resource.contentType);
-  const useCustomMimeType = resource.mimeType && resource.mimeType !== getDefaultMimeType(resource.contentType);
-
-  code += `
-    const uiResource = createUIResource({
-      uri: '${resource.uri}',
-      content: ${resource.contentType === 'rawHtml' ? `{ type: 'rawHtml', htmlString: ${contentVariable} }` : contentVariable},
-      ${useCustomMimeType ? `mimeType: '${mimeType}',` : `// mimeType: '${mimeType}' (default)`}
-      encoding: '${encoding}'`;
-
-  if (hasMetadata) {
-    code += `,
-      metadata: {`;
-    const metadataParts: string[] = [];
-    if (resource.metadata?.title) metadataParts.push(`title: '${resource.metadata.title}'`);
-    if (resource.metadata?.description) metadataParts.push(`description: '${resource.metadata.description}'`);
-    if (resource.audience) metadataParts.push(`audience: ${JSON.stringify(resource.audience)}`);
-    if (resource.priority !== undefined) metadataParts.push(`priority: ${resource.priority}`);
-    if (resource.lastModified) metadataParts.push(`lastModified: '${resource.lastModified}'`);
-    code += `\n        ${metadataParts.join(',\n        ')}`;
-    code += `\n      }`;
-  }
-
-  if (hasUiMetadata) {
-    code += `,
-      uiMetadata: {`;
-    const uiMetadataParts: string[] = [];
-    if (resource.uiMetadata?.['preferred-frame-size']) {
-      uiMetadataParts.push(`'preferred-frame-size': ['${resource.uiMetadata['preferred-frame-size'][0]}', '${resource.uiMetadata['preferred-frame-size'][1]}']`);
-    }
-    if (resource.uiMetadata?.['initial-render-data']) {
-      uiMetadataParts.push(`'initial-render-data': ${JSON.stringify(resource.uiMetadata['initial-render-data'])}`);
-    }
-    if (resource.uiMetadata?.['auto-resize-iframe'] !== undefined) {
-      uiMetadataParts.push(`'auto-resize-iframe': ${JSON.stringify(resource.uiMetadata['auto-resize-iframe'])}`);
-    }
-    if (resource.uiMetadata?.['sandbox-permissions']) {
-      uiMetadataParts.push(`'sandbox-permissions': '${resource.uiMetadata['sandbox-permissions']}'`);
-    }
-    if (resource.uiMetadata?.['iframe-title']) {
-      uiMetadataParts.push(`'iframe-title': '${resource.uiMetadata['iframe-title']}'`);
-    }
-    if (resource.uiMetadata?.['container-style']) {
-      uiMetadataParts.push(`'container-style': ${JSON.stringify(resource.uiMetadata['container-style'])}`);
-    }
-    code += `\n        ${uiMetadataParts.join(',\n        ')}`;
-    code += `\n      }`;
-  }
-
-  code += `
-    });
-
-    return {
-      content: [{
-        type: 'text',
-        text: '__MCP_UI_RESOURCE__:' + JSON.stringify(uiResource),
-      }],
-    };
-  }
-
-  throw new Error(\`Unknown tool: \${request.params.name}\`);
-});
-
-// Error handlers
-process.on('uncaughtException', (error) => {
-  console.error('FATAL SERVER ERROR:', error.message);
-  console.error('Stack:', error.stack);
-  process.exit(1);
-});
-
-process.on('unhandledRejection', (reason) => {
-  console.error('UNHANDLED REJECTION:', reason);
-  process.exit(1);
-});
-
-// Start server
-async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error('${serverName} MCP server running on stdio');
+  // Always use FastMCP format (companion mode is the only mode)
+  return generateFastMCPCode(resource, options);
 }
 
-main().catch((error) => {
-  console.error('Failed to start server:', error);
-  process.exit(1);
-});
-`;
-
-  return code;
-}
-
+/**
+ * Generate FastMCP companion server code
+ * Lightweight, declarative MCP server using fastmcp package
+ */
 export function generateFastMCPCode(
   resource: UIResource,
   options?: {
-    companionMode?: boolean;
     targetServerName?: string;
     selectedTools?: string[];
   }
 ): string {
-  // Handle server naming for companion mode
-  const serverName = options?.companionMode && options?.targetServerName
+  // Handle server naming (always companion mode now)
+  const serverName = options?.targetServerName
     ? `${options.targetServerName}-ui`
     : resource.uri.split('/')[2] || 'my-ui-server';
   const agentPlaceholders = resource.templatePlaceholders || [];
@@ -448,8 +207,8 @@ export function generateFastMCPCode(
   // Generate tool bindings comment
   const toolBindingsComment = generateToolBindingsComment(resource, options?.targetServerName);
 
-  // Generate companion-specific comments if in companion mode
-  const companionComment = options?.companionMode && options?.targetServerName
+  // Generate companion-specific comments (always companion mode now)
+  const companionComment = options?.targetServerName
     ? `// ============================================================
 // Companion UI Server for ${options.targetServerName}
 // Resource URI: ${resource.uri}

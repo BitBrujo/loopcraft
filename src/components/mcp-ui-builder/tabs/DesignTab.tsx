@@ -82,7 +82,6 @@ export function DesignTab() {
     setActiveTab,
     currentResource,
     updateResource,
-    companionMode,
     targetServerName,
     selectedTools,
     availableTools,
@@ -253,14 +252,14 @@ export function DesignTab() {
   // Get snippets for selected category
   const categorySnippets = selectedCategory ? getSnippetsByCategory(selectedCategory as ActionSnippet['category']) : [];
 
-  // Generate companion snippets if in companion mode
+  // Generate companion tool snippets for selected tools
   const companionSnippets: ActionSnippet[] = [];
-  if (companionMode === 'enabled' && selectedTools && selectedTools.length > 0 && targetServerName) {
+  if (targetServerName && selectedTools && selectedTools.length > 0) {
     selectedTools.forEach(toolName => {
       const snippet: ActionSnippet = {
         id: `companion-${toolName}`,
         name: `Call ${toolName}`,
-        category: 'tool',
+        category: 'notify', // Dummy category for type compatibility
         description: `Execute ${toolName} from ${targetServerName} server`,
         code: `<!-- Call ${toolName} from ${targetServerName} -->
 <button
@@ -598,23 +597,7 @@ export function DesignTab() {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="p-2 space-y-4">
-                  {/* Title */}
-                  <div className="space-y-2">
-                    <Label htmlFor="res-title">Title</Label>
-                    <Input
-                      id="res-title"
-                      value={currentResource.metadata?.title || ''}
-                      onChange={(e) => updateResource({
-                        metadata: {
-                          ...currentResource.metadata,
-                          title: e.target.value
-                        }
-                      })}
-                      placeholder="Dashboard UI"
-                    />
-                  </div>
-
-                  {/* Description */}
+                  {/* Description - Helps LLM understand the UI purpose */}
                   <div className="space-y-2">
                     <Label htmlFor="res-description">Description</Label>
                     <Textarea
@@ -626,9 +609,12 @@ export function DesignTab() {
                           description: e.target.value
                         }
                       })}
-                      placeholder="Interactive dashboard for monitoring key metrics"
+                      placeholder="Interactive UI for calling tools from the everything server"
                       rows={3}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Helps the AI assistant understand what this companion UI does
+                    </p>
                   </div>
 
                   <Separator className="my-4" />

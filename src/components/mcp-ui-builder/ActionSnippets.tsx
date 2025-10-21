@@ -35,7 +35,6 @@ import { ActionConfigForm } from './ActionConfigForm';
 
 interface ActionSnippetsProps {
   onInsert?: (code: string) => void;
-  companionMode?: 'disabled' | 'enabled';
   targetServerName?: string | null;
   selectedTools?: string[];
 }
@@ -65,8 +64,8 @@ function generateCompanionToolSnippet(toolName: string, serverName: string): str
 </script>`;
 }
 
-export function ActionSnippets({ onInsert, companionMode, targetServerName, selectedTools }: ActionSnippetsProps) {
-  const [expandedCategory, setExpandedCategory] = useState<string | null>('tool');
+export function ActionSnippets({ onInsert, targetServerName, selectedTools }: ActionSnippetsProps) {
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showToolSelector, setShowToolSelector] = useState(false);
 
@@ -80,14 +79,14 @@ export function ActionSnippets({ onInsert, companionMode, targetServerName, sele
     }
   };
 
-  // Generate companion snippets if in companion mode
+  // Generate companion tool snippets for selected tools from target server
   const companionSnippets: ActionSnippet[] = [];
-  if (companionMode === 'enabled' && selectedTools && selectedTools.length > 0 && targetServerName) {
+  if (targetServerName && selectedTools && selectedTools.length > 0) {
     selectedTools.forEach(toolName => {
       companionSnippets.push({
         id: `companion-${toolName}`,
         name: `Call ${toolName}`,
-        category: 'tool',
+        category: 'notify', // Dummy category for type compatibility
         description: `Execute ${toolName} from ${targetServerName} server`,
         code: generateCompanionToolSnippet(toolName, targetServerName)
       });

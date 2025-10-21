@@ -8,7 +8,7 @@ export type ContentType = 'rawHtml' | 'externalUrl' | 'remoteDom';
  * - 'disabled': Standalone server or integration with existing server
  * - 'enabled': Create UI-only server that calls tools from another MCP server
  */
-export type CompanionMode = 'disabled' | 'enabled';
+// CompanionMode removed - UI Builder is now companion-only
 
 /**
  * Resource audience targeting

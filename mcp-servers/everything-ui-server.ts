@@ -28,7 +28,7 @@ import { createUIResource } from '@mcp-ui/server';
 //
 // ⚙️  TOOL-TO-ACTION BINDINGS:
 //   This UI has 1 configured tool binding:
-//   1. printEnv → #primary-btn
+//   1. getTinyImage → #primary-btn
 //
 //   When UI renders, these actions will call tools from everything server
 //   Tool names will be prefixed: mcp_everything_toolname
@@ -72,65 +72,21 @@ server.addTool({
 </button>
 
 
-<!-- Call printEnv tool from everything -->
+<!-- Call getTinyImage tool from everything -->
 <button
   id="primary-btn"
-  onclick="call_printEnv()"
-  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
->
-  Click Me
-</button>
-
-
-<!-- Call printEnv tool from everything -->
-<button
-  id="primary-btn"
-  onclick="call_printEnv()"
+  onclick="call_getTinyImage()"
   class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
 >
   Click Me
 </button>
 
 <script>
-  function call_printEnv() {
+  function call_getTinyImage() {
     window.parent.postMessage({
       type: 'tool',
       payload: {
-        toolName: 'mcp_everything_printEnv',
-        params: {}
-      }
-    }, '*');
-  }
-</script>
-
-
-<!-- Call printEnv tool from everything -->
-<button
-  id="primary-btn"
-  onclick="call_printEnv()"
-  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
->
-  Click Me
-</button>
-
-<script>
-  function call_printEnv() {
-    window.parent.postMessage({
-      type: 'tool',
-      payload: {
-        toolName: 'mcp_everything_printEnv',
-        params: {}
-      }
-    }, '*');
-  }
-</script>
-
-<script>
-  function call_printEnv() {
-    window.parent.postMessage({
-      type: 'tool',
-      payload: {
-        toolName: 'mcp_everything_printEnv',
+        toolName: 'mcp_everything_getTinyImage',
         params: {}
       }
     }, '*');
@@ -148,7 +104,7 @@ server.addTool({
       metadata: {
         title: 'New UI Resource',
         description: 'A new MCP-UI resource',
-        lastModified: '2025-10-20T21:38:41.889Z'
+        lastModified: '2025-10-20T21:51:50.069Z'
       },
       uiMetadata: {
         'preferred-frame-size': ['800px', '600px']
