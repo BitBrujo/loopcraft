@@ -9,7 +9,26 @@ export const builtInTemplates: Template[] = [
     resource: {
       uri: 'ui://loopcraft/blank',
       contentType: 'rawHtml',
-      content: '<!DOCTYPE html>\n<html>\n<head>\n  <title>Custom UI</title>\n  <style>\n    body { font-family: system-ui, sans-serif; padding: 20px; }\n  </style>\n</head>\n<body>\n  <h1>Your Custom UI</h1>\n  <p>Start building here...</p>\n</body>\n</html>',
+      content: `<!DOCTYPE html>
+<html>
+<head>
+  <title>Custom UI</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Your Custom UI</h1>
+  <p>Start building here...</p>
+
+  <!--
+    TIP: If you add MCP tool actions to this UI:
+    1. Use "Tool Response Handler" snippet from the Design tab
+    2. Or tool bindings will auto-inject the response handler
+    3. This displays text, images, and all MCP content types
+  -->
+</body>
+</html>`,
     },
   },
   {

@@ -11,6 +11,7 @@ import type {
   ToolBinding,
   InteractiveElement,
 } from '@/types/ui-builder';
+import { getToolResponseHandlerCode } from './action-snippets';
 
 /**
  * Generate tool bindings comment for server code
@@ -105,6 +106,11 @@ ${paramExtraction.join('\n')}
 
 <script>
   function call_${toolName.replace(/[^a-zA-Z0-9]/g, '_')}() {
+    // Show loading indicator if response handler is present
+    if (typeof showLoading === 'function') {
+      showLoading();
+    }
+
     window.parent.postMessage({
       type: 'tool',
       payload: {
@@ -127,6 +133,11 @@ ${paramExtraction.join('\n')}
   function handleSubmit_${toolName.replace(/[^a-zA-Z0-9]/g, '_')}(event) {
     event.preventDefault();
 
+    // Show loading indicator if response handler is present
+    if (typeof showLoading === 'function') {
+      showLoading();
+    }
+
     window.parent.postMessage({
       type: 'tool',
       payload: {
@@ -141,6 +152,11 @@ ${paramExtraction.join('\n')}
     return `<!-- Call ${toolName} tool from ${targetServerName} -->
 <script>
   document.getElementById('${triggerId}')?.addEventListener('click', function() {
+    // Show loading indicator if response handler is present
+    if (typeof showLoading === 'function') {
+      showLoading();
+    }
+
     window.parent.postMessage({
       type: 'tool',
       payload: {
@@ -191,7 +207,25 @@ export function generateFastMCPCode(
 
   if (resource.contentType === 'rawHtml') {
     contentVariable = 'htmlContent';
-    contentConfig = `let ${contentVariable} = \`${resource.content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;`;
+
+    // Auto-inject tool response handler if tool bindings exist
+    let htmlWithHandler = resource.content;
+    const hasToolBindings = resource.toolBindings && resource.toolBindings.length > 0;
+
+    if (hasToolBindings) {
+      // Import the response handler code
+      const responseHandler = getToolResponseHandlerCode();
+
+      // Inject handler before closing </body> tag
+      if (htmlWithHandler.includes('</body>')) {
+        htmlWithHandler = htmlWithHandler.replace('</body>', `\n${responseHandler}\n</body>`);
+      } else {
+        // If no </body> tag, append at the end
+        htmlWithHandler += '\n' + responseHandler;
+      }
+    }
+
+    contentConfig = `let ${contentVariable} = \`${htmlWithHandler.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;`;
   } else if (resource.contentType === 'externalUrl') {
     contentConfig = `const ${contentVariable} = { type: 'externalUrl', iframeUrl: '${resource.content}' };`;
   } else {

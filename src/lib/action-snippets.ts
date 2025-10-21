@@ -5,7 +5,7 @@
 export interface ActionSnippet {
   id: string;
   name: string;
-  category: 'prompt' | 'link' | 'intent' | 'notify';
+  category: 'tool' | 'prompt' | 'link' | 'intent' | 'notify';
   description: string;
   code: string;
   placeholder?: string;        // Text to select after insertion
@@ -288,6 +288,111 @@ export const actionSnippets: ActionSnippet[] = [
   }
 </script>`,
   },
+
+  // ==================== TOOL RESPONSE HANDLER ====================
+  {
+    id: 'tool-response-handler',
+    name: 'Tool Response Display',
+    category: 'tool',
+    description: 'Universal handler for MCP tool responses (text, images, and all content types)',
+    code: `<!-- Tool Response Display Area -->
+<div id="result-container" style="margin-top: 1.5rem; padding: 1rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; display: none;">
+  <h3 style="color: #16a34a; margin-bottom: 0.75rem;">Result:</h3>
+  <div id="result-content"></div>
+</div>
+
+<div id="loading" style="margin-top: 1rem; display: none; color: #2563eb;">
+  ⏳ Loading...
+</div>
+
+<script>
+  // Universal MCP Tool Response Handler
+  // Handles all MCP content types: text, image, resource, etc.
+  window.addEventListener('message', (event) => {
+    if (event.data.type === 'mcp-ui-tool-response') {
+      const loading = document.getElementById('loading');
+      const container = document.getElementById('result-container');
+      const content = document.getElementById('result-content');
+
+      // Hide loading, show result
+      if (loading) loading.style.display = 'none';
+      if (container) container.style.display = 'block';
+      if (content) content.innerHTML = ''; // Clear previous
+
+      const result = event.data.result;
+
+      // Handle different response formats
+      if (result && result.success && result.data && result.data.content) {
+        renderMCPContent(result.data.content, content);
+      } else if (result && result.error) {
+        content.innerHTML = '<div style="color: #dc2626; padding: 0.5rem; background: #fee2e2; border-radius: 0.375rem;">Error: ' + result.error + '</div>';
+      } else {
+        content.innerHTML = '<pre style="background: #f3f4f6; padding: 1rem; border-radius: 0.375rem; overflow-x: auto;">' + JSON.stringify(result, null, 2) + '</pre>';
+      }
+    }
+  });
+
+  // Render MCP content array (supports text, image, resource, etc.)
+  function renderMCPContent(contentArray, container) {
+    if (!Array.isArray(contentArray)) {
+      container.innerHTML = '<pre>' + JSON.stringify(contentArray, null, 2) + '</pre>';
+      return;
+    }
+
+    contentArray.forEach(item => {
+      // Text content
+      if (item.type === 'text' && item.text) {
+        const pre = document.createElement('pre');
+        pre.style.cssText = 'background: #f3f4f6; padding: 1rem; border-radius: 0.375rem; overflow-x: auto; font-size: 0.875rem; margin: 0.5rem 0;';
+        pre.textContent = item.text;
+        container.appendChild(pre);
+      }
+      // Image content
+      else if (item.type === 'image' && item.data) {
+        const img = document.createElement('img');
+        img.src = 'data:' + (item.mimeType || 'image/png') + ';base64,' + item.data;
+        img.alt = item.text || 'MCP Image';
+        img.style.cssText = 'max-width: 100%; height: auto; border-radius: 0.5rem; margin: 0.5rem 0; border: 1px solid #e5e7eb;';
+        container.appendChild(img);
+
+        // Add caption if provided
+        if (item.text) {
+          const caption = document.createElement('p');
+          caption.style.cssText = 'font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem;';
+          caption.textContent = item.text;
+          container.appendChild(caption);
+        }
+      }
+      // Resource content
+      else if (item.type === 'resource' && item.resource) {
+        const div = document.createElement('div');
+        div.style.cssText = 'padding: 0.75rem; background: #eff6ff; border-left: 3px solid #3b82f6; border-radius: 0.375rem; margin: 0.5rem 0;';
+        div.innerHTML = '<strong style="color: #1e40af;">Resource:</strong> ' + (item.resource.uri || 'Unknown');
+        if (item.resource.name) {
+          div.innerHTML += '<br><span style="color: #6b7280; font-size: 0.875rem;">' + item.resource.name + '</span>';
+        }
+        container.appendChild(div);
+      }
+      // Fallback for unknown types
+      else {
+        const pre = document.createElement('pre');
+        pre.style.cssText = 'background: #fef3c7; padding: 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; margin: 0.5rem 0; border: 1px solid #fbbf24;';
+        pre.textContent = JSON.stringify(item, null, 2);
+        container.appendChild(pre);
+      }
+    });
+  }
+
+  // Helper function to show loading indicator
+  function showLoading() {
+    const loading = document.getElementById('loading');
+    const container = document.getElementById('result-container');
+    if (loading) loading.style.display = 'block';
+    if (container) container.style.display = 'none';
+  }
+</script>`,
+    validationNotes: 'Add this snippet once per UI. Place it after all tool buttons. Call showLoading() before sending tool requests.',
+  },
 ];
 
 /**
@@ -298,11 +403,26 @@ export function getSnippetsByCategory(category: ActionSnippet['category']) {
 }
 
 /**
- * Category metadata for UI display (4 action types)
- * Tool actions are handled separately via companion mode auto-generation
+ * Get the tool response handler snippet code
+ * Used for injecting into generated UIs automatically
+ */
+export function getToolResponseHandlerCode(): string {
+  const handler = actionSnippets.find(s => s.id === 'tool-response-handler');
+  return handler?.code || '';
+}
+
+/**
+ * Category metadata for UI display (5 action types)
+ * Tool actions include both companion-generated snippets and response handler
  * Icons are Lucide icon names (rendered by consuming components)
  */
 export const categoryMetadata = {
+  tool: {
+    label: 'Tool Response Handler',
+    icon: 'code-2',
+    description: 'Handle and display MCP tool responses',
+    color: 'bg-purple-500',
+  },
   prompt: {
     label: 'Prompt Actions',
     icon: 'message-square',
