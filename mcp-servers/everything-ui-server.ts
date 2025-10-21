@@ -43,7 +43,7 @@ const server = new FastMCP({
 // No dynamic placeholders - UI is static
 server.addTool({
   name: 'get_resource',
-  description: 'ui for env list',
+  description: 'call ui for env',
   parameters: z.object({}),
   execute: async (args) => {
     // Prepare content
@@ -64,35 +64,31 @@ server.addTool({
   </style>
 </head>
 <body>
-  <h1>Environment Variables</h1>
-  <p>Click the button below to fetch and display environment variables from the everything server.</p>
+  <h1>Hello from MCP-UI!</h1>
+  <p>Edit this HTML to create your custom UI resource.</p>
+  <p>Use the <strong>Configure</strong> tab to set metadata and frame size.</p>
 
-  <!-- Button to call printEnv -->
-  <button
-    onclick="call_printEnv()"
-    class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
-  >
-    Load Environment Variables
-  </button>
+<button id="primary-btn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+  Click Me
+</button>
 
-  <!-- Result display area -->
-  <div id="result-container" style="margin-top: 1.5rem; display: none;">
-    <h3 style="color: #16a34a;">Result:</h3>
-    <pre id="result" style="background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.875rem;"></pre>
-  </div>
 
-  <!-- Loading indicator -->
-  <div id="loading" style="margin-top: 1rem; display: none; color: #2563eb;">
-    ⏳ Loading...
-  </div>
+<!-- Call printEnv tool from everything -->
+<button
+  id="primary-btn"
+  onclick="call_printEnv()"
+  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+>
+  Click Me
+</button>
 
 <script>
   function call_printEnv() {
-    // Show loading indicator
-    document.getElementById('loading').style.display = 'block';
-    document.getElementById('result-container').style.display = 'none';
+    // Show loading indicator if response handler is present
+    if (typeof showLoading === 'function') {
+      showLoading();
+    }
 
-    // Send tool request to parent
     window.parent.postMessage({
       type: 'tool',
       payload: {
@@ -101,40 +97,105 @@ server.addTool({
       }
     }, '*');
   }
+</script>
 
-  // Listen for tool responses from parent
+
+<!-- Tool Response Display Area -->
+<div id="result-container" style="margin-top: 1.5rem; padding: 1rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; display: none;">
+  <h3 style="color: #16a34a; margin-bottom: 0.75rem;">Result:</h3>
+  <div id="result-content"></div>
+</div>
+
+<div id="loading" style="margin-top: 1rem; display: none; color: #2563eb;">
+  ⏳ Loading...
+</div>
+
+<script>
+  // Universal MCP Tool Response Handler
+  // Handles all MCP content types: text, image, resource, etc.
   window.addEventListener('message', (event) => {
     if (event.data.type === 'mcp-ui-tool-response') {
-      // Hide loading indicator
-      document.getElementById('loading').style.display = 'none';
+      const loading = document.getElementById('loading');
+      const container = document.getElementById('result-container');
+      const content = document.getElementById('result-content');
+
+      // Hide loading, show result
+      if (loading) loading.style.display = 'none';
+      if (container) container.style.display = 'block';
+      if (content) content.innerHTML = ''; // Clear previous
 
       const result = event.data.result;
 
-      // Display result
-      const resultElement = document.getElementById('result');
-      const containerElement = document.getElementById('result-container');
-
-      if (result && result.success && result.data) {
-        // Parse and format the result
-        const content = result.data.content;
-        if (Array.isArray(content) && content.length > 0 && content[0].text) {
-          resultElement.textContent = content[0].text;
-          containerElement.style.display = 'block';
-        } else {
-          resultElement.textContent = JSON.stringify(result, null, 2);
-          containerElement.style.display = 'block';
-        }
+      // Handle different response formats
+      if (result && result.success && result.data && result.data.content) {
+        renderMCPContent(result.data.content, content);
       } else if (result && result.error) {
-        resultElement.textContent = 'Error: ' + result.error;
-        containerElement.style.display = 'block';
+        content.innerHTML = '<div style="color: #dc2626; padding: 0.5rem; background: #fee2e2; border-radius: 0.375rem;">Error: ' + result.error + '</div>';
       } else {
-        resultElement.textContent = JSON.stringify(result, null, 2);
-        containerElement.style.display = 'block';
+        content.innerHTML = '<pre style="background: #f3f4f6; padding: 1rem; border-radius: 0.375rem; overflow-x: auto;">' + JSON.stringify(result, null, 2) + '</pre>';
       }
     }
   });
-</script>
 
+  // Render MCP content array (supports text, image, resource, etc.)
+  function renderMCPContent(contentArray, container) {
+    if (!Array.isArray(contentArray)) {
+      container.innerHTML = '<pre>' + JSON.stringify(contentArray, null, 2) + '</pre>';
+      return;
+    }
+
+    contentArray.forEach(item => {
+      // Text content
+      if (item.type === 'text' && item.text) {
+        const pre = document.createElement('pre');
+        pre.style.cssText = 'background: #f3f4f6; padding: 1rem; border-radius: 0.375rem; overflow-x: auto; font-size: 0.875rem; margin: 0.5rem 0;';
+        pre.textContent = item.text;
+        container.appendChild(pre);
+      }
+      // Image content
+      else if (item.type === 'image' && item.data) {
+        const img = document.createElement('img');
+        img.src = 'data:' + (item.mimeType || 'image/png') + ';base64,' + item.data;
+        img.alt = item.text || 'MCP Image';
+        img.style.cssText = 'max-width: 100%; height: auto; border-radius: 0.5rem; margin: 0.5rem 0; border: 1px solid #e5e7eb;';
+        container.appendChild(img);
+
+        // Add caption if provided
+        if (item.text) {
+          const caption = document.createElement('p');
+          caption.style.cssText = 'font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem;';
+          caption.textContent = item.text;
+          container.appendChild(caption);
+        }
+      }
+      // Resource content
+      else if (item.type === 'resource' && item.resource) {
+        const div = document.createElement('div');
+        div.style.cssText = 'padding: 0.75rem; background: #eff6ff; border-left: 3px solid #3b82f6; border-radius: 0.375rem; margin: 0.5rem 0;';
+        div.innerHTML = '<strong style="color: #1e40af;">Resource:</strong> ' + (item.resource.uri || 'Unknown');
+        if (item.resource.name) {
+          div.innerHTML += '<br><span style="color: #6b7280; font-size: 0.875rem;">' + item.resource.name + '</span>';
+        }
+        container.appendChild(div);
+      }
+      // Fallback for unknown types
+      else {
+        const pre = document.createElement('pre');
+        pre.style.cssText = 'background: #fef3c7; padding: 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; margin: 0.5rem 0; border: 1px solid #fbbf24;';
+        pre.textContent = JSON.stringify(item, null, 2);
+        container.appendChild(pre);
+      }
+    });
+  }
+
+  // Helper function to show loading indicator
+  function showLoading() {
+    const loading = document.getElementById('loading');
+    const container = document.getElementById('result-container');
+    if (loading) loading.style.display = 'block';
+    if (container) container.style.display = 'none';
+  }
+</script>
 </body>
 </html>`;
 
@@ -142,8 +203,180 @@ server.addTool({
   },
 });
 
+// Add resource for UI discovery (Resources API)
+server.addResource({
+  uri: 'ui://everything-ui/resource',
+  name: 'New UI Resource',
+  description: 'call ui for env',
+  mimeType: 'text/html',
+  load: async () => {
+    // Prepare content
+    let htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New UI Resource</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 { color: #2563eb; }
+  </style>
+</head>
+<body>
+  <h1>Hello from MCP-UI!</h1>
+  <p>Edit this HTML to create your custom UI resource.</p>
+  <p>Use the <strong>Configure</strong> tab to set metadata and frame size.</p>
+
+<button id="primary-btn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+  Click Me
+</button>
+
+
+<!-- Call printEnv tool from everything -->
+<button
+  id="primary-btn"
+  onclick="call_printEnv()"
+  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+>
+  Click Me
+</button>
+
+<script>
+  function call_printEnv() {
+    // Show loading indicator if response handler is present
+    if (typeof showLoading === 'function') {
+      showLoading();
+    }
+
+    window.parent.postMessage({
+      type: 'tool',
+      payload: {
+        toolName: 'mcp_everything_printEnv',
+        params: {}
+      }
+    }, '*');
+  }
+</script>
+
+
+<!-- Tool Response Display Area -->
+<div id="result-container" style="margin-top: 1.5rem; padding: 1rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; display: none;">
+  <h3 style="color: #16a34a; margin-bottom: 0.75rem;">Result:</h3>
+  <div id="result-content"></div>
+</div>
+
+<div id="loading" style="margin-top: 1rem; display: none; color: #2563eb;">
+  ⏳ Loading...
+</div>
+
+<script>
+  // Universal MCP Tool Response Handler
+  // Handles all MCP content types: text, image, resource, etc.
+  window.addEventListener('message', (event) => {
+    if (event.data.type === 'mcp-ui-tool-response') {
+      const loading = document.getElementById('loading');
+      const container = document.getElementById('result-container');
+      const content = document.getElementById('result-content');
+
+      // Hide loading, show result
+      if (loading) loading.style.display = 'none';
+      if (container) container.style.display = 'block';
+      if (content) content.innerHTML = ''; // Clear previous
+
+      const result = event.data.result;
+
+      // Handle different response formats
+      if (result && result.success && result.data && result.data.content) {
+        renderMCPContent(result.data.content, content);
+      } else if (result && result.error) {
+        content.innerHTML = '<div style="color: #dc2626; padding: 0.5rem; background: #fee2e2; border-radius: 0.375rem;">Error: ' + result.error + '</div>';
+      } else {
+        content.innerHTML = '<pre style="background: #f3f4f6; padding: 1rem; border-radius: 0.375rem; overflow-x: auto;">' + JSON.stringify(result, null, 2) + '</pre>';
+      }
+    }
+  });
+
+  // Render MCP content array (supports text, image, resource, etc.)
+  function renderMCPContent(contentArray, container) {
+    if (!Array.isArray(contentArray)) {
+      container.innerHTML = '<pre>' + JSON.stringify(contentArray, null, 2) + '</pre>';
+      return;
+    }
+
+    contentArray.forEach(item => {
+      // Text content
+      if (item.type === 'text' && item.text) {
+        const pre = document.createElement('pre');
+        pre.style.cssText = 'background: #f3f4f6; padding: 1rem; border-radius: 0.375rem; overflow-x: auto; font-size: 0.875rem; margin: 0.5rem 0;';
+        pre.textContent = item.text;
+        container.appendChild(pre);
+      }
+      // Image content
+      else if (item.type === 'image' && item.data) {
+        const img = document.createElement('img');
+        img.src = 'data:' + (item.mimeType || 'image/png') + ';base64,' + item.data;
+        img.alt = item.text || 'MCP Image';
+        img.style.cssText = 'max-width: 100%; height: auto; border-radius: 0.5rem; margin: 0.5rem 0; border: 1px solid #e5e7eb;';
+        container.appendChild(img);
+
+        // Add caption if provided
+        if (item.text) {
+          const caption = document.createElement('p');
+          caption.style.cssText = 'font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem;';
+          caption.textContent = item.text;
+          container.appendChild(caption);
+        }
+      }
+      // Resource content
+      else if (item.type === 'resource' && item.resource) {
+        const div = document.createElement('div');
+        div.style.cssText = 'padding: 0.75rem; background: #eff6ff; border-left: 3px solid #3b82f6; border-radius: 0.375rem; margin: 0.5rem 0;';
+        div.innerHTML = '<strong style="color: #1e40af;">Resource:</strong> ' + (item.resource.uri || 'Unknown');
+        if (item.resource.name) {
+          div.innerHTML += '<br><span style="color: #6b7280; font-size: 0.875rem;">' + item.resource.name + '</span>';
+        }
+        container.appendChild(div);
+      }
+      // Fallback for unknown types
+      else {
+        const pre = document.createElement('pre');
+        pre.style.cssText = 'background: #fef3c7; padding: 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; margin: 0.5rem 0; border: 1px solid #fbbf24;';
+        pre.textContent = JSON.stringify(item, null, 2);
+        container.appendChild(pre);
+      }
+    });
+  }
+
+  // Helper function to show loading indicator
+  function showLoading() {
+    const loading = document.getElementById('loading');
+    const container = document.getElementById('result-container');
+    if (loading) loading.style.display = 'block';
+    if (container) container.style.display = 'none';
+  }
+</script>
+</body>
+</html>`;
+
+    // Create UI resource
+    const uiResource = createUIResourceHelper(htmlContent, {});
+
+    // Return as text content
+    return {
+      text: '__MCP_UI_RESOURCE__:' + JSON.stringify(uiResource),
+      mimeType: 'text/html',
+      uri: 'ui://everything-ui/resource'
+    };
+  }
+});
+
 // Helper function to create UI resource
-function createUIResourceHelper(content: string, args: Record<string, never>) {
+function createUIResourceHelper(content: string, args: Record<string, unknown>) {
   const filledContent = content;
 
   const uiResource = createUIResource({
@@ -153,8 +386,8 @@ function createUIResourceHelper(content: string, args: Record<string, never>) {
     encoding: 'text',
       metadata: {
         title: 'New UI Resource',
-        description: 'ui for env list',
-        lastModified: '2025-10-21T01:32:07.665Z'
+        description: 'call ui for env',
+        lastModified: '2025-10-21T01:52:49.590Z'
       },
       uiMetadata: {
         'preferred-frame-size': ['800px', '600px']
@@ -162,8 +395,10 @@ function createUIResourceHelper(content: string, args: Record<string, never>) {
     });
 
   return {
-    type: 'text' as const,
-    text: '__MCP_UI_RESOURCE__:' + JSON.stringify(uiResource),
+    content: [{
+      type: 'text' as const,
+      text: '__MCP_UI_RESOURCE__:' + JSON.stringify(uiResource),
+    }],
   };
 }
 

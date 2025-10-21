@@ -380,6 +380,45 @@ server.addTool({
 });
 `;
 
+  // Determine encoding and MIME type before addResource
+  const encoding = resource.encoding || 'text';
+  const mimeType = resource.mimeType || getDefaultMimeType(resource.contentType);
+  const useCustomMimeType = resource.mimeType && resource.mimeType !== getDefaultMimeType(resource.contentType);
+
+  code += `
+// Add resource for UI discovery (Resources API)
+server.addResource({
+  uri: '${resource.uri}',
+  name: '${resource.metadata?.title || resourceName}',
+  description: '${resource.metadata?.description || `Interactive UI for ${resourceName}`}',
+  mimeType: '${mimeType}',
+  load: async () => {
+    // Prepare content
+    ${contentConfig}
+`;
+
+  // Add placeholder filling for HTML resources (only if placeholders exist)
+  if (resource.contentType === 'rawHtml' && agentPlaceholders.length > 0) {
+    code += `
+    // Fill agent placeholders (using empty context for resource reads)
+    htmlContent = fillAgentPlaceholders(htmlContent, {});
+`;
+  }
+
+  code += `
+    // Create UI resource
+    const uiResource = createUIResourceHelper(${contentVariable}, {});
+
+    // Return as text content
+    return {
+      text: '__MCP_UI_RESOURCE__:' + JSON.stringify(uiResource),
+      mimeType: '${mimeType}',
+      uri: '${resource.uri}'
+    };
+  }
+});
+`;
+
   // Build createUIResource call
   const hasMetadata = resource.metadata?.title || resource.metadata?.description ||
                       resource.audience || resource.priority !== undefined || resource.lastModified;
@@ -390,14 +429,9 @@ server.addTool({
                         resource.uiMetadata?.['iframe-title'] ||
                         resource.uiMetadata?.['container-style'];
 
-  // Determine encoding and MIME type
-  const encoding = resource.encoding || 'text';
-  const mimeType = resource.mimeType || getDefaultMimeType(resource.contentType);
-  const useCustomMimeType = resource.mimeType && resource.mimeType !== getDefaultMimeType(resource.contentType);
-
   code += `
 // Helper function to create UI resource
-function createUIResourceHelper(content, args) {
+function createUIResourceHelper(content: string, args: Record<string, unknown>) {
   ${resource.contentType === 'rawHtml' && agentPlaceholders.length > 0 ? `// Fill placeholders if provided
   const filledContent = fillAgentPlaceholders(content, args);` : `const filledContent = content;`}
 
@@ -451,7 +485,7 @@ function createUIResourceHelper(content, args) {
 
   return {
     content: [{
-      type: 'text',
+      type: 'text' as const,
       text: '__MCP_UI_RESOURCE__:' + JSON.stringify(uiResource),
     }],
   };

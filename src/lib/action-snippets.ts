@@ -322,11 +322,23 @@ export const actionSnippets: ActionSnippet[] = [
       const result = event.data.result;
 
       // Handle different response formats
-      if (result && result.success && result.data && result.data.content) {
-        renderMCPContent(result.data.content, content);
-      } else if (result && result.error) {
-        content.innerHTML = '<div style="color: #dc2626; padding: 0.5rem; background: #fee2e2; border-radius: 0.375rem;">Error: ' + result.error + '</div>';
-      } else {
+      // 1. API-level errors (network, server issues)
+      if (event.data.error) {
+        content.innerHTML = '<div style="color: #dc2626; padding: 0.5rem; background: #fee2e2; border-radius: 0.375rem;">Error: ' + event.data.error + '</div>';
+      }
+      // 2. MCP tool results (success or error)
+      else if (result && result.content && Array.isArray(result.content)) {
+        if (result.isError) {
+          // Tool returned error result
+          const errorText = result.content[0]?.text || 'Tool execution failed';
+          content.innerHTML = '<div style="color: #dc2626; padding: 0.5rem; background: #fee2e2; border-radius: 0.375rem;">Error: ' + errorText + '</div>';
+        } else {
+          // Tool success - render content array
+          renderMCPContent(result.content, content);
+        }
+      }
+      // 3. Fallback for unexpected format
+      else {
         content.innerHTML = '<pre style="background: #f3f4f6; padding: 1rem; border-radius: 0.375rem; overflow-x: auto;">' + JSON.stringify(result, null, 2) + '</pre>';
       }
     }
