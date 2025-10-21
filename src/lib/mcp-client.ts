@@ -154,7 +154,14 @@ export class MCPClientManager {
           }
         }
       } catch (error) {
-        console.error(`Failed to get resources from ${serverName}:`, error);
+        // -32601 = "Method not found" - server doesn't implement resources API
+        // This is normal for tools-only servers, so don't log as error
+        const mcpError = error as { code?: number };
+        if (mcpError?.code === -32601) {
+          console.log(`[MCP-CLIENT] Server ${serverName} does not implement resources API (tools-only server)`);
+        } else {
+          console.error(`Failed to get resources from ${serverName}:`, error);
+        }
       }
     }
 

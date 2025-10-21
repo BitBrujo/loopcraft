@@ -265,6 +265,7 @@ ${toolBindingsComment}// =======================================================
 import { FastMCP } from "fastmcp";
 import { z } from "zod";
 import { createUIResource } from '@mcp-ui/server';
+import { ListResourcesRequestSchema, ReadResourceRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
 ${companionComment}const server = new FastMCP({
   name: '${serverName}',
@@ -291,6 +292,11 @@ function fillAgentPlaceholders(html, agentContext) {
 `;
   }
 
+  // Extract dynamic tool name from resource URI
+  const uriParts = resource.uri.split('/');
+  const resourceName = uriParts[uriParts.length - 1] || 'ui';
+  const toolName = `get_${resourceName.replace(/-/g, '_')}`;
+
   // Build Zod schema for parameters
   let zodSchema = 'z.object({';
   if (agentPlaceholders.length > 0) {
@@ -305,23 +311,37 @@ function fillAgentPlaceholders(html, agentContext) {
     zodSchema += '})';
   }
 
-  // Add tool using FastMCP's addTool method
-  code += `
-// Add UI tool
+  // Conditionally add tool only if placeholders exist
+  if (agentPlaceholders.length > 0) {
+    code += `
+// Tool for dynamic placeholder filling
+// Allows AI to personalize UI with context: ${agentPlaceholders.map(p => `{{${p}}}`).join(', ')}
 server.addTool({
-  name: 'get_ui',
-  description: '${resource.metadata?.description || 'Get the UI resource'}',
+  name: '${toolName}',
+  description: '${resource.metadata?.description || `Get ${resourceName} UI with agent context`}',
   parameters: ${zodSchema},
   execute: async (args) => {
     // Prepare content
     ${contentConfig}
 `;
 
-  // Add placeholder filling for HTML
-  if (agentPlaceholders.length > 0 && resource.contentType === 'rawHtml') {
-    code += `
+    // Add placeholder filling for HTML
+    if (resource.contentType === 'rawHtml') {
+      code += `
     // Fill agent placeholders
     htmlContent = fillAgentPlaceholders(htmlContent, args || {});
+`;
+    }
+
+    code += `
+    return createUIResourceHelper(${contentVariable}, args || {});
+  },
+});
+`;
+  } else {
+    code += `
+// No tool needed - this UI has no dynamic placeholders
+// Access via Resources API: resources/list and resources/read
 `;
   }
 
@@ -341,11 +361,16 @@ server.addTool({
   const useCustomMimeType = resource.mimeType && resource.mimeType !== getDefaultMimeType(resource.contentType);
 
   code += `
-    const uiResource = createUIResource({
-      uri: '${resource.uri}',
-      content: ${resource.contentType === 'rawHtml' ? `{ type: 'rawHtml', htmlString: ${contentVariable} }` : contentVariable},
-      ${useCustomMimeType ? `mimeType: '${mimeType}',` : `// mimeType: '${mimeType}' (default)`}
-      encoding: '${encoding}'`;
+// Helper function to create UI resource
+function createUIResourceHelper(content, args) {
+  ${resource.contentType === 'rawHtml' && agentPlaceholders.length > 0 ? `// Fill placeholders if provided
+  const filledContent = fillAgentPlaceholders(content, args);` : `const filledContent = content;`}
+
+  const uiResource = createUIResource({
+    uri: '${resource.uri}',
+    content: ${resource.contentType === 'rawHtml' ? `{ type: 'rawHtml', htmlString: filledContent }` : 'content'},
+    ${useCustomMimeType ? `mimeType: '${mimeType}',` : `// mimeType: '${mimeType}' (default)`}
+    encoding: '${encoding}'`;
 
   if (hasMetadata) {
     code += `,
@@ -389,13 +414,45 @@ server.addTool({
   code += `
     });
 
-    return {
-      content: [{
-        type: 'text',
-        text: '__MCP_UI_RESOURCE__:' + JSON.stringify(uiResource),
-      }],
-    };
-  },
+  return {
+    content: [{
+      type: 'text',
+      text: '__MCP_UI_RESOURCE__:' + JSON.stringify(uiResource),
+    }],
+  };
+}
+
+// ============================================================
+// Resources API - Standard MCP-UI Pattern for Discoverability
+// ============================================================
+//
+// This allows MCP clients to discover and fetch UI resources
+// via the standard resources/list and resources/read endpoints.
+//
+// Benefits:
+// ✅ Portable across all MCP clients
+// ✅ Discoverable without calling tools
+// ✅ Standard MCP-UI specification compliant
+//
+
+// List available UI resources
+server.server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+  resources: [{
+    uri: '${resource.uri}',
+    name: '${resource.metadata?.title || serverName + ' UI'}',
+    description: '${resource.metadata?.description || 'Interactive UI resource'}',
+    mimeType: '${mimeType}',
+  }],
+}));
+
+// Read a specific UI resource
+server.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+  if (request.params.uri !== '${resource.uri}') {
+    throw new Error(\`Unknown resource: \${request.params.uri}\`);
+  }
+
+  // Return the UI resource (without agent context for direct resource reads)
+  return createUIResourceHelper(${contentVariable}, {});
 });
 
 // Add error handler for uncaught exceptions
