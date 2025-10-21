@@ -182,30 +182,13 @@ export function ToolActionMapper({
   const configuredCount = selectedTools.filter(isConfigured).length;
   const totalCount = selectedTools.length;
 
+  // Check if user has made selections yet
+  const hasUserInteraction = toolBindings.some(b => b.triggerId !== null);
+
   return (
     <Card className="border-orange-500/30 bg-orange-50/30 dark:bg-orange-950/10">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Settings2 className="h-4 w-4 text-orange-600" />
-            Tool Action Mapping
-            <Badge variant="secondary" className="text-xs">
-              {configuredCount}/{totalCount} configured
-            </Badge>
-          </CardTitle>
-          {parsedElements.length === 0 && (
-            <Badge variant="outline" className="text-xs text-muted-foreground">
-              Add HTML first
-            </Badge>
-          )}
-        </div>
-        <p className="text-sm text-muted-foreground mt-1">
-          Configure which HTML elements trigger your selected tools
-        </p>
-      </CardHeader>
-
-      <CardContent className="space-y-3">
-        {parsedElements.length === 0 ? (
+      <CardContent className="space-y-3 pt-6">
+        {parsedElements.length === 0 && !hasUserInteraction ? (
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
@@ -397,18 +380,6 @@ export function ToolActionMapper({
                             })}
                           </div>
                         )}
-
-                        {/* Generate Button */}
-                        {configured && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleGenerateSingle(toolName)}
-                            className="w-full text-xs gap-2"
-                          >
-                            <Code2 className="h-3 w-3" />
-                            Generate Code
-                          </Button>
-                        )}
                       </CardContent>
                     </CollapsibleContent>
                   </Card>
@@ -416,7 +387,7 @@ export function ToolActionMapper({
               );
             })}
 
-            {/* Generate All Button */}
+            {/* Insert Tool Bindings Button */}
             {configuredCount > 0 && (
               <Button
                 onClick={handleGenerateAll}
@@ -424,7 +395,7 @@ export function ToolActionMapper({
                 size="sm"
               >
                 <Code2 className="h-4 w-4" />
-                Generate All Code ({configuredCount} tools)
+                Insert Tool Bindings into HTML
               </Button>
             )}
           </>

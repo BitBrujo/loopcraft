@@ -32,6 +32,90 @@ function getIndentation(line: string): string {
 }
 
 /**
+ * Extract element ID from snippet code
+ */
+function extractElementId(snippet: string): string | null {
+  // Match id="..." or id='...'
+  const idMatch = snippet.match(/id=["']([^"']+)["']/);
+  return idMatch ? idMatch[1] : null;
+}
+
+/**
+ * Check if element ID already exists in HTML
+ */
+function elementIdExists(html: string, elementId: string): boolean {
+  if (!elementId) return false;
+
+  // Check for id="elementId" or id='elementId'
+  const regex = new RegExp(`id=["']${elementId}["']`, 'i');
+  return regex.test(html);
+}
+
+/**
+ * Remove existing element with given ID from HTML
+ */
+function removeElementById(html: string, elementId: string): string {
+  if (!elementId || !elementIdExists(html, elementId)) {
+    return html;
+  }
+
+  // Find the element with this ID and remove it along with its associated script
+  // This is a simplified approach - finds opening tag with ID and removes until closing tag
+  const lines = html.split('\n');
+  const newLines: string[] = [];
+  let skipUntilClosing: string | null = null;
+  let skipScript = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // If we're inside a script that follows our element, skip it
+    if (skipScript) {
+      if (line.includes('</script>')) {
+        skipScript = false;
+      }
+      continue;
+    }
+
+    // If we're skipping until a closing tag
+    if (skipUntilClosing) {
+      if (line.includes(`</${skipUntilClosing}>`)) {
+        skipUntilClosing = null;
+        // Check if next lines contain a related script
+        if (i + 1 < lines.length && lines[i + 1].trim().startsWith('<script>')) {
+          skipScript = true;
+        }
+      }
+      continue;
+    }
+
+    // Check if this line contains our element ID
+    if (line.includes(`id="${elementId}"`) || line.includes(`id='${elementId}'`)) {
+      // Extract tag name
+      const tagMatch = line.match(/<(\w+)/);
+      if (tagMatch) {
+        const tagName = tagMatch[1];
+        // If it's a self-closing tag or closes on same line, skip just this line
+        if (line.includes('/>') || line.includes(`</${tagName}>`)) {
+          // Check if next lines contain a related script
+          if (i + 1 < lines.length && lines[i + 1].trim().startsWith('<script>')) {
+            skipScript = true;
+          }
+          continue;
+        }
+        // Otherwise, skip until closing tag
+        skipUntilClosing = tagName;
+      }
+      continue;
+    }
+
+    newLines.push(line);
+  }
+
+  return newLines.join('\n');
+}
+
+/**
  * Smart insert HTML snippet into existing HTML content
  *
  * @param existingHTML - The existing HTML content
@@ -56,16 +140,26 @@ export function smartInsertHTML(existingHTML: string, snippetCode: string): stri
     return createMinimalHTMLWithSnippet(snippetCode, snippetType);
   }
 
+  // Check for duplicate element IDs and remove existing if found
+  let htmlToModify = existingHTML;
+  if (snippetType === 'html') {
+    const elementId = extractElementId(snippetCode);
+    if (elementId && elementIdExists(htmlToModify, elementId)) {
+      // Remove existing element with same ID to prevent duplicates
+      htmlToModify = removeElementById(htmlToModify, elementId);
+    }
+  }
+
   // Insert based on snippet type
   switch (snippetType) {
     case 'style':
-      return insertInHead(existingHTML, snippetCode);
+      return insertInHead(htmlToModify, snippetCode);
     case 'script':
-      return insertBeforeBodyEnd(existingHTML, snippetCode);
+      return insertBeforeBodyEnd(htmlToModify, snippetCode);
     case 'html':
-      return insertBeforeBodyEnd(existingHTML, snippetCode, true);
+      return insertBeforeBodyEnd(htmlToModify, snippetCode, true);
     default:
-      return existingHTML;
+      return htmlToModify;
   }
 }
 
