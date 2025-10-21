@@ -27,9 +27,8 @@ import { createUIResource } from '@mcp-ui/server';
 // 💡 Use "Browse Tools" to see available tools from everything
 //
 // ⚙️  TOOL-TO-ACTION BINDINGS:
-//   This UI has 2 configured tool bindings:
-//   1. printEnv → #primary-btn
-//   2. getTinyImage → #secondary-btn
+//   This UI has 1 configured tool binding:
+//   1. getTinyImage → #primary-btn
 //
 //   When UI renders, these actions will call tools from everything server
 //   Tool names will be prefixed: mcp_everything_toolname
@@ -44,7 +43,7 @@ const server = new FastMCP({
 // No dynamic placeholders - UI is static
 server.addTool({
   name: 'get_resource',
-  description: 'UI button',
+  description: 'ui for image',
   parameters: z.object({}),
   execute: async (args) => {
     // Prepare content
@@ -74,54 +73,13 @@ server.addTool({
 </button>
 
 
-<!-- Call printEnv tool from everything -->
-<button
-  id="primary-btn"
-  onclick="call_printEnv()"
-  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
->
-  Click Me
-</button>
-
-
-<button id="secondary-btn" class="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
-  Secondary
-</button>
-
-
-<!-- Call printEnv tool from everything -->
-<button
-  id="primary-btn"
-  onclick="call_printEnv()"
-  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
->
-  Click Me
-</button>
-
-<script>
-  function call_printEnv() {
-    // Show loading indicator if response handler is present
-    if (typeof showLoading === 'function') {
-      showLoading();
-    }
-
-    window.parent.postMessage({
-      type: 'tool',
-      payload: {
-        toolName: 'mcp_everything_printEnv',
-        params: {}
-      }
-    }, '*');
-  }
-</script>
-
 <!-- Call getTinyImage tool from everything -->
 <button
-  id="secondary-btn"
+  id="primary-btn"
   onclick="call_getTinyImage()"
   class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
 >
-  Secondary
+  Click Me
 </button>
 
 <script>
@@ -135,129 +93,6 @@ server.addTool({
       type: 'tool',
       payload: {
         toolName: 'mcp_everything_getTinyImage',
-        params: {}
-      }
-    }, '*');
-  }
-</script>
-
-
-<!-- Call printEnv tool from everything -->
-<button
-  id="primary-btn"
-  onclick="call_printEnv()"
-  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
->
-  Click Me
-</button>
-
-<script>
-  function call_printEnv() {
-    // Show loading indicator if response handler is present
-    if (typeof showLoading === 'function') {
-      showLoading();
-    }
-
-    window.parent.postMessage({
-      type: 'tool',
-      payload: {
-        toolName: 'mcp_everything_printEnv',
-        params: {}
-      }
-    }, '*');
-  }
-</script>
-
-<!-- Call getTinyImage tool from everything -->
-<button
-  id="secondary-btn"
-  onclick="call_getTinyImage()"
-  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
->
-  Secondary
-</button>
-
-<script>
-  function call_getTinyImage() {
-    // Show loading indicator if response handler is present
-    if (typeof showLoading === 'function') {
-      showLoading();
-    }
-
-    window.parent.postMessage({
-      type: 'tool',
-      payload: {
-        toolName: 'mcp_everything_getTinyImage',
-        params: {}
-      }
-    }, '*');
-  }
-</script>
-
-
-<!-- Call printEnv tool from everything -->
-<button
-  id="primary-btn"
-  onclick="call_printEnv()"
-  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
->
-  Click Me
-</button>
-
-<script>
-  function call_printEnv() {
-    // Show loading indicator if response handler is present
-    if (typeof showLoading === 'function') {
-      showLoading();
-    }
-
-    window.parent.postMessage({
-      type: 'tool',
-      payload: {
-        toolName: 'mcp_everything_printEnv',
-        params: {}
-      }
-    }, '*');
-  }
-</script>
-
-<!-- Call getTinyImage tool from everything -->
-<button
-  id="secondary-btn"
-  onclick="call_getTinyImage()"
-  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
->
-  Secondary
-</button>
-
-<script>
-  function call_getTinyImage() {
-    // Show loading indicator if response handler is present
-    if (typeof showLoading === 'function') {
-      showLoading();
-    }
-
-    window.parent.postMessage({
-      type: 'tool',
-      payload: {
-        toolName: 'mcp_everything_getTinyImage',
-        params: {}
-      }
-    }, '*');
-  }
-</script>
-
-<script>
-  function call_printEnv() {
-    // Show loading indicator if response handler is present
-    if (typeof showLoading === 'function') {
-      showLoading();
-    }
-
-    window.parent.postMessage({
-      type: 'tool',
-      payload: {
-        toolName: 'mcp_everything_printEnv',
         params: {}
       }
     }, '*');
@@ -317,7 +152,7 @@ server.addTool({
           const errorText = result.content[0]?.text || 'Tool execution failed';
           content.innerHTML = '<div style="color: #dc2626; padding: 0.5rem; background: #fee2e2; border-radius: 0.375rem;">Error: ' + errorText + '</div>';
         } else {
-          // Tool success - render content array
+          // Tool success - render content array (supports ALL MCP types)
           renderMCPContent(result.content, content);
         }
       }
@@ -398,7 +233,7 @@ server.addTool({
 server.addResource({
   uri: 'ui://everything-ui/resource',
   name: 'New UI Resource',
-  description: 'UI button',
+  description: 'ui for image',
   mimeType: 'text/html',
   load: async () => {
     // Prepare content
@@ -428,54 +263,13 @@ server.addResource({
 </button>
 
 
-<!-- Call printEnv tool from everything -->
-<button
-  id="primary-btn"
-  onclick="call_printEnv()"
-  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
->
-  Click Me
-</button>
-
-
-<button id="secondary-btn" class="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
-  Secondary
-</button>
-
-
-<!-- Call printEnv tool from everything -->
-<button
-  id="primary-btn"
-  onclick="call_printEnv()"
-  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
->
-  Click Me
-</button>
-
-<script>
-  function call_printEnv() {
-    // Show loading indicator if response handler is present
-    if (typeof showLoading === 'function') {
-      showLoading();
-    }
-
-    window.parent.postMessage({
-      type: 'tool',
-      payload: {
-        toolName: 'mcp_everything_printEnv',
-        params: {}
-      }
-    }, '*');
-  }
-</script>
-
 <!-- Call getTinyImage tool from everything -->
 <button
-  id="secondary-btn"
+  id="primary-btn"
   onclick="call_getTinyImage()"
   class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
 >
-  Secondary
+  Click Me
 </button>
 
 <script>
@@ -489,129 +283,6 @@ server.addResource({
       type: 'tool',
       payload: {
         toolName: 'mcp_everything_getTinyImage',
-        params: {}
-      }
-    }, '*');
-  }
-</script>
-
-
-<!-- Call printEnv tool from everything -->
-<button
-  id="primary-btn"
-  onclick="call_printEnv()"
-  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
->
-  Click Me
-</button>
-
-<script>
-  function call_printEnv() {
-    // Show loading indicator if response handler is present
-    if (typeof showLoading === 'function') {
-      showLoading();
-    }
-
-    window.parent.postMessage({
-      type: 'tool',
-      payload: {
-        toolName: 'mcp_everything_printEnv',
-        params: {}
-      }
-    }, '*');
-  }
-</script>
-
-<!-- Call getTinyImage tool from everything -->
-<button
-  id="secondary-btn"
-  onclick="call_getTinyImage()"
-  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
->
-  Secondary
-</button>
-
-<script>
-  function call_getTinyImage() {
-    // Show loading indicator if response handler is present
-    if (typeof showLoading === 'function') {
-      showLoading();
-    }
-
-    window.parent.postMessage({
-      type: 'tool',
-      payload: {
-        toolName: 'mcp_everything_getTinyImage',
-        params: {}
-      }
-    }, '*');
-  }
-</script>
-
-
-<!-- Call printEnv tool from everything -->
-<button
-  id="primary-btn"
-  onclick="call_printEnv()"
-  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
->
-  Click Me
-</button>
-
-<script>
-  function call_printEnv() {
-    // Show loading indicator if response handler is present
-    if (typeof showLoading === 'function') {
-      showLoading();
-    }
-
-    window.parent.postMessage({
-      type: 'tool',
-      payload: {
-        toolName: 'mcp_everything_printEnv',
-        params: {}
-      }
-    }, '*');
-  }
-</script>
-
-<!-- Call getTinyImage tool from everything -->
-<button
-  id="secondary-btn"
-  onclick="call_getTinyImage()"
-  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
->
-  Secondary
-</button>
-
-<script>
-  function call_getTinyImage() {
-    // Show loading indicator if response handler is present
-    if (typeof showLoading === 'function') {
-      showLoading();
-    }
-
-    window.parent.postMessage({
-      type: 'tool',
-      payload: {
-        toolName: 'mcp_everything_getTinyImage',
-        params: {}
-      }
-    }, '*');
-  }
-</script>
-
-<script>
-  function call_printEnv() {
-    // Show loading indicator if response handler is present
-    if (typeof showLoading === 'function') {
-      showLoading();
-    }
-
-    window.parent.postMessage({
-      type: 'tool',
-      payload: {
-        toolName: 'mcp_everything_printEnv',
         params: {}
       }
     }, '*');
@@ -671,7 +342,7 @@ server.addResource({
           const errorText = result.content[0]?.text || 'Tool execution failed';
           content.innerHTML = '<div style="color: #dc2626; padding: 0.5rem; background: #fee2e2; border-radius: 0.375rem;">Error: ' + errorText + '</div>';
         } else {
-          // Tool success - render content array
+          // Tool success - render content array (supports ALL MCP types)
           renderMCPContent(result.content, content);
         }
       }
@@ -767,8 +438,8 @@ function createUIResourceHelper(content: string, args: Record<string, unknown>) 
     encoding: 'text',
       metadata: {
         title: 'New UI Resource',
-        description: 'UI button',
-        lastModified: '2025-10-21T02:45:24.141Z'
+        description: 'ui for image',
+        lastModified: '2025-10-21T02:58:36.080Z'
       },
       uiMetadata: {
         'preferred-frame-size': ['800px', '600px']
