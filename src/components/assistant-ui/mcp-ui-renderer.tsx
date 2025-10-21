@@ -1,5 +1,5 @@
 import { UIResourceRenderer, UIActionResult, isUIResource } from "@mcp-ui/client";
-import { useCallback, useRef, useEffect } from "react";
+import { useCallback } from "react";
 import { toast } from "@/lib/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
@@ -18,16 +18,7 @@ interface MCPUIRendererProps {
 }
 
 export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content, serverName }) => {
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const router = useRouter();
-
-  // Find iframe element after render
-  useEffect(() => {
-    const iframe = document.querySelector('iframe[data-mcp-ui-resource]') as HTMLIFrameElement;
-    if (iframe) {
-      iframeRef.current = iframe;
-    }
-  }, [content]);
 
   const handleUIAction = useCallback(async (result: UIActionResult) => {
     console.log("🔔 MCP UI Action received:", result);
@@ -85,42 +76,17 @@ export const MCPUIRenderer: React.FC<MCPUIRendererProps> = ({ content, serverNam
         if (!response.ok) {
           const errorData = await response.json();
           console.error('Tool call failed:', errorData);
-
-          // Post error back to iframe
-          if (iframeRef.current?.contentWindow) {
-            iframeRef.current.contentWindow.postMessage({
-              type: 'mcp-ui-tool-response',
-              error: errorData.error || 'Tool call failed'
-            }, '*');
-          }
-
           return { status: 'error', error: errorData.error };
         }
 
         const toolResult = await response.json();
-        console.log('Tool call result:', toolResult);
+        console.log('✅ Tool call successful:', toolResult);
 
-        // Post result back to iframe
-        if (iframeRef.current?.contentWindow) {
-          iframeRef.current.contentWindow.postMessage({
-            type: 'mcp-ui-tool-response',
-            result: toolResult
-          }, '*');
-        }
-
-        // Return the result so @mcp-ui/client can also handle it
+        // Return result - @mcp-ui/client library will post it to iframe automatically
         return toolResult;
       } catch (error) {
         console.error('Error calling tool:', error);
-
-        // Post error back to iframe
-        if (iframeRef.current?.contentWindow) {
-          iframeRef.current.contentWindow.postMessage({
-            type: 'mcp-ui-tool-response',
-            error: error instanceof Error ? error.message : 'Unknown error'
-          }, '*');
-        }
-
+        // Return error - @mcp-ui/client library will post it to iframe automatically
         return { status: 'error', error: error instanceof Error ? error.message : 'Unknown error' };
       }
     } else if (result.type === 'prompt') {

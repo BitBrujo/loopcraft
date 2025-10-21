@@ -43,7 +43,7 @@ const server = new FastMCP({
 // No dynamic placeholders - UI is static
 server.addTool({
   name: 'get_resource',
-  description: 'call ui for env',
+  description: 'env button',
   parameters: z.object({}),
   execute: async (args) => {
     // Prepare content
@@ -114,7 +114,11 @@ server.addTool({
   // Universal MCP Tool Response Handler
   // Handles all MCP content types: text, image, resource, etc.
   window.addEventListener('message', (event) => {
-    if (event.data.type === 'mcp-ui-tool-response') {
+    console.log('📥 iframe received message:', event.data);
+
+    // Listen for ui-message-response from @mcp-ui/client library
+    if (event.data.type === 'ui-message-response') {
+      console.log('✅ Processing ui-message-response');
       const loading = document.getElementById('loading');
       const container = document.getElementById('result-container');
       const content = document.getElementById('result-content');
@@ -124,14 +128,28 @@ server.addTool({
       if (container) container.style.display = 'block';
       if (content) content.innerHTML = ''; // Clear previous
 
-      const result = event.data.result;
+      // Extract result from payload (library wraps it)
+      const result = event.data.payload;
+      console.log('📦 Tool result:', result);
 
       // Handle different response formats
-      if (result && result.success && result.data && result.data.content) {
-        renderMCPContent(result.data.content, content);
-      } else if (result && result.error) {
-        content.innerHTML = '<div style="color: #dc2626; padding: 0.5rem; background: #fee2e2; border-radius: 0.375rem;">Error: ' + result.error + '</div>';
-      } else {
+      // 1. API-level errors (network, server issues)
+      if (event.data.error) {
+        content.innerHTML = '<div style="color: #dc2626; padding: 0.5rem; background: #fee2e2; border-radius: 0.375rem;">Error: ' + event.data.error + '</div>';
+      }
+      // 2. MCP tool results (success or error)
+      else if (result && result.content && Array.isArray(result.content)) {
+        if (result.isError) {
+          // Tool returned error result
+          const errorText = result.content[0]?.text || 'Tool execution failed';
+          content.innerHTML = '<div style="color: #dc2626; padding: 0.5rem; background: #fee2e2; border-radius: 0.375rem;">Error: ' + errorText + '</div>';
+        } else {
+          // Tool success - render content array
+          renderMCPContent(result.content, content);
+        }
+      }
+      // 3. Fallback for unexpected format
+      else {
         content.innerHTML = '<pre style="background: #f3f4f6; padding: 1rem; border-radius: 0.375rem; overflow-x: auto;">' + JSON.stringify(result, null, 2) + '</pre>';
       }
     }
@@ -207,7 +225,7 @@ server.addTool({
 server.addResource({
   uri: 'ui://everything-ui/resource',
   name: 'New UI Resource',
-  description: 'call ui for env',
+  description: 'env button',
   mimeType: 'text/html',
   load: async () => {
     // Prepare content
@@ -278,7 +296,11 @@ server.addResource({
   // Universal MCP Tool Response Handler
   // Handles all MCP content types: text, image, resource, etc.
   window.addEventListener('message', (event) => {
-    if (event.data.type === 'mcp-ui-tool-response') {
+    console.log('📥 iframe received message:', event.data);
+
+    // Listen for ui-message-response from @mcp-ui/client library
+    if (event.data.type === 'ui-message-response') {
+      console.log('✅ Processing ui-message-response');
       const loading = document.getElementById('loading');
       const container = document.getElementById('result-container');
       const content = document.getElementById('result-content');
@@ -288,14 +310,28 @@ server.addResource({
       if (container) container.style.display = 'block';
       if (content) content.innerHTML = ''; // Clear previous
 
-      const result = event.data.result;
+      // Extract result from payload (library wraps it)
+      const result = event.data.payload;
+      console.log('📦 Tool result:', result);
 
       // Handle different response formats
-      if (result && result.success && result.data && result.data.content) {
-        renderMCPContent(result.data.content, content);
-      } else if (result && result.error) {
-        content.innerHTML = '<div style="color: #dc2626; padding: 0.5rem; background: #fee2e2; border-radius: 0.375rem;">Error: ' + result.error + '</div>';
-      } else {
+      // 1. API-level errors (network, server issues)
+      if (event.data.error) {
+        content.innerHTML = '<div style="color: #dc2626; padding: 0.5rem; background: #fee2e2; border-radius: 0.375rem;">Error: ' + event.data.error + '</div>';
+      }
+      // 2. MCP tool results (success or error)
+      else if (result && result.content && Array.isArray(result.content)) {
+        if (result.isError) {
+          // Tool returned error result
+          const errorText = result.content[0]?.text || 'Tool execution failed';
+          content.innerHTML = '<div style="color: #dc2626; padding: 0.5rem; background: #fee2e2; border-radius: 0.375rem;">Error: ' + errorText + '</div>';
+        } else {
+          // Tool success - render content array
+          renderMCPContent(result.content, content);
+        }
+      }
+      // 3. Fallback for unexpected format
+      else {
         content.innerHTML = '<pre style="background: #f3f4f6; padding: 1rem; border-radius: 0.375rem; overflow-x: auto;">' + JSON.stringify(result, null, 2) + '</pre>';
       }
     }
@@ -386,8 +422,8 @@ function createUIResourceHelper(content: string, args: Record<string, unknown>) 
     encoding: 'text',
       metadata: {
         title: 'New UI Resource',
-        description: 'call ui for env',
-        lastModified: '2025-10-21T01:52:49.590Z'
+        description: 'env button',
+        lastModified: '2025-10-21T02:32:09.377Z'
       },
       uiMetadata: {
         'preferred-frame-size': ['800px', '600px']

@@ -309,7 +309,11 @@ export const actionSnippets: ActionSnippet[] = [
   // Universal MCP Tool Response Handler
   // Handles all MCP content types: text, image, resource, etc.
   window.addEventListener('message', (event) => {
-    if (event.data.type === 'mcp-ui-tool-response') {
+    console.log('📥 iframe received message:', event.data);
+
+    // Listen for ui-message-response from @mcp-ui/client library
+    if (event.data.type === 'ui-message-response') {
+      console.log('✅ Processing ui-message-response');
       const loading = document.getElementById('loading');
       const container = document.getElementById('result-container');
       const content = document.getElementById('result-content');
@@ -319,7 +323,9 @@ export const actionSnippets: ActionSnippet[] = [
       if (container) container.style.display = 'block';
       if (content) content.innerHTML = ''; // Clear previous
 
-      const result = event.data.result;
+      // Extract result from payload (library wraps it)
+      const result = event.data.payload;
+      console.log('📦 Tool result:', result);
 
       // Handle different response formats
       // 1. API-level errors (network, server issues)
