@@ -191,7 +191,7 @@ export function ActionSnippets({ onInsert, targetServerName, selectedTools }: Ac
           {/* Regular Action Categories */}
           {categories.map((category) => {
             const meta = categoryMetadata[category];
-            const snippets = getSnippetsByCategory(category);
+            const snippets = getSnippetsByCategory(category).filter(s => s.id !== 'tool-response-handler');
             const isExpanded = expandedCategory === category;
 
             return (

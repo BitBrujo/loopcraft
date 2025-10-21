@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Settings2, ChevronDown, Code2, AlertCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Check, ChevronDown, Code2, AlertCircle } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -49,6 +49,11 @@ export function ToolActionMapper({
   targetServerName,
 }: ToolActionMapperProps) {
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
+
+  // Strip emoji characters from text
+  const stripEmojis = (text: string): string => {
+    return text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
+  };
 
   // Toggle tool expansion
   const toggleTool = (toolName: string) => {
@@ -142,20 +147,6 @@ export function ToolActionMapper({
     }
   };
 
-  // Generate code for single tool
-  const handleGenerateSingle = (toolName: string) => {
-    if (!targetServerName) return;
-
-    const binding = getBinding(toolName);
-    if (!binding || !binding.triggerId) return;
-
-    const element = parsedElements.find(e => e.id === binding.triggerId);
-    if (!element) return;
-
-    const code = generateBindingCode(binding, targetServerName, element);
-    onGenerateCode(code);
-  };
-
   // Get available form fields for parameter mapping
   const getAvailableFormFields = (triggerId: string | null): InteractiveElement[] => {
     if (!triggerId) return [];
@@ -180,16 +171,15 @@ export function ToolActionMapper({
   };
 
   const configuredCount = selectedTools.filter(isConfigured).length;
-  const totalCount = selectedTools.length;
 
   // Check if user has made selections yet
   const hasUserInteraction = toolBindings.some(b => b.triggerId !== null);
 
   return (
     <Card className="border-orange-500/30 bg-orange-50/30 dark:bg-orange-950/10">
-      <CardContent className="space-y-3 pt-6">
+      <CardContent className="space-y-3 p-4">
         {parsedElements.length === 0 && !hasUserInteraction ? (
-          <Alert>
+          <Alert className="flex flex-col items-center text-center [&>svg]:static [&>svg]:mb-2 [&>svg~*]:pl-0">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               Add HTML content in the editor to automatically detect interactive elements
@@ -213,9 +203,9 @@ export function ToolActionMapper({
                   open={expanded}
                   onOpenChange={() => toggleTool(toolName)}
                 >
-                  <Card className={configured ? 'border-green-500/50' : ''}>
+                  <Card className={`gap-3 py-3 ${configured ? 'border-green-500/50' : ''}`}>
                     <CollapsibleTrigger asChild>
-                      <CardHeader className="p-3 cursor-pointer hover:bg-accent/50">
+                      <div className="p-4 cursor-pointer hover:bg-accent/50">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
@@ -239,11 +229,11 @@ export function ToolActionMapper({
                             }`}
                           />
                         </div>
-                      </CardHeader>
+                      </div>
                     </CollapsibleTrigger>
 
                     <CollapsibleContent>
-                      <CardContent className="p-3 pt-0 space-y-3">
+                      <CardContent className="p-4 pt-0 space-y-4">
                         {/* Trigger Element Selection */}
                         <div className="space-y-2">
                           <Label className="text-xs">Trigger Element</Label>
@@ -264,7 +254,7 @@ export function ToolActionMapper({
                                     <span className="text-xs">#{element.id}</span>
                                     {element.text && (
                                       <span className="text-xs text-muted-foreground">
-                                        - {element.text}
+                                        - {stripEmojis(element.text)}
                                       </span>
                                     )}
                                   </div>
@@ -276,7 +266,7 @@ export function ToolActionMapper({
 
                         {/* Parameter Mappings */}
                         {Object.keys(params).length > 0 && (
-                          <div className="space-y-3 pt-2 border-t">
+                          <div className="space-y-4 pt-4 border-t">
                             <Label className="text-xs font-semibold">Parameters</Label>
                             {Object.entries(params).map(([paramName, paramSchema]) => {
                               const isRequired = required.includes(paramName);
@@ -286,7 +276,7 @@ export function ToolActionMapper({
                               };
 
                               return (
-                                <div key={paramName} className="space-y-2 p-2 bg-muted/30 rounded">
+                                <div key={paramName} className="space-y-2 p-3 bg-muted/30 rounded">
                                   <div className="flex items-center gap-2">
                                     <Label className="text-xs font-mono">
                                       {paramName}
