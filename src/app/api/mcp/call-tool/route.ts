@@ -48,8 +48,15 @@ export async function POST(req: Request) {
 
     console.log(`[MCP Tool Result] ${serverName}.${toolName}:`, result);
 
-    // Return result in MCP format
-    return new Response(JSON.stringify(result), {
+    // Unwrap MCP SDK response envelope if present
+    // SDK returns: { response: { content: [...], isError: false } }
+    // We need: { content: [...], isError: false }
+    const unwrappedResult = (result as any)?.response || result;
+
+    console.log(`[MCP Tool Result Unwrapped]:`, unwrappedResult);
+
+    // Return unwrapped result in MCP format
+    return new Response(JSON.stringify(unwrappedResult), {
       status: 200,
       headers: { "Content-Type": "application/json" }
     });

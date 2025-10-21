@@ -324,8 +324,16 @@ export const actionSnippets: ActionSnippet[] = [
       if (content) content.innerHTML = ''; // Clear previous
 
       // Extract result from payload (library wraps it)
-      const result = event.data.payload;
-      console.log('📦 Tool result:', result);
+      let result = event.data.payload;
+      console.log('📦 Tool result (raw):', result);
+
+      // Unwrap MCP SDK response envelope if present (defensive)
+      // Some responses may have: { response: { content: [...] } }
+      if (result && result.response && !result.content) {
+        console.log('📦 Unwrapping SDK envelope');
+        result = result.response;
+      }
+      console.log('📦 Tool result (unwrapped):', result);
 
       // Handle different response formats
       // 1. API-level errors (network, server issues)
@@ -339,7 +347,7 @@ export const actionSnippets: ActionSnippet[] = [
           const errorText = result.content[0]?.text || 'Tool execution failed';
           content.innerHTML = '<div style="color: #dc2626; padding: 0.5rem; background: #fee2e2; border-radius: 0.375rem;">Error: ' + errorText + '</div>';
         } else {
-          // Tool success - render content array
+          // Tool success - render content array (supports ALL MCP types)
           renderMCPContent(result.content, content);
         }
       }
