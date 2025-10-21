@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     // Unwrap MCP SDK response envelope if present
     // SDK returns: { response: { content: [...], isError: false } }
     // We need: { content: [...], isError: false }
-    const unwrappedResult = (result as any)?.response || result;
+    const unwrappedResult = (result as { response?: unknown })?.response || result;
 
     console.log(`[MCP Tool Result Unwrapped]:`, unwrappedResult);
 
