@@ -56,8 +56,8 @@ export function CompanionWizard({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Target MCP Server</label>
+          <div>
+            <label className="text-sm font-medium block mb-4">Target MCP Server</label>
             <Select value={targetServerName ?? undefined} onValueChange={onTargetServerChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a server..." />
@@ -77,15 +77,6 @@ export function CompanionWizard({
               </SelectContent>
             </Select>
           </div>
-
-          {targetServerName && (
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                This will create a new companion server named <strong>{targetServerName}-ui</strong> that provides visual interfaces for {targetServerName} tools.
-              </AlertDescription>
-            </Alert>
-          )}
         </CardContent>
       </Card>
 
