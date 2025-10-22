@@ -152,19 +152,6 @@ export function ConfigureTab() {
           onToolToggle={toggleToolSelection}
         />
 
-        {/* Next Button - Show only when tools selected and on step 1 */}
-        {selectedTools.length > 0 && currentStep === 1 && (
-          <div className="flex justify-end">
-            <Button
-              onClick={() => setCurrentStep(2)}
-              className="gap-2"
-            >
-              Next: Configure Resource
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-
         {/* Resource Configuration Card - Only show on step 2 */}
         {currentStep === 2 && (
         <Card className="border-primary/30">
