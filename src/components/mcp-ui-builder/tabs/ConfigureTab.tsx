@@ -40,7 +40,6 @@ export function ConfigureTab() {
   } = useUIBuilderStore();
   const [mcpServers, setMcpServers] = useState<MCPServer[]>([]);
   const [serverFetchError, setServerFetchError] = useState<string | null>(null);
-  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
 
   // Fetch MCP servers on mount
   useEffect(() => {
@@ -142,153 +141,19 @@ export function ConfigureTab() {
           </Alert>
         )}
 
-        {/* Companion Wizard - 3-Step Workflow */}
+        {/* Companion Wizard - 4-Step Workflow */}
         <CompanionWizard
           targetServerName={targetServerName}
           availableTools={availableTools}
           selectedTools={selectedTools}
           enabledServers={enabledServers}
+          currentResource={currentResource}
           onTargetServerChange={handleTargetServerChange}
           onToolToggle={toggleToolSelection}
+          updateResource={updateResource}
+          handleContentTypeChange={handleContentTypeChange}
+          setActiveTab={setActiveTab}
         />
-
-        {/* Resource Configuration Card - Only show on step 2 */}
-        {currentStep === 2 && (
-        <Card className="border-primary/30">
-          <CardHeader>
-            <CardTitle>Resource Configuration</CardTitle>
-            <CardDescription>
-              Configure the UI resource for your companion server
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Resource URI */}
-            <div className="space-y-2">
-              <Label htmlFor="uri" className="text-sm font-medium">
-                Resource URI <abbr title="required" className="text-destructive ml-0.5 no-underline" aria-label="required">*</abbr>
-              </Label>
-              <Input
-                id="uri"
-                value={currentResource.uri}
-                onChange={(e) => updateResource({ uri: e.target.value })}
-                placeholder="ui://myapp/dashboard"
-              />
-              {!currentResource.uri.startsWith('ui://') && currentResource.uri && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    URI must start with &quot;ui://&quot;
-                  </AlertDescription>
-                </Alert>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Format: ui://[server-name]/[resource-name]
-              </p>
-            </div>
-
-            {/* Content Type */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">
-                Content Type <abbr title="required" className="text-destructive ml-0.5 no-underline" aria-label="required">*</abbr>
-              </Label>
-              <RadioGroup value={currentResource.contentType} onValueChange={handleContentTypeChange}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="rawHtml" id="rawHtml" />
-                  <Label htmlFor="rawHtml" className="font-normal cursor-pointer">
-                    Raw HTML
-                  </Label>
-                </div>
-                <p className="text-sm text-muted-foreground ml-6 mb-2">
-                  Static HTML content rendered in an iframe
-                </p>
-
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="externalUrl" id="externalUrl" />
-                  <Label htmlFor="externalUrl" className="font-normal cursor-pointer">
-                    External URL
-                  </Label>
-                </div>
-                <p className="text-sm text-muted-foreground ml-6 mb-2">
-                  Embed an external website or web application
-                </p>
-
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="remoteDom" id="remoteDom" />
-                  <Label htmlFor="remoteDom" className="font-normal cursor-pointer">
-                    Remote DOM
-                  </Label>
-                </div>
-                <p className="text-sm text-muted-foreground ml-6">
-                  Server-generated UI using Shopify&apos;s Remote DOM framework
-                </p>
-              </RadioGroup>
-            </div>
-
-            {/* Remote DOM Framework (only when remoteDom is selected) */}
-            {currentResource.contentType === 'remoteDom' && (
-              <div className="pt-2 border-t">
-                <Label htmlFor="framework" className="block mb-4">Remote DOM Framework</Label>
-                <Select
-                  value={currentResource.remoteDomConfig?.framework || 'react'}
-                  onValueChange={(value: 'react' | 'webcomponents') => {
-                    updateResource({
-                      remoteDomConfig: {
-                        ...currentResource.remoteDomConfig,
-                        framework: value,
-                      },
-                    });
-                  }}
-                >
-                  <SelectTrigger id="framework">
-                    <SelectValue placeholder="Select framework" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="react">
-                      <div className="flex items-center gap-2">
-                        <Component className="h-4 w-4" />
-                        <span>React</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="webcomponents">
-                      <div className="flex items-center gap-2">
-                        <Puzzle className="h-4 w-4" />
-                        <span>Web Components</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  {currentResource.remoteDomConfig?.framework === 'react'
-                    ? 'Use React components via @remote-dom/core/client'
-                    : 'Use native Web Components with customElements API'}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        )}
-
-        {/* Navigation Buttons - Show on step 2 */}
-        {currentStep === 2 && (
-          <div className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={() => setCurrentStep(1)}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Tool Selection
-            </Button>
-            <Button
-              onClick={() => setActiveTab('design')}
-              disabled={!currentResource.uri.startsWith('ui://')}
-              className="gap-2"
-            >
-              Next: Design UI
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
       </div>
     </div>
   );

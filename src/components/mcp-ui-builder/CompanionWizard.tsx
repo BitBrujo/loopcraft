@@ -6,8 +6,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Info, CheckCircle2, ArrowRight } from 'lucide-react';
-import { ToolSchema } from '@/types/ui-builder';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Info, CheckCircle2, ArrowRight, AlertCircle, Component, Puzzle } from 'lucide-react';
+import { ToolSchema, UIResource, ContentType, TabId } from '@/types/ui-builder';
 import { CompanionFlowDiagram } from './CompanionFlowDiagram';
 
 interface MCPServer {
@@ -21,8 +24,12 @@ interface CompanionWizardProps {
   availableTools: ToolSchema[];
   selectedTools: string[];
   enabledServers: MCPServer[];
+  currentResource: UIResource;
   onTargetServerChange: (serverName: string) => void;
   onToolToggle: (toolName: string) => void;
+  updateResource: (updates: Partial<UIResource>) => void;
+  handleContentTypeChange: (type: ContentType) => void;
+  setActiveTab: (tab: TabId) => void;
 }
 
 export function CompanionWizard({
@@ -30,8 +37,12 @@ export function CompanionWizard({
   availableTools,
   selectedTools,
   enabledServers,
+  currentResource,
   onTargetServerChange,
   onToolToggle,
+  updateResource,
+  handleContentTypeChange,
+  setActiveTab,
 }: CompanionWizardProps) {
   const isStep1Complete = targetServerName !== '';
   const isStep2Complete = selectedTools.length > 0;
@@ -173,16 +184,137 @@ export function CompanionWizard({
           </CardContent>
         </Card>
 
-        {/* Next Button */}
+        {/* Step 4: Configure Resource */}
         {isStep2Complete && (
-          <div className="flex justify-center md:justify-end">
-            <Button
-              className="gap-2"
-            >
-              Next: Continue to Design
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
+          <Card className="border-primary/30">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 mt-0.5 border-2 border-primary text-primary bg-transparent">
+                  4
+                </span>
+                <CardTitle>Configure Resource</CardTitle>
+              </div>
+              <CardDescription>
+                Configure the UI resource for your companion server
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Resource URI */}
+              <div className="space-y-2">
+                <Label htmlFor="uri" className="text-sm font-medium">
+                  Resource URI <abbr title="required" className="text-destructive ml-0.5 no-underline" aria-label="required">*</abbr>
+                </Label>
+                <Input
+                  id="uri"
+                  value={currentResource.uri}
+                  onChange={(e) => updateResource({ uri: e.target.value })}
+                  placeholder="ui://myapp/dashboard"
+                />
+                {!currentResource.uri.startsWith('ui://') && currentResource.uri && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      URI must start with &quot;ui://&quot;
+                    </AlertDescription>
+                  </Alert>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Format: ui://[server-name]/[resource-name]
+                </p>
+              </div>
+
+              {/* Content Type */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Content Type <abbr title="required" className="text-destructive ml-0.5 no-underline" aria-label="required">*</abbr>
+                </Label>
+                <RadioGroup value={currentResource.contentType} onValueChange={handleContentTypeChange}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="rawHtml" id="rawHtml" />
+                    <Label htmlFor="rawHtml" className="font-normal cursor-pointer">
+                      Raw HTML
+                    </Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground ml-6 mb-2">
+                    Static HTML content rendered in an iframe
+                  </p>
+
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="externalUrl" id="externalUrl" />
+                    <Label htmlFor="externalUrl" className="font-normal cursor-pointer">
+                      External URL
+                    </Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground ml-6 mb-2">
+                    Embed an external website or web application
+                  </p>
+
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="remoteDom" id="remoteDom" />
+                    <Label htmlFor="remoteDom" className="font-normal cursor-pointer">
+                      Remote DOM
+                    </Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground ml-6">
+                    Server-generated UI using Shopify&apos;s Remote DOM framework
+                  </p>
+                </RadioGroup>
+              </div>
+
+              {/* Remote DOM Framework (only when remoteDom is selected) */}
+              {currentResource.contentType === 'remoteDom' && (
+                <div className="pt-2 border-t">
+                  <Label htmlFor="framework" className="block mb-4">Remote DOM Framework</Label>
+                  <Select
+                    value={currentResource.remoteDomConfig?.framework || 'react'}
+                    onValueChange={(value: 'react' | 'webcomponents') => {
+                      updateResource({
+                        remoteDomConfig: {
+                          ...currentResource.remoteDomConfig,
+                          framework: value,
+                        },
+                      });
+                    }}
+                  >
+                    <SelectTrigger id="framework">
+                      <SelectValue placeholder="Select framework" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="react">
+                        <div className="flex items-center gap-2">
+                          <Component className="h-4 w-4" />
+                          <span>React</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="webcomponents">
+                        <div className="flex items-center gap-2">
+                          <Puzzle className="h-4 w-4" />
+                          <span>Web Components</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {currentResource.remoteDomConfig?.framework === 'react'
+                      ? 'Use React components via @remote-dom/core/client'
+                      : 'Use native Web Components with customElements API'}
+                  </p>
+                </div>
+              )}
+
+              {/* Next Button - Inside Step 4 */}
+              <div className="flex justify-center md:justify-end pt-4">
+                <Button
+                  className="gap-2"
+                  onClick={() => setActiveTab('design')}
+                  disabled={!currentResource.uri.startsWith('ui://')}
+                >
+                  Next: Continue to Design
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>
