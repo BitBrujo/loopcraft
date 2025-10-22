@@ -143,7 +143,7 @@ export function CompanionWizard({
                 </AlertDescription>
               </Alert>
             ) : (
-              <div className="space-y-3 h-[24rem] overflow-y-auto">
+              <div className="space-y-3 h-[16rem] overflow-y-auto">
                 {availableTools.map((tool) => (
                   <div key={tool.name} className="flex items-start space-x-3 p-3 rounded-lg border">
                     <Checkbox
