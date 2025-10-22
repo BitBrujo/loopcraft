@@ -175,7 +175,7 @@ export function CompanionWizard({
       {/* Right Column: Step 3 */}
       <div className="flex flex-col gap-4 md:gap-6">
         {/* Step 3: Configure Resource */}
-        <Card className="border-primary/30 h-full" style={{ opacity: isStep2Complete ? 1 : 0.5 }}>
+        <Card className="border-primary/30 h-full" style={{ opacity: isStep2Complete ? 1 : 0.5, pointerEvents: isStep2Complete ? 'auto' : 'none' }}>
             <CardHeader>
               <div className="flex items-center gap-2">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 mt-0.5 border-2 border-primary text-primary bg-transparent">

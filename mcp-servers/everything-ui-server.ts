@@ -28,7 +28,10 @@ import { createUIResource } from '@mcp-ui/server';
 //
 // ⚙️  TOOL-TO-ACTION BINDINGS:
 //   This UI has 1 configured tool binding:
-//   1. getTinyImage → #primary-btn
+//   1. sampleLLM → #primary-btn
+//      Parameters (2):
+//        - prompt: static: "who is god?"
+//        - maxTokens: static: "100"
 //
 //   When UI renders, these actions will call tools from everything server
 //   Tool names will be prefixed: mcp_everything_toolname
@@ -43,7 +46,7 @@ const server = new FastMCP({
 // No dynamic placeholders - UI is static
 server.addTool({
   name: 'get_resource',
-  description: 'ui for image',
+  description: 'god question ui',
   parameters: z.object({}),
   execute: async (args) => {
     // Prepare content
@@ -52,38 +55,19 @@ server.addTool({
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>New UI Resource</title>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      padding: 2rem;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    h1 { color: #2563eb; }
-  </style>
-</head>
-<body>
-  <h1>Hello from MCP-UI!</h1>
-  <p>Edit this HTML to create your custom UI resource.</p>
-  <p>Use the <strong>Configure</strong> tab to set metadata and frame size.</p>
+  <title>UI Template</title>
 
-<button id="primary-btn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-  Click Me
-</button>
-
-
-<!-- Call getTinyImage tool from everything -->
+<!-- Call sampleLLM tool from everything -->
 <button
   id="primary-btn"
-  onclick="call_getTinyImage()"
+  onclick="call_sampleLLM()"
   class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
 >
   Click Me
 </button>
 
 <script>
-  function call_getTinyImage() {
+  function call_sampleLLM() {
     // Show loading indicator if response handler is present
     if (typeof showLoading === 'function') {
       showLoading();
@@ -92,12 +76,19 @@ server.addTool({
     window.parent.postMessage({
       type: 'tool',
       payload: {
-        toolName: 'mcp_everything_getTinyImage',
-        params: {}
+        toolName: 'mcp_everything_sampleLLM',
+        params: {
+          prompt: "who is god?",
+          maxTokens: "100",
+        }
       }
     }, '*');
   }
 </script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-8 max-w-4xl mx-auto">
 
 
 <!-- Tool Response Display Area -->
@@ -233,7 +224,7 @@ server.addTool({
 server.addResource({
   uri: 'ui://everything-ui/resource',
   name: 'New UI Resource',
-  description: 'ui for image',
+  description: 'god question ui',
   mimeType: 'text/html',
   load: async () => {
     // Prepare content
@@ -242,38 +233,19 @@ server.addResource({
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>New UI Resource</title>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      padding: 2rem;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    h1 { color: #2563eb; }
-  </style>
-</head>
-<body>
-  <h1>Hello from MCP-UI!</h1>
-  <p>Edit this HTML to create your custom UI resource.</p>
-  <p>Use the <strong>Configure</strong> tab to set metadata and frame size.</p>
+  <title>UI Template</title>
 
-<button id="primary-btn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-  Click Me
-</button>
-
-
-<!-- Call getTinyImage tool from everything -->
+<!-- Call sampleLLM tool from everything -->
 <button
   id="primary-btn"
-  onclick="call_getTinyImage()"
+  onclick="call_sampleLLM()"
   class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
 >
   Click Me
 </button>
 
 <script>
-  function call_getTinyImage() {
+  function call_sampleLLM() {
     // Show loading indicator if response handler is present
     if (typeof showLoading === 'function') {
       showLoading();
@@ -282,12 +254,19 @@ server.addResource({
     window.parent.postMessage({
       type: 'tool',
       payload: {
-        toolName: 'mcp_everything_getTinyImage',
-        params: {}
+        toolName: 'mcp_everything_sampleLLM',
+        params: {
+          prompt: "who is god?",
+          maxTokens: "100",
+        }
       }
     }, '*');
   }
 </script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-8 max-w-4xl mx-auto">
 
 
 <!-- Tool Response Display Area -->
@@ -438,8 +417,8 @@ function createUIResourceHelper(content: string, args: Record<string, unknown>) 
     encoding: 'text',
       metadata: {
         title: 'New UI Resource',
-        description: 'ui for image',
-        lastModified: '2025-10-21T02:58:36.080Z'
+        description: 'god question ui',
+        lastModified: '2025-10-22T02:48:06.966Z'
       },
       uiMetadata: {
         'preferred-frame-size': ['800px', '600px']
