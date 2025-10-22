@@ -15,19 +15,23 @@ export function CompanionFlowDiagram({ targetServerName }: CompanionFlowDiagramP
         <div className="flex flex-col gap-2">
           {/* Companion Server */}
           <div className="flex items-center gap-2">
-            <div className="w-20 h-12 md:w-24 md:h-14 bg-orange-100 dark:bg-orange-900/30 rounded-lg border-2 border-orange-500 flex flex-col items-center justify-center p-1.5 md:p-2 shadow-md">
+            <div className="w-28 h-12 md:w-36 md:h-14 bg-orange-100 dark:bg-orange-900/30 rounded-lg border-2 border-orange-500 flex flex-col items-center justify-center p-1.5 md:p-2 shadow-md">
               <Server className="h-3 w-3 md:h-4 md:w-4 text-orange-600 mb-0.5" />
               <span className="text-[8px] md:text-[10px] font-semibold text-center">{targetServerName}-ui</span>
             </div>
-            <span className="text-[8px] md:text-[10px] text-muted-foreground max-w-[60px] md:max-w-[80px]">UI Server</span>
+            <div className="bg-green-100 dark:bg-green-900/30 rounded border border-green-500 px-2 py-1">
+              <span className="text-[8px] md:text-[10px] font-medium text-green-700 dark:text-green-400">UI Server</span>
+            </div>
           </div>
           {/* Target Server */}
           <div className="flex items-center gap-2">
-            <div className="w-20 h-12 md:w-24 md:h-14 bg-orange-100 dark:bg-orange-900/30 rounded-lg border-2 border-orange-500 flex flex-col items-center justify-center p-1.5 md:p-2 shadow-md">
+            <div className="w-28 h-12 md:w-36 md:h-14 bg-orange-100 dark:bg-orange-900/30 rounded-lg border-2 border-orange-500 flex flex-col items-center justify-center p-1.5 md:p-2 shadow-md">
               <Server className="h-3 w-3 md:h-4 md:w-4 text-orange-600 mb-0.5" />
               <span className="text-[8px] md:text-[10px] font-semibold text-center">{targetServerName}</span>
             </div>
-            <span className="text-[8px] md:text-[10px] text-muted-foreground max-w-[60px] md:max-w-[80px]">Has Tools</span>
+            <div className="bg-green-100 dark:bg-green-900/30 rounded border border-green-500 px-2 py-1">
+              <span className="text-[8px] md:text-[10px] font-medium text-green-700 dark:text-green-400">Has Tools</span>
+            </div>
           </div>
         </div>
 
