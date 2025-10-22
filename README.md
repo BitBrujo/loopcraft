@@ -28,13 +28,9 @@ An application that integrates the Model Context Protocol (MCP) with an AI-power
   - Recommended for FastMCP format (lightweight, declarative)
 - **Auto-Deployment**
   - One-click deployment with 6-step automated process
-  - Real-time streaming progress updates via NDJSON
-  - Automatic rollback on failure to prevent orphaned resources
-  - Supports both Standalone and FastMCP formats
 - **Action Snippets Library**: 13 code snippets across 5 action types
   - Tool, Prompt, Link, Intent, Notify actions
   - "Insert at Cursor" functionality for Monaco editor
-  - Companion Tools category (when companion mode enabled)
 
 ### 🔄 MCP-UI Action Types
 
@@ -82,21 +78,7 @@ npm run mcp:hypermemory  # HyperMemory knowledge graph server
 - **Auth**: JWT with bcrypt password hashing
 - **State**: Zustand with persistence
 
-### Key Libraries
-- **Monaco Editor**: Code editing with syntax highlighting
-- **Lucide React**: Icon library
-- **Zod**: Schema validation
-- **React Hook Form**: Form management
-
 ## 📚 MCP Integration
-
-**Key Features:**
-- **FastMCP Format**: Lightweight, declarative server structure
-- **UI-Only Pattern**: Provides interactive help interface with prompt actions
-- **MCP-UI Integration**: Uses `@mcp-ui/server` for UI resource delivery
-- **Tools API Approach**: `get_ui` tool returns UI resources when called
-- **Interactive Components**: Help buttons using `window.parent.postMessage()`
-- **Stdio Transport**: Standard MCP client communication
 
 **Technology Stack:**
 - FastMCP with `@mcp-ui/server` integration
@@ -128,7 +110,6 @@ When you click "Auto-Deploy", LoopCraft performs these steps:
   - Web Components framework integration
   - Client-side hydration and state management
 - [ ] **Visual UI Editor**
-  - Drag-and-drop component builder
   - Component library with pre-built blocks
 
 ###  Phase 3: Advanced Features (Planned)
@@ -142,16 +123,11 @@ When you click "Auto-Deploy", LoopCraft performs these steps:
 - [ ] **Extended Capabilities**
   - Advanced debugging tools for MCP protocol
   - Webhook support for external integrations
-- [ ] **Developer Experience**
-  - Testing framework for MCP tools
 
 ###  Phase 4: Ecosystem (Future)
 
 - [ ] **Marketplace & Monetization**
   - Server marketplace with ratings
-  - Paid templates and servers
-  - Subscription management
-  - Developer revenue sharing
 - [ ] **Platform Extensions**
   - Third-party integrations (Zapier, n8n, etc.)
   - AI-powered template generation
