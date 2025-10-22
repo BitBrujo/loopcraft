@@ -31,9 +31,6 @@ An application that integrates the Model Context Protocol (MCP) with an AI-power
   - Real-time streaming progress updates via NDJSON
   - Automatic rollback on failure to prevent orphaned resources
   - Supports both Standalone and FastMCP formats
-- **HTML Template Library**: 13 ready-to-use templates
-  - Forms, Dashboards, Tables, Galleries, Charts
-  - Action Examples: AI Assistant Helper, Documentation Viewer, Navigation Panel, Status Notifier, Multi-Action Demo
 - **Action Snippets Library**: 13 code snippets across 5 action types
   - Tool, Prompt, Link, Intent, Notify actions
   - "Insert at Cursor" functionality for Monaco editor
