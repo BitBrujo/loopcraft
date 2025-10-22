@@ -45,12 +45,8 @@ export function CompanionWizard({
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 mt-0.5 ${
-                  isStep1Complete
-                    ? "border-2 border-green-500 text-green-600 bg-transparent"
-                    : "border-2 border-primary text-primary bg-transparent"
-                }`}>
-                  {isStep1Complete ? "✓" : "1"}
+                <span className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 mt-0.5 border-2 border-primary text-primary bg-transparent">
+                  1
                 </span>
                 <CardTitle>Which server will this UI companion?</CardTitle>
               </div>
@@ -92,12 +88,8 @@ export function CompanionWizard({
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 mt-0.5 ${
-                  isStep2Complete
-                    ? "border-2 border-green-500 text-green-600 bg-transparent"
-                    : "border-2 border-primary text-primary bg-transparent"
-                }`}>
-                  {isStep2Complete ? "✓" : "2"}
+                <span className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 mt-0.5 border-2 border-primary text-primary bg-transparent">
+                  2
                 </span>
                 <CardTitle>Which tools should be accessible from the UI?</CardTitle>
               </div>
