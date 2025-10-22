@@ -30,7 +30,7 @@ import { createUIResource } from '@mcp-ui/server';
 //   This UI has 1 configured tool binding:
 //   1. sampleLLM → #primary-btn
 //      Parameters (2):
-//        - prompt: static: "what is god"
+//        - prompt: static: "who is god?"
 //        - maxTokens: static: "500"
 //
 //   When UI renders, these actions will call tools from everything server
@@ -46,7 +46,7 @@ const server = new FastMCP({
 // No dynamic placeholders - UI is static
 server.addTool({
   name: 'get_resource',
-  description: 'god q ui',
+  description: 'A new MCP-UI resource',
   parameters: z.object({}),
   execute: async (args) => {
     // Prepare content
@@ -94,8 +94,8 @@ server.addTool({
       payload: {
         toolName: 'mcp_everything_sampleLLM',
         params: {
-          prompt: "what is god",
-          maxTokens: "500",
+          prompt: "who is god?",
+          maxTokens: 500,
         }
       }
     }, '*');
@@ -243,8 +243,8 @@ function createUIResourceHelper(content: string, args: Record<string, unknown>) 
     encoding: 'text',
       metadata: {
         title: 'New UI Resource',
-        description: 'god q ui',
-        lastModified: '2025-10-22T02:59:42.948Z'
+        description: 'A new MCP-UI resource',
+        lastModified: '2025-10-22T03:27:28.614Z'
       },
       uiMetadata: {
         'preferred-frame-size': ['800px', '600px']
