@@ -37,9 +37,9 @@ export function CompanionWizard({
   const isStep2Complete = selectedTools.length > 0;
 
   return (
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
       {/* Left Column: Steps 1 and 2 */}
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         {/* Step 1: Select Target Server */}
         <Card className={isStep1Complete ? 'border-orange-500/50' : ''}>
           <CardHeader>
@@ -147,7 +147,7 @@ export function CompanionWizard({
       </div>
 
       {/* Right Column: Step 3 */}
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         {/* Step 3: Understand the Pattern */}
         <Card style={{ opacity: isStep2Complete ? 1 : 0.5 }}>
           <CardHeader>
@@ -175,7 +175,7 @@ export function CompanionWizard({
 
         {/* Next Button */}
         {isStep2Complete && (
-          <div className="flex justify-end">
+          <div className="flex justify-center md:justify-end">
             <Button
               className="gap-2"
             >
