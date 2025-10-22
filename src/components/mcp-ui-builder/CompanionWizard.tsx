@@ -48,9 +48,24 @@ export function CompanionWizard({
   const isStep2Complete = selectedTools.length > 0;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-      {/* Left Column: Steps 1 and 2 */}
-      <div className="space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6">
+      {/* Flow Diagram - Always Visible at Top */}
+      <Card>
+        <CardHeader>
+          <CardTitle>How the Companion Pattern Works</CardTitle>
+          <CardDescription>
+            Understanding the architecture of portable companion servers
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <CompanionFlowDiagram targetServerName={targetServerName} />
+        </CardContent>
+      </Card>
+
+      {/* 2-Column Grid: Steps 1, 2, 3 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:items-start">
+        {/* Left Column: Steps 1 and 2 */}
+        <div className="flex flex-col gap-4 md:gap-6">
         {/* Step 1: Select Target Server */}
         <Card className={isStep1Complete ? 'border-orange-500/50' : ''}>
           <CardHeader>
@@ -128,7 +143,7 @@ export function CompanionWizard({
                 </AlertDescription>
               </Alert>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-96 overflow-y-auto">
                 {availableTools.map((tool) => (
                   <div key={tool.name} className="flex items-start space-x-3 p-3 rounded-lg border">
                     <Checkbox
@@ -158,39 +173,14 @@ export function CompanionWizard({
       </div>
 
       {/* Right Column: Step 3 */}
-      <div className="space-y-4 md:space-y-6">
-        {/* Step 3: Understand the Pattern */}
-        <Card style={{ opacity: isStep2Complete ? 1 : 0.5 }}>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 mt-0.5 border-2 border-primary text-primary bg-transparent">
-                3
-              </span>
-              <CardTitle>How the Companion Pattern Works</CardTitle>
-            </div>
-            <CardDescription>
-              Understanding the architecture of portable companion servers
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {!isStep2Complete ? (
-              <p className="text-sm text-muted-foreground">Select tools first</p>
-            ) : (
-              <>
-                {/* Visual Diagram */}
-                <CompanionFlowDiagram targetServerName={targetServerName} />
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Step 4: Configure Resource */}
+      <div className="flex flex-col gap-4 md:gap-6">
+        {/* Step 3: Configure Resource */}
         {isStep2Complete && (
           <Card className="border-primary/30">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 mt-0.5 border-2 border-primary text-primary bg-transparent">
-                  4
+                  3
                 </span>
                 <CardTitle>Configure Resource</CardTitle>
               </div>
@@ -316,6 +306,7 @@ export function CompanionWizard({
             </CardContent>
           </Card>
         )}
+      </div>
       </div>
     </div>
   );
