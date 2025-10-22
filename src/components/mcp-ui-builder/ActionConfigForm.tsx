@@ -157,8 +157,8 @@ export function ActionConfigForm({ snippet, onInsert }: ActionConfigFormProps) {
               className="text-sm"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="notify-level" className="text-xs font-medium">
+          <div>
+            <Label htmlFor="notify-level" className="text-xs font-medium block mb-4">
               Level
             </Label>
             <Select value={notifyLevel} onValueChange={(value) => setNotifyLevel(value as 'default' | 'success' | 'error' | 'warning')}>

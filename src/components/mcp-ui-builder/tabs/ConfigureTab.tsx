@@ -239,8 +239,8 @@ export function ConfigureTab() {
 
             {/* Remote DOM Framework (only when remoteDom is selected) */}
             {currentResource.contentType === 'remoteDom' && (
-              <div className="space-y-2 pt-2 border-t">
-                <Label htmlFor="framework">Remote DOM Framework</Label>
+              <div className="pt-2 border-t">
+                <Label htmlFor="framework" className="block mb-4">Remote DOM Framework</Label>
                 <Select
                   value={currentResource.remoteDomConfig?.framework || 'react'}
                   onValueChange={(value: 'react' | 'webcomponents') => {

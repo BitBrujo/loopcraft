@@ -749,8 +749,8 @@ export function DesignTab() {
               <CollapsibleContent>
                 <div className="p-2 space-y-4">
                   {/* Size Preset */}
-                  <div className="space-y-2">
-                    <Label htmlFor="sizePreset">Preferred Frame Size</Label>
+                  <div>
+                    <Label htmlFor="sizePreset" className="block mb-4">Preferred Frame Size</Label>
                     <Select value={sizePreset} onValueChange={handleSizePresetChange}>
                       <SelectTrigger id="sizePreset">
                         <SelectValue placeholder="Choose a size preset" />
@@ -806,8 +806,8 @@ export function DesignTab() {
                   {currentResource.contentType !== 'remoteDom' && (
                     <>
                       <Separator className="my-4" />
-                      <div className="space-y-2">
-                        <Label htmlFor="autoResize">Auto-Resize After Load</Label>
+                      <div>
+                        <Label htmlFor="autoResize" className="block mb-4">Auto-Resize After Load</Label>
                         <Select
                           value={
                             typeof currentResource.uiMetadata?.['auto-resize-iframe'] === 'boolean'
@@ -874,8 +874,8 @@ export function DesignTab() {
 
                   {/* Sandbox Permissions */}
                   {currentResource.contentType !== 'remoteDom' && (
-                    <div className="space-y-2">
-                      <Label htmlFor="sandboxPermissions">Sandbox Permissions</Label>
+                    <div>
+                      <Label htmlFor="sandboxPermissions" className="block mb-4">Sandbox Permissions</Label>
                       <Select
                         value={
                           currentResource.uiMetadata?.['sandbox-permissions'] === 'allow-scripts' ? 'strict' :
