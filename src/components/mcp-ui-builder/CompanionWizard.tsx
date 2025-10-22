@@ -63,7 +63,7 @@ export function CompanionWizard({
       </Card>
 
       {/* 2-Column Grid: Steps 1, 2, 3 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:items-stretch">
         {/* Left Column: Steps 1 and 2 */}
         <div className="flex flex-col gap-4 md:gap-6">
         {/* Step 1: Select Target Server */}
@@ -110,7 +110,7 @@ export function CompanionWizard({
         </Card>
 
         {/* Step 2: Select Tools */}
-        <Card className={isStep2Complete ? 'border-orange-500/50' : ''} style={{ opacity: isStep1Complete ? 1 : 0.5 }}>
+        <Card className={`flex-1 ${isStep2Complete ? 'border-orange-500/50' : ''}`} style={{ opacity: isStep1Complete ? 1 : 0.5 }}>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -143,7 +143,7 @@ export function CompanionWizard({
                 </AlertDescription>
               </Alert>
             ) : (
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div className="space-y-3 h-[24rem] overflow-y-auto">
                 {availableTools.map((tool) => (
                   <div key={tool.name} className="flex items-start space-x-3 p-3 rounded-lg border">
                     <Checkbox
@@ -176,7 +176,7 @@ export function CompanionWizard({
       <div className="flex flex-col gap-4 md:gap-6">
         {/* Step 3: Configure Resource */}
         {isStep2Complete && (
-          <Card className="border-primary/30">
+          <Card className="border-primary/30 h-full">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 mt-0.5 border-2 border-primary text-primary bg-transparent">
