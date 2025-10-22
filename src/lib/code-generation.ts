@@ -65,6 +65,36 @@ function getDefaultMimeType(contentType: ContentType): string {
 }
 
 /**
+ * Convert a string value to the appropriate JavaScript literal
+ * Detects the type and generates correct JavaScript code
+ *
+ * Examples:
+ * - "500" → 500 (number)
+ * - "3.14" → 3.14 (number)
+ * - "true" → true (boolean)
+ * - "false" → false (boolean)
+ * - "null" → null (null literal)
+ * - "hello" → "hello" (string with quotes)
+ */
+function toJavaScriptLiteral(value: string): string {
+  // Try to parse as number
+  const asNumber = Number(value);
+  if (!isNaN(asNumber) && value.trim() !== '') {
+    return String(asNumber);
+  }
+
+  // Try to parse as boolean
+  if (value === 'true') return 'true';
+  if (value === 'false') return 'false';
+
+  // Try to parse as null
+  if (value === 'null') return 'null';
+
+  // Default to string (with quotes)
+  return JSON.stringify(value);
+}
+
+/**
  * Generate HTML + JavaScript code from a tool binding
  * Creates ready-to-insert code for mapped tool actions
  */
@@ -80,7 +110,8 @@ export function generateBindingCode(
   const paramExtraction: string[] = [];
   Object.entries(parameterMappings).forEach(([paramName, mapping]) => {
     if (mapping.source === 'static') {
-      paramExtraction.push(`          ${paramName}: ${JSON.stringify(mapping.value)},`);
+      // Use smart type conversion for static values
+      paramExtraction.push(`          ${paramName}: ${toJavaScriptLiteral(mapping.value)},`);
     } else if (mapping.source === 'form') {
       // Form field - get value from element
       paramExtraction.push(`          ${paramName}: document.getElementById('${mapping.value}')?.value || '',`);
