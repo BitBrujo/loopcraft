@@ -1,24 +1,31 @@
 'use client';
 
-import { useState } from 'react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { getPattern } from '@/lib/composition-patterns';
-import { Settings, FileText, Palette, Wrench, ChevronDown, ChevronRight } from 'lucide-react';
+import { Settings, CheckCircle2 } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export function ConfigPanel() {
   const { composition, currentResource, updateResource } = useUIBuilderStore();
   const pattern = composition.selectedPattern ? getPattern(composition.selectedPattern) : null;
 
-  const [metadataExpanded, setMetadataExpanded] = useState(true);
-  const [uiMetadataExpanded, setUiMetadataExpanded] = useState(true);
-  const [rendererExpanded, setRendererExpanded] = useState(false);
-
   // If no pattern selected, show placeholder
   if (!pattern) {
     return (
-      <div className="h-full flex items-center justify-center bg-gray-50 p-6">
-        <div className="text-center text-gray-500">
-          <Settings className="h-10 w-10 mx-auto mb-2 text-gray-400" />
+      <div className="h-full flex items-center justify-center p-6">
+        <div className="text-center text-muted-foreground">
+          <Settings className="h-10 w-10 mx-auto mb-2" />
           <div className="font-medium">Configuration Options</div>
           <div className="text-sm mt-1">
             Select a pattern in the left panel to configure additional options.
@@ -28,197 +35,212 @@ export function ConfigPanel() {
     );
   }
 
+  // Check which steps are complete
+  const isStep1Complete = currentResource?.uri && currentResource.uri.startsWith('ui://');
+  const isStep2Complete = currentResource?.metadata?.title && currentResource.metadata.title.length > 0;
+  const isStep3Complete = true; // Renderer options are optional
+
   return (
-    <div className="h-full overflow-y-auto bg-gray-50 p-6 space-y-4">
-      <div className="flex items-center gap-2 mb-4">
-        <Settings className="h-6 w-6 text-gray-600" />
-        <h2 className="text-xl font-semibold text-gray-900">Configuration Options</h2>
+    <div className="h-full overflow-y-auto p-6 space-y-4 md:space-y-6">
+      <div className="flex items-center gap-2 mb-2">
+        <Settings className="h-5 w-5 text-primary" />
+        <h2 className="text-lg font-semibold">Configuration Options</h2>
       </div>
 
-      {/* Resource Metadata */}
-      <div className="border border-gray-200 rounded-lg bg-white">
-        <button
-          onClick={() => setMetadataExpanded(!metadataExpanded)}
-          className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-        >
-          <span className="font-medium text-gray-900 flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Resource Metadata
-          </span>
-          {metadataExpanded ? <ChevronDown className="h-4 w-4 text-gray-400" /> : <ChevronRight className="h-4 w-4 text-gray-400" />}
-        </button>
-
-        {metadataExpanded && (
-          <div className="p-4 pt-0 space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Resource URI
-              </label>
-              <input
-                type="text"
-                value={currentResource?.uri || 'ui://server/interactive-pattern'}
-                onChange={(e) => updateResource({ uri: e.target.value })}
-                placeholder="ui://server/resource-name"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Auto-filled based on pattern name
-              </p>
+      {/* Step 1: Resource Metadata */}
+      <Card className={isStep1Complete ? 'border-orange-500/50' : ''}>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 border-2 border-primary text-primary bg-transparent">
+                1
+              </span>
+              <CardTitle className="text-base">Resource Metadata</CardTitle>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Title
-              </label>
-              <input
-                type="text"
-                value={currentResource?.metadata?.title || pattern.name}
-                onChange={(e) => updateResource({
-                  metadata: { ...currentResource?.metadata, title: e.target.value }
-                })}
-                placeholder="Resource title"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <textarea
-                value={currentResource?.metadata?.description || pattern.description}
-                onChange={(e) => updateResource({
-                  metadata: { ...currentResource?.metadata, description: e.target.value }
-                })}
-                placeholder="Resource description"
-                rows={3}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              />
-            </div>
+            {isStep1Complete && (
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+            )}
           </div>
-        )}
-      </div>
-
-      {/* UI Metadata */}
-      <div className="border border-gray-200 rounded-lg bg-white">
-        <button
-          onClick={() => setUiMetadataExpanded(!uiMetadataExpanded)}
-          className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-        >
-          <span className="font-medium text-gray-900 flex items-center gap-2">
-            <Palette className="h-4 w-4" />
-            UI Metadata
-          </span>
-          {uiMetadataExpanded ? <ChevronDown className="h-4 w-4 text-gray-400" /> : <ChevronRight className="h-4 w-4 text-gray-400" />}
-        </button>
-
-        {uiMetadataExpanded && (
-          <div className="p-4 pt-0 space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Preferred Frame Size
-              </label>
-              <select
-                value={getFrameSizePreset()}
-                onChange={(e) => handleFrameSizeChange(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              >
-                <option value="small">Small (600×400)</option>
-                <option value="medium">Medium (800×600)</option>
-                <option value="large">Large (1000×800)</option>
-                <option value="full">Full Width (100%×600)</option>
-                <option value="custom">Custom</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Auto-Resize
-              </label>
-              <select
-                value={getAutoResizeValue()}
-                onChange={(e) => handleAutoResizeChange(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              >
-                <option value="disabled">Disabled</option>
-                <option value="both">Both Dimensions</option>
-                <option value="width">Width Only</option>
-                <option value="height">Height Only</option>
-              </select>
-            </div>
+          <CardDescription>
+            Basic information about your UI resource
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="uri" className="text-sm font-medium">
+              Resource URI <abbr title="required" className="text-destructive ml-0.5 no-underline" aria-label="required">*</abbr>
+            </Label>
+            <Input
+              id="uri"
+              value={currentResource?.uri || 'ui://server/interactive-pattern'}
+              onChange={(e) => updateResource({ uri: e.target.value })}
+              placeholder="ui://server/resource-name"
+            />
+            <p className="text-xs text-muted-foreground">
+              Auto-filled based on pattern name
+            </p>
           </div>
-        )}
-      </div>
 
-      {/* Renderer Options */}
-      <div className="border border-gray-200 rounded-lg bg-white">
-        <button
-          onClick={() => setRendererExpanded(!rendererExpanded)}
-          className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-        >
-          <span className="font-medium text-gray-900 flex items-center gap-2">
-            <Wrench className="h-4 w-4" />
-            Renderer Options
-          </span>
-          {rendererExpanded ? <ChevronDown className="h-4 w-4 text-gray-400" /> : <ChevronRight className="h-4 w-4 text-gray-400" />}
-        </button>
-
-        {rendererExpanded && (
-          <div className="p-4 pt-0 space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sandbox Permissions
-              </label>
-              <select
-                value={getSandboxPermissions()}
-                onChange={(e) => handleSandboxChange(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              >
-                <option value="standard">Standard (Recommended)</option>
-                <option value="strict">Strict (No Scripts)</option>
-                <option value="permissive">Permissive (All Features)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Iframe Title (Accessibility)
-              </label>
-              <input
-                type="text"
-                value={getIframeTitle()}
-                onChange={(e) => handleIframeTitleChange(e.target.value)}
-                placeholder="Interactive UI"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Minimum Height
-              </label>
-              <input
-                type="text"
-                value={getMinHeight()}
-                onChange={(e) => handleMinHeightChange(e.target.value)}
-                placeholder="400px"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="title" className="text-sm font-medium">
+              Title
+            </Label>
+            <Input
+              id="title"
+              value={currentResource?.metadata?.title || pattern.name}
+              onChange={(e) => updateResource({
+                metadata: { ...currentResource?.metadata, title: e.target.value }
+              })}
+              placeholder="Resource title"
+            />
           </div>
-        )}
-      </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description" className="text-sm font-medium">
+              Description
+            </Label>
+            <Textarea
+              id="description"
+              value={currentResource?.metadata?.description || pattern.description}
+              onChange={(e) => updateResource({
+                metadata: { ...currentResource?.metadata, description: e.target.value }
+              })}
+              placeholder="Resource description"
+              rows={3}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Step 2: UI Metadata */}
+      <Card className={isStep2Complete ? 'border-orange-500/50' : ''}>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 border-2 border-primary text-primary bg-transparent">
+                2
+              </span>
+              <CardTitle className="text-base">UI Metadata</CardTitle>
+            </div>
+            {isStep2Complete && (
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+            )}
+          </div>
+          <CardDescription>
+            Display and sizing preferences for the UI
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="frameSize" className="text-sm font-medium">
+              Preferred Frame Size
+            </Label>
+            <Select value={getFrameSizePreset()} onValueChange={handleFrameSizeChange}>
+              <SelectTrigger id="frameSize">
+                <SelectValue placeholder="Select frame size" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="small">Small (600×400)</SelectItem>
+                <SelectItem value="medium">Medium (800×600)</SelectItem>
+                <SelectItem value="large">Large (1000×800)</SelectItem>
+                <SelectItem value="full">Full Width (100%×600)</SelectItem>
+                <SelectItem value="custom">Custom</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="autoResize" className="text-sm font-medium">
+              Auto-Resize
+            </Label>
+            <Select value={getAutoResizeValue()} onValueChange={handleAutoResizeChange}>
+              <SelectTrigger id="autoResize">
+                <SelectValue placeholder="Select auto-resize behavior" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="disabled">Disabled</SelectItem>
+                <SelectItem value="both">Both Dimensions</SelectItem>
+                <SelectItem value="width">Width Only</SelectItem>
+                <SelectItem value="height">Height Only</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Step 3: Renderer Options */}
+      <Card className={isStep3Complete ? 'border-orange-500/50' : ''}>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 border-2 border-primary text-primary bg-transparent">
+                3
+              </span>
+              <CardTitle className="text-base">Renderer Options</CardTitle>
+            </div>
+            {isStep3Complete && (
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+            )}
+          </div>
+          <CardDescription>
+            Configure iframe rendering behavior and security
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="sandboxPermissions" className="text-sm font-medium">
+              Sandbox Permissions
+            </Label>
+            <Select value={getSandboxPermissions()} onValueChange={handleSandboxChange}>
+              <SelectTrigger id="sandboxPermissions">
+                <SelectValue placeholder="Select security level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="standard">Standard (Recommended)</SelectItem>
+                <SelectItem value="strict">Strict (No Scripts)</SelectItem>
+                <SelectItem value="permissive">Permissive (All Features)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="iframeTitle" className="text-sm font-medium">
+              Iframe Title (Accessibility)
+            </Label>
+            <Input
+              id="iframeTitle"
+              value={getIframeTitle()}
+              onChange={(e) => handleIframeTitleChange(e.target.value)}
+              placeholder="Interactive UI"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="minHeight" className="text-sm font-medium">
+              Minimum Height
+            </Label>
+            <Input
+              id="minHeight"
+              value={getMinHeight()}
+              onChange={(e) => handleMinHeightChange(e.target.value)}
+              placeholder="400px"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Pattern Info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900">
         <div className="flex items-start gap-2">
-          <span className="text-blue-600 text-xl">{pattern.icon}</span>
-          <div>
-            <div className="font-medium text-blue-900">{pattern.name}</div>
-            <div className="text-sm text-blue-800 mt-1">{pattern.description}</div>
+          <span className="text-2xl">{pattern.icon}</span>
+          <div className="flex-1">
+            <div className="font-medium text-blue-900 dark:text-blue-100">{pattern.name}</div>
+            <AlertDescription className="text-sm text-blue-800 dark:text-blue-300 mt-1">
+              {pattern.description}
+            </AlertDescription>
           </div>
         </div>
-      </div>
+      </Alert>
     </div>
   );
 
