@@ -32,7 +32,7 @@ const tabs: Array<{ id: TabId; label: string; description: string }> = [
         description: "Choose target server and tools",
     },
     { id: "design", label: "Design UI", description: "Create your UI content" },
-    { id: "export", label: "Deploy Companion", description: "Deploy portable server" },
+    { id: "export", label: "Export", description: "Deploy portable server" },
 ];
 
 export function BuilderLayout() {

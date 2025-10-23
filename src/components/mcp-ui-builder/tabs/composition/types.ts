@@ -7,7 +7,6 @@ export type PatternType =
   | 'button-tool-call'
   | 'form-tool-call'
   | 'search-filter'
-  | 'multi-step'
   | 'ai-helper'
   | 'link-tool-call';
 

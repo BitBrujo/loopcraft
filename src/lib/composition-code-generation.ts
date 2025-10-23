@@ -43,6 +43,11 @@ export function generateMultiPatternCode(patterns: PatternInstance[]): string {
   const patternsHTML = completePatterns
     .map((p, index) => {
       const patternMeta = getPattern(p.selectedPattern!);
+      // Skip invalid patterns (e.g., legacy 'multi-step' that no longer exists)
+      if (!patternMeta) {
+        console.warn(`Skipping invalid pattern: ${p.selectedPattern}`);
+        return '';
+      }
       const elementHTML = generateElementHTML(p.elementConfig!, patternMeta.elementType);
       const handlerHTML = generateHandlerContainerHTML(p.handlerConfig!);
       return `
@@ -139,6 +144,11 @@ export function generatePatternCode(
   handlerConfig: HandlerConfig
 ): string {
   const patternMeta = getPattern(pattern);
+
+  // Return error message if pattern is invalid (e.g., legacy 'multi-step')
+  if (!patternMeta) {
+    return `<!-- ERROR: Invalid pattern type "${pattern}". Please select a valid pattern. -->`;
+  }
 
   const htmlCode = generateElementHTML(elementConfig, patternMeta.elementType);
   const handlerContainerHTML = generateHandlerContainerHTML(handlerConfig);

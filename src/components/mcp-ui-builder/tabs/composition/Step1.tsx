@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Target, Check, CheckSquare, FileEdit, AlertTriangle, MousePointer, Search, Workflow, Bot, Link2, ArrowRight } from 'lucide-react';
+import { Target, Check, CheckSquare, FileEdit, MousePointer, Search, Workflow, Bot, Link2, ArrowRight } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { getAllPatterns } from '@/lib/composition-patterns';
 import { validateStep1 } from '@/lib/composition-validation';
@@ -12,7 +12,6 @@ const PATTERN_ICONS: Record<string, React.ComponentType<{ className?: string }>>
   'button-tool-call': MousePointer,
   'form-tool-call': FileEdit,
   'search-filter': Search,
-  'multi-step': Workflow,
   'ai-helper': Bot,
   'link-tool-call': Link2,
 };
@@ -90,14 +89,6 @@ export function Step1() {
           ))}
         </div>
       </div>
-
-      {/* Validation Error */}
-      {!currentPattern?.isValid.step1 && currentPattern?.selectedPattern === null && (
-        <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 rounded-lg p-3 text-sm text-yellow-800 dark:text-yellow-300 flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4" />
-          <span>Please select a pattern type to continue</span>
-        </div>
-      )}
 
       {/* Navigation */}
       <div className="flex justify-end pt-4 border-t">

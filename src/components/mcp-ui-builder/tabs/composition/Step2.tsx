@@ -93,14 +93,6 @@ export function Step2() {
         <LinkConfig config={config} setConfig={setConfig} />
       )}
 
-      {/* Validation Status */}
-      {currentPattern?.isValid.step2 && (
-        <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg p-3 text-sm text-green-800 dark:text-green-300 flex items-center gap-2">
-          <Check className="h-5 w-5" />
-          <span>Element configuration valid</span>
-        </div>
-      )}
-
       {/* Navigation */}
       <div className="flex justify-between pt-4 border-t">
         <button

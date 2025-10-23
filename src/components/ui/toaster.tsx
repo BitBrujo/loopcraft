@@ -17,6 +17,7 @@ export function Toaster() {
             message={toast.message}
             variant={toast.variant}
             duration={toast.duration}
+            actions={toast.actions}
             onDismiss={dismiss}
           />
         )
@@ -30,10 +31,11 @@ interface ToastItemProps {
   message: string
   variant?: "default" | "success" | "error" | "warning"
   duration?: number
+  actions?: Array<{ label: string; onClick: () => void }>
   onDismiss: (id: string) => void
 }
 
-function ToastItem({ id, message, variant, duration, onDismiss }: ToastItemProps) {
+function ToastItem({ id, message, variant, duration, actions, onDismiss }: ToastItemProps) {
   useEffect(() => {
     if (duration) {
       const timer = setTimeout(() => {
@@ -48,6 +50,7 @@ function ToastItem({ id, message, variant, duration, onDismiss }: ToastItemProps
     <Toast
       variant={variant}
       onClose={() => onDismiss(id)}
+      actions={actions}
       className="mb-2"
     >
       {message}

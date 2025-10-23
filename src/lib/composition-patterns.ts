@@ -42,17 +42,6 @@ export const PATTERNS: Record<PatternType, Pattern> = {
     icon: '🔍',
   },
 
-  'multi-step': {
-    id: 'multi-step',
-    name: 'Multi-Step Workflow',
-    description: 'A sequence of actions where the output of one tool feeds into the next. Supports tool chaining.',
-    requiredSteps: ['element', 'action', 'handler'],
-    elementType: 'button',
-    actionType: 'tool',
-    handlerTypes: ['response', 'both'], // Must handle response for chaining
-    icon: '🔗',
-  },
-
   'ai-helper': {
     id: 'ai-helper',
     name: 'AI Helper Button',

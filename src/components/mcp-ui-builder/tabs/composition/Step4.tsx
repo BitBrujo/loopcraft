@@ -1,11 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Package, Check, Link2, ArrowRight, Plus } from 'lucide-react';
+import { Package, Check, Link2, ArrowRight, Plus, CheckCircle2, Code2, Upload } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { getPattern } from '@/lib/composition-patterns';
 import { validateStep4 } from '@/lib/composition-validation';
 import { generatePatternCode } from '@/lib/composition-code-generation';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import type { HandlerConfig, HandlerType, NotificationVariant } from './types';
 
 export function Step4() {
@@ -16,6 +23,7 @@ export function Step4() {
     updateCompositionValidity,
     setGeneratedCode,
     setActiveTab,
+    setActiveDesignTab,
     addNewPattern,
   } = useUIBuilderStore();
 
@@ -31,6 +39,8 @@ export function Step4() {
       supportAllContentTypes: true,
     }
   );
+
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   // Sync with store
   useEffect(() => {
@@ -63,13 +73,15 @@ export function Step4() {
     );
 
     setGeneratedCode(code);
-    // Switch to Code tab in CompositionTab
-    // This will be handled by parent component
+    setShowSuccessDialog(true);
   };
 
   const handleAddPattern = () => {
     addNewPattern();
   };
+
+  // Check if code has been generated
+  const hasGeneratedCode = composition.generatedCode !== null;
 
   if (!pattern) {
     return (
@@ -169,8 +181,9 @@ export function Step4() {
         </div>
       )}
 
-      {/* Multi-Step Workflow (Tool Chaining) */}
-      {pattern.id === 'multi-step' && (
+      {/* Tool Chaining (Available for all tool actions with response handlers) */}
+      {currentPattern?.actionConfig?.actionType === 'tool' &&
+       (config.handlerType === 'response' || config.handlerType === 'both') && (
         <div className="border border-orange-200 rounded-lg p-4 space-y-4 bg-orange-50 dark:bg-orange-950/20">
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-orange-900 flex items-center gap-2">
@@ -191,21 +204,13 @@ export function Step4() {
           {config.enableChaining && (
             <div className="bg-card border border-orange-300 rounded p-3">
               <p className="text-sm text-orange-800 mb-2">
-                Tool chaining allows the output of this tool to feed into the next tool automatically.
+                Tool chaining allows you to create multi-step workflows where the output of one tool feeds into the next.
               </p>
               <p className="text-xs text-orange-700">
-                Configure the next tool in the chain after generating the code.
+                After generating this pattern, use the "Chain Another Tool" button to add the next step in your workflow.
               </p>
             </div>
           )}
-        </div>
-      )}
-
-      {/* Validation Status */}
-      {currentPattern?.isValid.step4 && (
-        <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg p-3 text-sm text-green-800 dark:text-green-300 flex items-center gap-2">
-          <Check className="h-5 w-5" />
-          <span>Handler configuration complete</span>
         </div>
       )}
 
@@ -235,11 +240,76 @@ export function Step4() {
             disabled={!currentPattern?.isValid.step4}
             className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 gap-2"
           >
-            Generate Pattern Code
+            {hasGeneratedCode ? 'Regenerate Code' : 'Generate Pattern Code'}
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>
       </div>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <CheckCircle2 className="h-6 w-6 text-primary" />
+              </div>
+              <DialogTitle className="text-xl">Code Generated Successfully!</DialogTitle>
+            </div>
+            <DialogDescription>
+              Your pattern code has been generated. What would you like to do next?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className={config.enableChaining ? "grid grid-cols-2 gap-3 mt-4" : "flex flex-col gap-3 mt-4"}>
+            <button
+              onClick={() => {
+                setShowSuccessDialog(false);
+                addNewPattern();
+              }}
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 has-[>svg]:px-3 gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Create Another Element
+            </button>
+
+            {config.enableChaining && (
+              <button
+                onClick={() => {
+                  setShowSuccessDialog(false);
+                  setConfig({ ...config, enableChaining: true });
+                }}
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border border-primary text-primary hover:bg-primary/10 h-10 px-4 py-2 has-[>svg]:px-3 gap-2"
+              >
+                <Link2 className="h-4 w-4" />
+                Chain Another Tool
+              </button>
+            )}
+
+            <button
+              onClick={() => {
+                setShowSuccessDialog(false);
+                setActiveDesignTab('code');
+              }}
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 has-[>svg]:px-3 gap-2"
+            >
+              <Code2 className="h-4 w-4" />
+              View Code
+            </button>
+
+            <button
+              onClick={() => {
+                setShowSuccessDialog(false);
+                setActiveTab('export');
+              }}
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 has-[>svg]:px-3 gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Go to Export Tab
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

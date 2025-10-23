@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Select,
   SelectContent,
@@ -322,19 +321,6 @@ export function ConfigPanel() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Pattern Info */}
-      <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900">
-        <div className="flex items-start gap-2">
-          <span className="text-2xl">{pattern.icon}</span>
-          <div className="flex-1">
-            <div className="font-medium text-blue-900 dark:text-blue-100">{pattern.name}</div>
-            <AlertDescription className="text-sm text-blue-800 dark:text-blue-300 mt-1">
-              {pattern.description}
-            </AlertDescription>
-          </div>
-        </div>
-      </Alert>
     </div>
   );
 }

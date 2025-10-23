@@ -57,6 +57,12 @@ export function validateStep2(
   // Pattern-specific validation
   const patternMeta = getPattern(pattern);
 
+  // Check if pattern exists (handles legacy patterns like 'multi-step' that were removed)
+  if (!patternMeta) {
+    errors.push('Invalid pattern type. Please select a valid pattern.');
+    return { valid: false, errors };
+  }
+
   switch (patternMeta.elementType) {
     case 'button':
       if (!elementConfig.buttonText || elementConfig.buttonText.trim() === '') {
@@ -129,6 +135,12 @@ export function validateStep3(
   }
 
   const patternMeta = getPattern(pattern);
+
+  // Check if pattern exists (handles legacy patterns like 'multi-step' that were removed)
+  if (!patternMeta) {
+    errors.push('Invalid pattern type. Please select a valid pattern.');
+    return { valid: false, errors };
+  }
 
   // Validate action type matches pattern
   if (actionConfig.actionType !== patternMeta.actionType) {
@@ -207,6 +219,12 @@ export function validateStep4(
 
   const patternMeta = getPattern(pattern);
 
+  // Check if pattern exists (handles legacy patterns like 'multi-step' that were removed)
+  if (!patternMeta) {
+    errors.push('Invalid pattern type. Please select a valid pattern.');
+    return { valid: false, errors };
+  }
+
   // Validate handler type is supported by pattern
   if (!patternMeta.handlerTypes.includes(handlerConfig.handlerType)) {
     errors.push(`Handler type "${handlerConfig.handlerType}" is not supported for this pattern. Supported types: ${patternMeta.handlerTypes.join(', ')}`);
@@ -221,18 +239,9 @@ export function validateStep4(
     }
   }
 
-  // Validate chained tool config if enabled
-  if (handlerConfig.enableChaining) {
-    if (!handlerConfig.nextToolConfig) {
-      errors.push('Chained tool configuration is required when chaining is enabled');
-    } else {
-      // Validate chained tool config
-      const chainedValidation = validateStep3(pattern, handlerConfig.nextToolConfig);
-      if (!chainedValidation.valid) {
-        errors.push(...chainedValidation.errors.map(e => `Chained tool: ${e}`));
-      }
-    }
-  }
+  // Note: enableChaining is just a flag that controls whether the "Chain Another Tool"
+  // button appears in the success dialog. No validation needed here since the user
+  // will configure the next tool after generating the current pattern code.
 
   return {
     valid: errors.length === 0,

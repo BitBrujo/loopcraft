@@ -24,17 +24,36 @@ export interface ToastProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof toastVariants> {
   onClose?: () => void
+  actions?: Array<{ label: string; onClick: () => void }>
 }
 
 const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
-  ({ className, variant, onClose, children, ...props }, ref) => {
+  ({ className, variant, onClose, actions, children, ...props }, ref) => {
     return (
       <div
         ref={ref}
         className={cn(toastVariants({ variant }), className)}
         {...props}
       >
-        <div className="flex-1 text-sm font-medium">{children}</div>
+        <div className="flex-1">
+          <div className="text-sm font-medium">{children}</div>
+          {actions && actions.length > 0 && (
+            <div className="flex gap-2 mt-2">
+              {actions.map((action, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    action.onClick();
+                    onClose?.();
+                  }}
+                  className="px-3 py-1 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         {onClose && (
           <button
             onClick={onClose}

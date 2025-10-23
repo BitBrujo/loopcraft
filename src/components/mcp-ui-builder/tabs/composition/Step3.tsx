@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Zap, Check, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Zap, Check, ArrowRight } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { getPattern } from '@/lib/composition-patterns';
 import { validateStep3 } from '@/lib/composition-validation';
@@ -107,14 +107,6 @@ export function Step3() {
         <NotifyActionConfig config={config} setConfig={setConfig} />
       )}
 
-      {/* Validation Status */}
-      {currentPattern?.isValid.step3 && (
-        <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg p-3 text-sm text-green-800 dark:text-green-300 flex items-center gap-2">
-          <Check className="h-5 w-5" />
-          <span>Required parameters configured</span>
-        </div>
-      )}
-
       {/* Navigation */}
       <div className="flex justify-between pt-4 border-t">
         <button
@@ -186,22 +178,8 @@ function ToolActionConfig({ config, setConfig, targetServerName, availableTools,
     setConfig({ ...config, toolParameters: updated });
   };
 
-  if (!targetServerName || availableTools.length === 0) {
-    return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800 flex items-center gap-2">
-        <AlertTriangle className="h-4 w-4" />
-        <span>No MCP server selected or no tools available. Please select a target server in the Configure tab first.</span>
-      </div>
-    );
-  }
-
-  if (filteredTools.length === 0 && selectedTools.length > 0) {
-    return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800 flex items-center gap-2">
-        <AlertTriangle className="h-4 w-4" />
-        <span>No tools selected in the Configure tab. Please select at least one tool to expose via this UI.</span>
-      </div>
-    );
+  if (!targetServerName || availableTools.length === 0 || (filteredTools.length === 0 && selectedTools.length > 0)) {
+    return null;
   }
 
   return (

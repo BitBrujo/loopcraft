@@ -2,11 +2,17 @@ import * as React from "react"
 
 export type ToastVariant = "default" | "success" | "error" | "warning"
 
+export interface ToastAction {
+  label: string
+  onClick: () => void
+}
+
 export interface Toast {
   id: string
   message: string
   variant?: ToastVariant
   duration?: number
+  actions?: ToastAction[]
 }
 
 interface ToastState {
