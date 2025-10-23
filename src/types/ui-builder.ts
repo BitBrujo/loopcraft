@@ -310,8 +310,11 @@ export interface ValidationError {
   message: string;
 }
 
-/** Builder tabs - 4 core tabs (added Composition for guided pattern building) */
-export type TabId = 'configure' | 'design' | 'composition' | 'export';
+/** Builder tabs - 3 core tabs (Composition moved to Design sub-tab) */
+export type TabId = 'configure' | 'design' | 'export';
+
+/** Design tab sub-tabs - Composition for guided pattern building, Code for manual editing, Preview for live testing */
+export type DesignSubTab = 'composition' | 'code' | 'preview';
 
 /** Export format options */
 export type ExportFormat = 'integration' | 'standalone' | 'fastmcp';

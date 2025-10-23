@@ -4,6 +4,7 @@ import type {
   UIResource,
   Template,
   TabId,
+  DesignSubTab,
   ToolSchema,
   ToolBinding,
 } from '@/types/ui-builder';
@@ -33,6 +34,9 @@ interface UIBuilderStore {
   // Active tab (simplified to 3 tabs)
   activeTab: TabId;
 
+  // Active Design sub-tab (Composition | Code | Preview)
+  activeDesignTab: DesignSubTab;
+
   // Target server state (companion mode is always enabled)
   targetServerName: string | null;
   availableTools: ToolSchema[];
@@ -60,6 +64,7 @@ interface UIBuilderStore {
 
   // Actions - Tabs
   setActiveTab: (tab: TabId) => void;
+  setActiveDesignTab: (tab: DesignSubTab) => void;
 
   // Actions - Target Server (always in companion mode)
   setTargetServerName: (serverName: string | null) => void;
@@ -136,6 +141,7 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
       isLoading: false,
       error: null,
       activeTab: 'configure',
+      activeDesignTab: 'composition',
 
       // Target server initial state (always in companion mode)
       targetServerName: null,
@@ -218,6 +224,9 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
 
       setActiveTab: (tab) =>
         set({ activeTab: tab }),
+
+      setActiveDesignTab: (tab) =>
+        set({ activeDesignTab: tab }),
 
       // Target server actions (always in companion mode)
       setTargetServerName: (serverName) =>
@@ -371,6 +380,7 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         currentResource: state.currentResource,
         showPreview: state.showPreview,
         activeTab: state.activeTab,
+        activeDesignTab: state.activeDesignTab,
         targetServerName: state.targetServerName,
         selectedTools: state.selectedTools,
         composition: state.composition,

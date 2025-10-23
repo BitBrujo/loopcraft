@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { ArrowRight, Sparkles, Info, Copy, Check, X, Wrench, MessageSquare, Link as LinkIcon, Target, Bell, ChevronDown, Code2, Monitor, AlertTriangle, Circle, Edit, FileText, Box, LayoutDashboard, Table, LineChart, Image, Settings } from 'lucide-react';
+import { ArrowRight, Sparkles, Info, Copy, Check, X, Wrench, MessageSquare, Link as LinkIcon, Target, Bell, ChevronDown, Code2, Monitor, AlertTriangle, Circle, Edit, FileText, Box, LayoutDashboard, Table, LineChart, Image, Settings, Workflow } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
+import { InsertPanel } from '../tabs/composition/InsertPanel';
+import { ConfigPanel } from '../tabs/composition/ConfigPanel';
 import { Button } from '@/components/ui/button';
 import { PreviewPanel } from '../PreviewPanel';
 import { extractTemplatePlaceholders, parseHTMLForInteractiveElements } from '@/lib/html-parser';
@@ -93,6 +95,8 @@ const SIZE_PRESETS = {
 export function DesignTab() {
   const {
     setActiveTab,
+    activeDesignTab,
+    setActiveDesignTab,
     currentResource,
     updateResource,
     targetServerName,
@@ -108,7 +112,6 @@ export function DesignTab() {
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [showUIMetadata, setShowUIMetadata] = useState(false);
   const [showRendererOptions, setShowRendererOptions] = useState(false);
-  const [activeEditorTab, setActiveEditorTab] = useState<'code' | 'preview'>('code');
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
   const [parsedElements, setParsedElements] = useState<InteractiveElement[]>([]);
 
@@ -1095,10 +1098,14 @@ export function DesignTab() {
           )}
         </div>
 
-        {/* Right Column: Code + Preview Tabs */}
+        {/* Right Column: Composition | Code | Preview Tabs */}
         <div className="flex-1 overflow-hidden flex flex-col min-w-0">
-          <Tabs value={activeEditorTab} onValueChange={(value) => setActiveEditorTab(value as 'code' | 'preview')} className="flex-1 flex flex-col overflow-hidden">
+          <Tabs value={activeDesignTab} onValueChange={(value) => setActiveDesignTab(value as 'composition' | 'code' | 'preview')} className="flex-1 flex flex-col overflow-hidden">
             <TabsList className="w-full justify-start rounded-none border-b bg-muted/5 h-auto p-0">
+              <TabsTrigger value="composition" className="gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
+                <Workflow className="h-4 w-4" />
+                Composition
+              </TabsTrigger>
               <TabsTrigger value="code" className="gap-2 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
                 <Code2 className="h-4 w-4" />
                 Code
@@ -1108,6 +1115,19 @@ export function DesignTab() {
                 Preview
               </TabsTrigger>
             </TabsList>
+
+            {/* Composition Tab */}
+            <TabsContent value="composition" className="flex-1 overflow-hidden mt-0 data-[state=inactive]:hidden">
+              <div className="h-full flex">
+                {/* 2-column layout: InsertPanel | ConfigPanel */}
+                <div className="flex-1 overflow-y-auto border-r">
+                  <InsertPanel />
+                </div>
+                <div className="w-[400px] overflow-y-auto">
+                  <ConfigPanel />
+                </div>
+              </div>
+            </TabsContent>
 
             {/* Code Tab */}
             <TabsContent value="code" className="flex-1 overflow-hidden mt-0 data-[state=inactive]:hidden">

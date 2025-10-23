@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useUIBuilderStore } from "@/lib/stores/ui-builder-store";
 import { ConfigureTab } from "./tabs/ConfigureTab";
 import { DesignTab } from "./tabs/DesignTab";
-import { CompositionTab } from "./tabs/CompositionTab";
 import { ExportTab } from "./tabs/ExportTab";
 import { Button } from "@/components/ui/button";
 import { SaveDialog } from "./SaveDialog";
@@ -33,7 +32,6 @@ const tabs: Array<{ id: TabId; label: string; description: string }> = [
         description: "Choose target server and tools",
     },
     { id: "design", label: "Design UI", description: "Create your UI content" },
-    { id: "composition", label: "Composition", description: "Build interactive patterns" },
     { id: "export", label: "Deploy Companion", description: "Deploy portable server" },
 ];
 
@@ -54,8 +52,6 @@ export function BuilderLayout() {
                 return <ConfigureTab />;
             case "design":
                 return <DesignTab />;
-            case "composition":
-                return <CompositionTab />;
             case "export":
                 return <ExportTab />;
             default:
