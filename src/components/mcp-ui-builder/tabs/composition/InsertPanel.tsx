@@ -54,24 +54,24 @@ export function InsertPanel() {
                     ${status === 'locked' ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
                   `}
                 >
-                  <div
+                  <span
                     className={`
-                      w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all
+                      flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 border-2 transition-all
                       ${
                         status === 'done'
-                          ? 'bg-green-500 text-white'
+                          ? 'border-green-500 text-green-500 bg-transparent'
                           : status === 'current'
-                          ? 'bg-orange-500 text-white ring-4 ring-orange-200'
-                          : 'bg-muted text-muted-foreground'
+                          ? 'border-primary text-primary bg-transparent ring-4 ring-primary/20'
+                          : 'border-muted-foreground/30 text-muted-foreground bg-transparent'
                       }
                     `}
                   >
                     {status === 'done' ? (
-                      <Check className="h-4 w-4" />
+                      <Check className="h-3 w-3" />
                     ) : (
                       step.number
                     )}
-                  </div>
+                  </span>
                   <div
                     className={`
                       text-sm font-medium transition-colors
