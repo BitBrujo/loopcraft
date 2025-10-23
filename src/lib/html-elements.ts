@@ -251,9 +251,9 @@ export const elementsByCategory = htmlElements.reduce((acc, element) => {
 
 // Category metadata
 export const categoryInfo = {
-  buttons: { label: 'Buttons', icon: '🔘', description: 'Interactive button elements' },
-  inputs: { label: 'Inputs', icon: '✏️', description: 'Form input fields' },
-  forms: { label: 'Forms', icon: '📝', description: 'Complete form structures' },
-  containers: { label: 'Containers', icon: '📦', description: 'Layout containers' },
-  interactive: { label: 'Interactive', icon: '✨', description: 'Links, badges, alerts' },
+  buttons: { label: 'Buttons', icon: 'circle', description: 'Interactive button elements' },
+  inputs: { label: 'Inputs', icon: 'edit', description: 'Form input fields' },
+  forms: { label: 'Forms', icon: 'file-text', description: 'Complete form structures' },
+  containers: { label: 'Containers', icon: 'box', description: 'Layout containers' },
+  interactive: { label: 'Interactive', icon: 'sparkles', description: 'Links, badges, alerts' },
 };

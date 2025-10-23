@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { ArrowRight, Sparkles, Info, Copy, Check, X, Wrench, MessageSquare, Link as LinkIcon, Target, Bell, ChevronDown, Code2, Monitor, AlertTriangle } from 'lucide-react';
+import { ArrowRight, Sparkles, Info, Copy, Check, X, Wrench, MessageSquare, Link as LinkIcon, Target, Bell, ChevronDown, Code2, Monitor, AlertTriangle, Circle, Edit, FileText, Box, LayoutDashboard, Table, LineChart, Image, Settings } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { Button } from '@/components/ui/button';
 import { PreviewPanel } from '../PreviewPanel';
@@ -52,6 +52,19 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   'link': LinkIcon,
   'target': Target,
   'bell': Bell,
+};
+
+const elementIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  'circle': Circle,
+  'edit': Edit,
+  'file-text': FileText,
+  'box': Box,
+  'sparkles': Sparkles,
+  'layout-dashboard': LayoutDashboard,
+  'table': Table,
+  'line-chart': LineChart,
+  'image': Image,
+  'settings': Settings,
 };
 
 // Helper function to get display MIME type based on content type
@@ -322,10 +335,11 @@ export function DesignTab() {
                 <SelectContent>
                   {Object.keys(elementsByCategory).map((category) => {
                     const info = categoryInfo[category as keyof typeof categoryInfo];
+                    const IconComponent = elementIconMap[info.icon];
                     return (
                       <SelectItem key={category} value={category}>
                         <div className="flex items-center gap-2">
-                          <span>{info.icon}</span>
+                          {IconComponent && <IconComponent className="h-4 w-4" />}
                           <span>{info.label}</span>
                         </div>
                       </SelectItem>

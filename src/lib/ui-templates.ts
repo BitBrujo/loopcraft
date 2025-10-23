@@ -430,32 +430,32 @@ export function getCategorizedUITemplates(): Record<UICategory, UITemplate[]> {
 export function getUICategoryInfo(category: UICategory): { icon: string; title: string; description: string } {
   const categoryInfo: Record<UICategory, { icon: string; title: string; description: string }> = {
     forms: {
-      icon: '📝',
+      icon: 'file-text',
       title: 'Forms',
       description: 'Input forms for data collection',
     },
     dashboards: {
-      icon: '📊',
+      icon: 'layout-dashboard',
       title: 'Dashboards',
       description: 'Data visualization and metrics',
     },
     tables: {
-      icon: '📋',
+      icon: 'table',
       title: 'Tables',
       description: 'Tabular data display',
     },
     charts: {
-      icon: '📈',
+      icon: 'line-chart',
       title: 'Charts',
       description: 'Data charts and graphs',
     },
     galleries: {
-      icon: '🖼️',
+      icon: 'image',
       title: 'Galleries',
       description: 'Image and media galleries',
     },
     custom: {
-      icon: '⚙️',
+      icon: 'settings',
       title: 'Custom',
       description: 'Custom UI components',
     },
