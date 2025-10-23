@@ -310,8 +310,8 @@ export interface ValidationError {
   message: string;
 }
 
-/** Builder tabs - simplified to 3 core tabs */
-export type TabId = 'configure' | 'design' | 'export';
+/** Builder tabs - 4 core tabs (added Composition for guided pattern building) */
+export type TabId = 'configure' | 'design' | 'composition' | 'export';
 
 /** Export format options */
 export type ExportFormat = 'integration' | 'standalone' | 'fastmcp';

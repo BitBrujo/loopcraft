@@ -7,6 +7,13 @@ import type {
   ToolSchema,
   ToolBinding,
 } from '@/types/ui-builder';
+import type {
+  CompositionState,
+  PatternType,
+  ElementConfig,
+  ActionConfig,
+  HandlerConfig,
+} from '@/components/mcp-ui-builder/tabs/composition/types';
 
 interface UIBuilderStore {
   // Current resource being edited
@@ -30,6 +37,9 @@ interface UIBuilderStore {
   targetServerName: string | null;
   availableTools: ToolSchema[];
   selectedTools: string[];
+
+  // Composition workflow state
+  composition: CompositionState;
 
   // Actions - Basic
   setCurrentResource: (resource: UIResource | null) => void;
@@ -61,6 +71,16 @@ interface UIBuilderStore {
   setToolBindings: (bindings: ToolBinding[]) => void;
   updateToolBinding: (toolName: string, updates: Partial<ToolBinding>) => void;
   removeToolBinding: (toolName: string) => void;
+
+  // Actions - Composition Workflow
+  setCompositionStep: (step: 1 | 2 | 3 | 4) => void;
+  setSelectedPattern: (pattern: PatternType | null) => void;
+  setElementConfig: (config: ElementConfig | null) => void;
+  setActionConfig: (config: ActionConfig | null) => void;
+  setHandlerConfig: (config: HandlerConfig | null) => void;
+  updateCompositionValidity: (step: 1 | 2 | 3 | 4, isValid: boolean) => void;
+  setGeneratedCode: (code: string | null) => void;
+  resetComposition: () => void;
 }
 
 const defaultResource: UIResource = {
@@ -121,6 +141,22 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
       targetServerName: null,
       availableTools: [],
       selectedTools: [],
+
+      // Composition workflow initial state
+      composition: {
+        currentStep: 1,
+        selectedPattern: null,
+        elementConfig: null,
+        actionConfig: null,
+        handlerConfig: null,
+        isValid: {
+          step1: false,
+          step2: false,
+          step3: false,
+          step4: false,
+        },
+        generatedCode: null,
+      },
 
       // Actions
       setCurrentResource: (resource) =>
@@ -250,6 +286,84 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
               }
             : null,
         })),
+
+      // Composition workflow actions
+      setCompositionStep: (step) =>
+        set((state) => ({
+          composition: {
+            ...state.composition,
+            currentStep: step,
+          },
+        })),
+
+      setSelectedPattern: (pattern) =>
+        set((state) => ({
+          composition: {
+            ...state.composition,
+            selectedPattern: pattern,
+          },
+        })),
+
+      setElementConfig: (config) =>
+        set((state) => ({
+          composition: {
+            ...state.composition,
+            elementConfig: config,
+          },
+        })),
+
+      setActionConfig: (config) =>
+        set((state) => ({
+          composition: {
+            ...state.composition,
+            actionConfig: config,
+          },
+        })),
+
+      setHandlerConfig: (config) =>
+        set((state) => ({
+          composition: {
+            ...state.composition,
+            handlerConfig: config,
+          },
+        })),
+
+      updateCompositionValidity: (step, isValid) =>
+        set((state) => ({
+          composition: {
+            ...state.composition,
+            isValid: {
+              ...state.composition.isValid,
+              [`step${step}`]: isValid,
+            },
+          },
+        })),
+
+      setGeneratedCode: (code) =>
+        set((state) => ({
+          composition: {
+            ...state.composition,
+            generatedCode: code,
+          },
+        })),
+
+      resetComposition: () =>
+        set((state) => ({
+          composition: {
+            currentStep: 1,
+            selectedPattern: null,
+            elementConfig: null,
+            actionConfig: null,
+            handlerConfig: null,
+            isValid: {
+              step1: false,
+              step2: false,
+              step3: false,
+              step4: false,
+            },
+            generatedCode: null,
+          },
+        })),
     }),
     {
       name: 'ui-builder-storage',
@@ -259,6 +373,7 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         activeTab: state.activeTab,
         targetServerName: state.targetServerName,
         selectedTools: state.selectedTools,
+        composition: state.composition,
       }),
     }
   )
