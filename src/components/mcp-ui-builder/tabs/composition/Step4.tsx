@@ -154,27 +154,7 @@ export function Step4() {
                 onChange={(e) => setConfig({ ...config, showLoadingIndicator: e.target.checked })}
                 className="rounded text-orange-500"
               />
-              <span className="text-sm text-foreground">Show loading indicator</span>
-            </label>
-
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={config.handleErrors ?? true}
-                onChange={(e) => setConfig({ ...config, handleErrors: e.target.checked })}
-                className="rounded text-orange-500"
-              />
-              <span className="text-sm text-foreground">Handle errors gracefully</span>
-            </label>
-
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={config.supportAllContentTypes ?? true}
-                onChange={(e) => setConfig({ ...config, supportAllContentTypes: e.target.checked })}
-                className="rounded text-orange-500"
-              />
-              <span className="text-sm text-foreground">Support all MCP content types</span>
+              <span className="text-sm text-foreground">Loading indicator</span>
             </label>
           </div>
         </div>

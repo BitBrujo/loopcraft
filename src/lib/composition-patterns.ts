@@ -34,7 +34,7 @@ export const PATTERNS: Record<PatternType, Pattern> = {
   'search-filter': {
     id: 'search-filter',
     name: 'Search Input → Filter Tool',
-    description: 'A search input that filters or queries data using an MCP tool. Updates results in real-time.',
+    description: '',
     requiredSteps: ['element', 'action', 'handler'],
     elementType: 'input',
     actionType: 'tool',

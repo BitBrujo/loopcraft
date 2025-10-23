@@ -36,8 +36,8 @@ export function ConfigPanel() {
   }
 
   // Check which steps are complete
-  const isStep1Complete = currentResource?.uri && currentResource.uri.startsWith('ui://');
-  const isStep2Complete = currentResource?.metadata?.title && currentResource.metadata.title.length > 0;
+  const isStep1Complete = currentResource?.metadata?.title && currentResource.metadata.title.length > 0;
+  const isStep2Complete = true; // UI metadata is optional
   const isStep3Complete = true; // Renderer options are optional
 
   return (
@@ -66,21 +66,6 @@ export function ConfigPanel() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="uri" className="text-sm font-medium">
-              Resource URI <abbr title="required" className="text-destructive ml-0.5 no-underline" aria-label="required">*</abbr>
-            </Label>
-            <Input
-              id="uri"
-              value={currentResource?.uri || 'ui://server/interactive-pattern'}
-              onChange={(e) => updateResource({ uri: e.target.value })}
-              placeholder="ui://server/resource-name"
-            />
-            <p className="text-xs text-muted-foreground">
-              Auto-filled based on pattern name
-            </p>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="title" className="text-sm font-medium">
               Title

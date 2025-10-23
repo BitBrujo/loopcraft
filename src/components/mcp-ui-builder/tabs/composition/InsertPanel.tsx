@@ -77,7 +77,7 @@ export function InsertPanel() {
                       text-sm font-medium transition-colors
                       ${
                         status === 'current'
-                          ? 'text-orange-600'
+                          ? 'text-foreground'
                           : status === 'done'
                           ? 'text-green-600'
                           : 'text-muted-foreground'
@@ -90,11 +90,11 @@ export function InsertPanel() {
 
                 {/* Connector Line */}
                 {!isLast && (
-                  <div className="flex-1 h-1 mx-2">
+                  <div className="flex-1 h-px mx-2">
                     <div
                       className={`
                         h-full transition-all
-                        ${getStepStatus(step.number + 1) !== 'locked' ? 'bg-green-500' : 'bg-muted'}
+                        ${getStepStatus(step.number + 1) !== 'locked' ? 'bg-green-300' : 'bg-muted/30'}
                       `}
                     />
                   </div>
