@@ -135,15 +135,6 @@ export function Step4() {
         </div>
       </div>
 
-      {/* Response Handling Info */}
-      {(config.handlerType === 'response' || config.handlerType === 'both') && (
-        <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4">
-          <p className="text-sm text-blue-800 dark:text-blue-300">
-            ℹ️ Tool responses will be logged to the console and shown via notifications. No container needed.
-          </p>
-        </div>
-      )}
-
       {/* Notification Configuration */}
       {(config.handlerType === 'notification' || config.handlerType === 'both') && (
         <div className="border border rounded-lg p-4 space-y-4">

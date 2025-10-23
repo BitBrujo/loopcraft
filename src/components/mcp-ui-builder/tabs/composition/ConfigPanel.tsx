@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { getPattern } from '@/lib/composition-patterns';
 import { Settings, CheckCircle2 } from 'lucide-react';
@@ -20,6 +21,113 @@ export function ConfigPanel() {
   const { composition, currentResource, updateResource } = useUIBuilderStore();
   const currentPattern = composition.patterns[composition.currentPatternIndex];
   const pattern = currentPattern?.selectedPattern ? getPattern(currentPattern.selectedPattern) : null;
+
+  // Helper functions defined before JSX to prevent infinite loops
+  const getFrameSizePreset = React.useMemo((): string => {
+    const size = currentResource?.uiMetadata?.['preferred-frame-size'];
+    if (!size) return 'medium';
+    const [width, height] = size as [string, string];
+    if (width === '600px' && height === '400px') return 'small';
+    if (width === '800px' && height === '600px') return 'medium';
+    if (width === '1000px' && height === '800px') return 'large';
+    if (width === '100%' && height === '600px') return 'full';
+    return 'custom';
+  }, [currentResource?.uiMetadata]);
+
+  const handleFrameSizeChange = React.useCallback((preset: string) => {
+    const sizes: Record<string, [string, string]> = {
+      small: ['600px', '400px'],
+      medium: ['800px', '600px'],
+      large: ['1000px', '800px'],
+      full: ['100%', '600px'],
+    };
+    if (sizes[preset]) {
+      updateResource({
+        uiMetadata: {
+          ...currentResource?.uiMetadata,
+          'preferred-frame-size': sizes[preset],
+        },
+      });
+    }
+  }, [currentResource?.uiMetadata, updateResource]);
+
+  const getAutoResizeValue = React.useMemo((): string => {
+    const autoResize = currentResource?.uiMetadata?.['auto-resize-iframe'];
+    if (autoResize === true) return 'both';
+    if (typeof autoResize === 'object') {
+      if (autoResize.width && autoResize.height) return 'both';
+      if (autoResize.width) return 'width';
+      if (autoResize.height) return 'height';
+    }
+    return 'disabled';
+  }, [currentResource?.uiMetadata]);
+
+  const handleAutoResizeChange = React.useCallback((value: string) => {
+    let autoResize: boolean | { width?: boolean; height?: boolean } = false;
+    if (value === 'both') autoResize = true;
+    else if (value === 'width') autoResize = { width: true };
+    else if (value === 'height') autoResize = { height: true };
+
+    updateResource({
+      uiMetadata: {
+        ...currentResource?.uiMetadata,
+        'auto-resize-iframe': autoResize,
+      },
+    });
+  }, [currentResource?.uiMetadata, updateResource]);
+
+  const getSandboxPermissions = React.useMemo((): string => {
+    const permissions = currentResource?.uiMetadata?.['sandbox-permissions'] as string | undefined;
+    if (!permissions) return 'standard';
+    if (permissions.includes('allow-same-origin') && permissions.includes('allow-scripts')) return 'standard';
+    if (!permissions.includes('allow-scripts')) return 'strict';
+    return 'permissive';
+  }, [currentResource?.uiMetadata]);
+
+  const handleSandboxChange = React.useCallback((preset: string) => {
+    const presets: Record<string, string> = {
+      standard: 'allow-forms allow-scripts allow-same-origin',
+      strict: 'allow-forms',
+      permissive: 'allow-forms allow-scripts allow-same-origin allow-popups allow-downloads',
+    };
+    updateResource({
+      uiMetadata: {
+        ...currentResource?.uiMetadata,
+        'sandbox-permissions': presets[preset],
+      },
+    });
+  }, [currentResource?.uiMetadata, updateResource]);
+
+  const getIframeTitle = React.useMemo((): string => {
+    return (currentResource?.uiMetadata?.['iframe-title'] as string) || '';
+  }, [currentResource?.uiMetadata]);
+
+  const handleIframeTitleChange = React.useCallback((value: string) => {
+    updateResource({
+      uiMetadata: {
+        ...currentResource?.uiMetadata,
+        'iframe-title': value,
+      },
+    });
+  }, [currentResource?.uiMetadata, updateResource]);
+
+  const getMinHeight = React.useMemo((): string => {
+    const style = currentResource?.uiMetadata?.['container-style'] as { minHeight?: string } | undefined;
+    return style?.minHeight || '';
+  }, [currentResource?.uiMetadata]);
+
+  const handleMinHeightChange = React.useCallback((value: string) => {
+    const currentStyle = (currentResource?.uiMetadata?.['container-style'] || {}) as Record<string, unknown>;
+    updateResource({
+      uiMetadata: {
+        ...currentResource?.uiMetadata,
+        'container-style': {
+          ...currentStyle,
+          minHeight: value,
+        },
+      },
+    });
+  }, [currentResource?.uiMetadata, updateResource]);
 
   // If no pattern selected, show placeholder
   if (!pattern) {
@@ -121,7 +229,7 @@ export function ConfigPanel() {
             <Label htmlFor="frameSize" className="text-sm font-medium">
               Preferred Frame Size
             </Label>
-            <Select value={getFrameSizePreset()} onValueChange={handleFrameSizeChange}>
+            <Select value={getFrameSizePreset} onValueChange={handleFrameSizeChange}>
               <SelectTrigger id="frameSize">
                 <SelectValue placeholder="Select frame size" />
               </SelectTrigger>
@@ -139,7 +247,7 @@ export function ConfigPanel() {
             <Label htmlFor="autoResize" className="text-sm font-medium">
               Auto-Resize
             </Label>
-            <Select value={getAutoResizeValue()} onValueChange={handleAutoResizeChange}>
+            <Select value={getAutoResizeValue} onValueChange={handleAutoResizeChange}>
               <SelectTrigger id="autoResize">
                 <SelectValue placeholder="Select auto-resize behavior" />
               </SelectTrigger>
@@ -177,7 +285,7 @@ export function ConfigPanel() {
             <Label htmlFor="sandboxPermissions" className="text-sm font-medium">
               Sandbox Permissions
             </Label>
-            <Select value={getSandboxPermissions()} onValueChange={handleSandboxChange}>
+            <Select value={getSandboxPermissions} onValueChange={handleSandboxChange}>
               <SelectTrigger id="sandboxPermissions">
                 <SelectValue placeholder="Select security level" />
               </SelectTrigger>
@@ -195,7 +303,7 @@ export function ConfigPanel() {
             </Label>
             <Input
               id="iframeTitle"
-              value={getIframeTitle()}
+              value={getIframeTitle}
               onChange={(e) => handleIframeTitleChange(e.target.value)}
               placeholder="Interactive UI"
             />
@@ -207,7 +315,7 @@ export function ConfigPanel() {
             </Label>
             <Input
               id="minHeight"
-              value={getMinHeight()}
+              value={getMinHeight}
               onChange={(e) => handleMinHeightChange(e.target.value)}
               placeholder="400px"
             />
@@ -229,111 +337,4 @@ export function ConfigPanel() {
       </Alert>
     </div>
   );
-
-  // Helper functions
-  function getFrameSizePreset(): string {
-    const size = currentResource?.uiMetadata?.['preferred-frame-size'];
-    if (!size) return 'medium';
-    const [width, height] = size as [string, string];
-    if (width === '600px' && height === '400px') return 'small';
-    if (width === '800px' && height === '600px') return 'medium';
-    if (width === '1000px' && height === '800px') return 'large';
-    if (width === '100%' && height === '600px') return 'full';
-    return 'custom';
-  }
-
-  function handleFrameSizeChange(preset: string) {
-    const sizes: Record<string, [string, string]> = {
-      small: ['600px', '400px'],
-      medium: ['800px', '600px'],
-      large: ['1000px', '800px'],
-      full: ['100%', '600px'],
-    };
-    if (sizes[preset]) {
-      updateResource({
-        uiMetadata: {
-          ...currentResource?.uiMetadata,
-          'preferred-frame-size': sizes[preset],
-        },
-      });
-    }
-  }
-
-  function getAutoResizeValue(): string {
-    const autoResize = currentResource?.uiMetadata?.['auto-resize-iframe'];
-    if (autoResize === true) return 'both';
-    if (typeof autoResize === 'object') {
-      if (autoResize.width && autoResize.height) return 'both';
-      if (autoResize.width) return 'width';
-      if (autoResize.height) return 'height';
-    }
-    return 'disabled';
-  }
-
-  function handleAutoResizeChange(value: string) {
-    let autoResize: boolean | { width?: boolean; height?: boolean } = false;
-    if (value === 'both') autoResize = true;
-    else if (value === 'width') autoResize = { width: true };
-    else if (value === 'height') autoResize = { height: true };
-
-    updateResource({
-      uiMetadata: {
-        ...currentResource?.uiMetadata,
-        'auto-resize-iframe': autoResize,
-      },
-    });
-  }
-
-  function getSandboxPermissions(): string {
-    const permissions = currentResource?.uiMetadata?.['sandbox-permissions'] as string | undefined;
-    if (!permissions) return 'standard';
-    if (permissions.includes('allow-same-origin') && permissions.includes('allow-scripts')) return 'standard';
-    if (!permissions.includes('allow-scripts')) return 'strict';
-    return 'permissive';
-  }
-
-  function handleSandboxChange(preset: string) {
-    const presets: Record<string, string> = {
-      standard: 'allow-forms allow-scripts allow-same-origin',
-      strict: 'allow-forms',
-      permissive: 'allow-forms allow-scripts allow-same-origin allow-popups allow-downloads',
-    };
-    updateResource({
-      uiMetadata: {
-        ...currentResource?.uiMetadata,
-        'sandbox-permissions': presets[preset],
-      },
-    });
-  }
-
-  function getIframeTitle(): string {
-    return (currentResource?.uiMetadata?.['iframe-title'] as string) || '';
-  }
-
-  function handleIframeTitleChange(value: string) {
-    updateResource({
-      uiMetadata: {
-        ...currentResource?.uiMetadata,
-        'iframe-title': value,
-      },
-    });
-  }
-
-  function getMinHeight(): string {
-    const style = currentResource?.uiMetadata?.['container-style'] as { minHeight?: string } | undefined;
-    return style?.minHeight || '';
-  }
-
-  function handleMinHeightChange(value: string) {
-    const currentStyle = (currentResource?.uiMetadata?.['container-style'] || {}) as Record<string, unknown>;
-    updateResource({
-      uiMetadata: {
-        ...currentResource?.uiMetadata,
-        'container-style': {
-          ...currentStyle,
-          minHeight: value,
-        },
-      },
-    });
-  }
 }
