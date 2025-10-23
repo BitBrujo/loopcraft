@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Box, Check } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { getPattern } from '@/lib/composition-patterns';
 import { validateStep2 } from '@/lib/composition-validation';
@@ -60,7 +61,7 @@ export function Step2() {
       {/* Header */}
       <div>
         <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-          <span className="text-2xl">🏗️</span>
+          <Box className="h-6 w-6" />
           Step 2: Configure HTML Element
         </h2>
         <p className="text-sm text-gray-600 mt-1">
@@ -92,7 +93,7 @@ export function Step2() {
       {/* Validation Status */}
       {composition.isValid.step2 && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800 flex items-center gap-2">
-          <span>✓</span>
+          <Check className="h-5 w-5" />
           <span>Element configuration valid</span>
         </div>
       )}

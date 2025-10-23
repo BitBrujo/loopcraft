@@ -1,6 +1,7 @@
 'use client';
 
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
+import { Target, Box, Zap, Package, Check } from 'lucide-react';
 import { Step1 } from './Step1';
 import { Step2 } from './Step2';
 import { Step3 } from './Step3';
@@ -10,10 +11,10 @@ export function InsertPanel() {
   const { composition, setCompositionStep } = useUIBuilderStore();
 
   const steps = [
-    { number: 1, label: 'Pattern', icon: '🎯' },
-    { number: 2, label: 'Element', icon: '🏗️' },
-    { number: 3, label: 'Action', icon: '⚡' },
-    { number: 4, label: 'Handler', icon: '📦' },
+    { number: 1, label: 'Pattern', Icon: Target },
+    { number: 2, label: 'Element', Icon: Box },
+    { number: 3, label: 'Action', Icon: Zap },
+    { number: 4, label: 'Handler', Icon: Package },
   ];
 
   const getStepStatus = (stepNumber: number): 'done' | 'current' | 'locked' => {
@@ -65,7 +66,11 @@ export function InsertPanel() {
                       }
                     `}
                   >
-                    {status === 'done' ? '✓' : step.number}
+                    {status === 'done' ? (
+                      <Check className="h-5 w-5" />
+                    ) : (
+                      step.number
+                    )}
                   </div>
                   <div
                     className={`

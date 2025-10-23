@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Zap, Check, AlertTriangle } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { getPattern } from '@/lib/composition-patterns';
 import { validateStep3 } from '@/lib/composition-validation';
@@ -62,7 +63,7 @@ export function Step3() {
       {/* Header */}
       <div>
         <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-          <span className="text-2xl">⚡</span>
+          <Zap className="h-6 w-6" />
           Step 3: Configure Action
         </h2>
         <p className="text-sm text-gray-600 mt-1">
@@ -106,7 +107,7 @@ export function Step3() {
       {/* Validation Status */}
       {composition.isValid.step3 && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800 flex items-center gap-2">
-          <span>✓</span>
+          <Check className="h-5 w-5" />
           <span>Required parameters configured</span>
         </div>
       )}
@@ -180,8 +181,9 @@ function ToolActionConfig({ config, setConfig, targetServerName, availableTools,
 
   if (!targetServerName || availableTools.length === 0) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800">
-        ⚠️ No MCP server selected or no tools available. Please select a target server in the Configure tab first.
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800 flex items-center gap-2">
+        <AlertTriangle className="h-4 w-4" />
+        <span>No MCP server selected or no tools available. Please select a target server in the Configure tab first.</span>
       </div>
     );
   }

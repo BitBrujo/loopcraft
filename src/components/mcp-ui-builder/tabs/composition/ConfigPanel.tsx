@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { getPattern } from '@/lib/composition-patterns';
+import { Settings, FileText, Palette, Wrench, ChevronDown, ChevronRight } from 'lucide-react';
 
 export function ConfigPanel() {
   const { composition, currentResource, updateResource } = useUIBuilderStore();
@@ -17,7 +18,7 @@ export function ConfigPanel() {
     return (
       <div className="h-full flex items-center justify-center bg-gray-50 p-6">
         <div className="text-center text-gray-500">
-          <div className="text-4xl mb-2">⚙️</div>
+          <Settings className="h-10 w-10 mx-auto mb-2 text-gray-400" />
           <div className="font-medium">Configuration Options</div>
           <div className="text-sm mt-1">
             Select a pattern in the left panel to configure additional options.
@@ -30,7 +31,7 @@ export function ConfigPanel() {
   return (
     <div className="h-full overflow-y-auto bg-gray-50 p-6 space-y-4">
       <div className="flex items-center gap-2 mb-4">
-        <span className="text-2xl">⚙️</span>
+        <Settings className="h-6 w-6 text-gray-600" />
         <h2 className="text-xl font-semibold text-gray-900">Configuration Options</h2>
       </div>
 
@@ -41,10 +42,10 @@ export function ConfigPanel() {
           className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
         >
           <span className="font-medium text-gray-900 flex items-center gap-2">
-            <span>📋</span>
+            <FileText className="h-4 w-4" />
             Resource Metadata
           </span>
-          <span className="text-gray-400">{metadataExpanded ? '−' : '+'}</span>
+          {metadataExpanded ? <ChevronDown className="h-4 w-4 text-gray-400" /> : <ChevronRight className="h-4 w-4 text-gray-400" />}
         </button>
 
         {metadataExpanded && (
@@ -105,10 +106,10 @@ export function ConfigPanel() {
           className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
         >
           <span className="font-medium text-gray-900 flex items-center gap-2">
-            <span>🎨</span>
+            <Palette className="h-4 w-4" />
             UI Metadata
           </span>
-          <span className="text-gray-400">{uiMetadataExpanded ? '−' : '+'}</span>
+          {uiMetadataExpanded ? <ChevronDown className="h-4 w-4 text-gray-400" /> : <ChevronRight className="h-4 w-4 text-gray-400" />}
         </button>
 
         {uiMetadataExpanded && (
@@ -156,10 +157,10 @@ export function ConfigPanel() {
           className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
         >
           <span className="font-medium text-gray-900 flex items-center gap-2">
-            <span>🔧</span>
+            <Wrench className="h-4 w-4" />
             Renderer Options
           </span>
-          <span className="text-gray-400">{rendererExpanded ? '−' : '+'}</span>
+          {rendererExpanded ? <ChevronDown className="h-4 w-4 text-gray-400" /> : <ChevronRight className="h-4 w-4 text-gray-400" />}
         </button>
 
         {rendererExpanded && (

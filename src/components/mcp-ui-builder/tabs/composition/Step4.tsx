@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Package, Check } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { getPattern } from '@/lib/composition-patterns';
 import { validateStep4 } from '@/lib/composition-validation';
@@ -75,7 +76,7 @@ export function Step4() {
       {/* Header */}
       <div>
         <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-          <span className="text-2xl">📦</span>
+          <Package className="h-6 w-6" />
           Step 4: Configure Response Handler
         </h2>
         <p className="text-sm text-gray-600 mt-1">
@@ -118,7 +119,7 @@ export function Step4() {
                   </div>
                 </div>
                 {config.handlerType === type && (
-                  <span className="text-orange-500">✓</span>
+                  <Check className="h-5 w-5 text-orange-500" />
                 )}
               </div>
             </button>
@@ -245,7 +246,7 @@ export function Step4() {
       {/* Validation Status */}
       {composition.isValid.step4 && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800 flex items-center gap-2">
-          <span>✓</span>
+          <Check className="h-5 w-5" />
           <span>Handler configuration complete</span>
         </div>
       )}
