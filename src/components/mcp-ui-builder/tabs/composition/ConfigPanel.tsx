@@ -18,7 +18,8 @@ import {
 
 export function ConfigPanel() {
   const { composition, currentResource, updateResource } = useUIBuilderStore();
-  const pattern = composition.selectedPattern ? getPattern(composition.selectedPattern) : null;
+  const currentPattern = composition.patterns[composition.currentPatternIndex];
+  const pattern = currentPattern?.selectedPattern ? getPattern(currentPattern.selectedPattern) : null;
 
   // If no pattern selected, show placeholder
   if (!pattern) {

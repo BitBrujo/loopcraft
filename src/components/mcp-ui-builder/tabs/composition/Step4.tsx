@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Package, Check, Link2, ArrowRight } from 'lucide-react';
+import { Package, Check, Link2, ArrowRight, Plus } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { getPattern } from '@/lib/composition-patterns';
 import { validateStep4 } from '@/lib/composition-validation';
@@ -16,11 +16,15 @@ export function Step4() {
     updateCompositionValidity,
     setGeneratedCode,
     setActiveTab,
+    addNewPattern,
   } = useUIBuilderStore();
 
-  const pattern = composition.selectedPattern ? getPattern(composition.selectedPattern) : null;
+  // Get current pattern instance
+  const currentPattern = composition.patterns[composition.currentPatternIndex];
+  const pattern = currentPattern?.selectedPattern ? getPattern(currentPattern.selectedPattern) : null;
+
   const [config, setConfig] = useState<HandlerConfig>(
-    composition.handlerConfig || {
+    currentPattern?.handlerConfig || {
       handlerType: 'response',
       showLoadingIndicator: true,
       handleErrors: true,
@@ -30,37 +34,41 @@ export function Step4() {
 
   // Sync with store
   useEffect(() => {
-    if (composition.handlerConfig) {
-      setConfig(composition.handlerConfig);
+    if (currentPattern?.handlerConfig) {
+      setConfig(currentPattern.handlerConfig);
     }
-  }, [composition.handlerConfig]);
+  }, [currentPattern?.handlerConfig]);
 
   // Validate
   useEffect(() => {
-    const validation = validateStep4(composition.selectedPattern, config);
+    const validation = validateStep4(currentPattern?.selectedPattern || null, config);
     updateCompositionValidity(4, validation.valid);
     setHandlerConfig(config);
-  }, [config, composition.selectedPattern, setHandlerConfig, updateCompositionValidity]);
+  }, [config, currentPattern?.selectedPattern, setHandlerConfig, updateCompositionValidity]);
 
   const handleBack = () => {
     setCompositionStep(3);
   };
 
   const handleGenerateCode = () => {
-    if (!composition.selectedPattern || !composition.elementConfig || !composition.actionConfig) {
+    if (!currentPattern?.selectedPattern || !currentPattern?.elementConfig || !currentPattern?.actionConfig) {
       return;
     }
 
     const code = generatePatternCode(
-      composition.selectedPattern,
-      composition.elementConfig,
-      composition.actionConfig,
+      currentPattern.selectedPattern,
+      currentPattern.elementConfig,
+      currentPattern.actionConfig,
       config
     );
 
     setGeneratedCode(code);
     // Switch to Code tab in CompositionTab
     // This will be handled by parent component
+  };
+
+  const handleAddPattern = () => {
+    addNewPattern();
   };
 
   if (!pattern) {
@@ -81,8 +89,8 @@ export function Step4() {
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
           Pattern: <span className="font-medium">{pattern.name}</span>
-          {composition.actionConfig && (
-            <> • Tool: <span className="font-medium">{composition.actionConfig.toolName || composition.actionConfig.actionType}</span></>
+          {currentPattern?.actionConfig && (
+            <> • Tool: <span className="font-medium">{currentPattern.actionConfig.toolName || currentPattern.actionConfig.actionType}</span></>
           )}
         </p>
       </div>
@@ -127,36 +135,12 @@ export function Step4() {
         </div>
       </div>
 
-      {/* Response Display Configuration */}
+      {/* Response Handling Info */}
       {(config.handlerType === 'response' || config.handlerType === 'both') && (
-        <div className="border border rounded-lg p-4 space-y-4">
-          <h3 className="font-medium text-foreground">Response Display</h3>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">
-              Container ID *
-            </label>
-            <input
-              type="text"
-              value={config.responseContainerId || ''}
-              onChange={(e) => setConfig({ ...config, responseContainerId: e.target.value })}
-              placeholder="e.g., result-container"
-              className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            />
-            <p className="text-xs text-muted-foreground mt-1">ID of the container where results will be displayed</p>
-          </div>
-
-          <div className="space-y-2">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={config.showLoadingIndicator ?? true}
-                onChange={(e) => setConfig({ ...config, showLoadingIndicator: e.target.checked })}
-                className="rounded text-orange-500"
-              />
-              <span className="text-sm text-foreground">Loading indicator</span>
-            </label>
-          </div>
+        <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4">
+          <p className="text-sm text-blue-800 dark:text-blue-300">
+            ℹ️ Tool responses will be logged to the console and shown via notifications. No container needed.
+          </p>
         </div>
       )}
 
@@ -227,7 +211,7 @@ export function Step4() {
       )}
 
       {/* Validation Status */}
-      {composition.isValid.step4 && (
+      {currentPattern?.isValid.step4 && (
         <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg p-3 text-sm text-green-800 dark:text-green-300 flex items-center gap-2">
           <Check className="h-5 w-5" />
           <span>Handler configuration complete</span>
@@ -242,15 +226,28 @@ export function Step4() {
         >
           ← Back
         </button>
-        <button
-          data-slot="button"
-          onClick={handleGenerateCode}
-          disabled={!composition.isValid.step4}
-          className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 gap-2"
-        >
-          Generate Pattern Code
-          <ArrowRight className="h-4 w-4" />
-        </button>
+        <div className="flex gap-2">
+          {/* Add Pattern Button */}
+          <button
+            data-slot="button"
+            onClick={handleAddPattern}
+            disabled={!currentPattern?.isValid.step4}
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border border-primary text-primary hover:bg-primary/10 h-9 px-4 py-2 has-[>svg]:px-3 gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Another Pattern
+          </button>
+          {/* Generate Code Button */}
+          <button
+            data-slot="button"
+            onClick={handleGenerateCode}
+            disabled={!currentPattern?.isValid.step4}
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 gap-2"
+          >
+            Generate Pattern Code
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

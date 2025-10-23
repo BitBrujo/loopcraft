@@ -142,11 +142,11 @@ export interface HandlerConfig {
 }
 
 /**
- * Complete Composition State
- * All configuration for a single pattern
+ * Pattern Instance
+ * Complete configuration for a single pattern in multi-pattern composition
  */
-export interface CompositionState {
-  currentStep: 1 | 2 | 3 | 4;
+export interface PatternInstance {
+  id: string; // Unique identifier for this pattern instance
   selectedPattern: PatternType | null;
   elementConfig: ElementConfig | null;
   actionConfig: ActionConfig | null;
@@ -157,6 +157,16 @@ export interface CompositionState {
     step3: boolean;
     step4: boolean;
   };
+}
+
+/**
+ * Complete Composition State
+ * Supports multiple pattern instances with sequential workflow
+ */
+export interface CompositionState {
+  currentStep: 1 | 2 | 3 | 4;
+  currentPatternIndex: number; // Index of pattern being edited
+  patterns: PatternInstance[]; // Array of configured patterns
   generatedCode: string | null;
 }
 

@@ -15,9 +15,12 @@ export function Step2() {
     updateCompositionValidity,
   } = useUIBuilderStore();
 
-  const pattern = composition.selectedPattern ? getPattern(composition.selectedPattern) : null;
+  // Get current pattern instance
+  const currentPattern = composition.patterns[composition.currentPatternIndex];
+  const pattern = currentPattern?.selectedPattern ? getPattern(currentPattern.selectedPattern) : null;
+
   const [config, setConfig] = useState<ElementConfig>(
-    composition.elementConfig || {
+    currentPattern?.elementConfig || {
       elementType: pattern?.elementType || 'button',
       id: '',
     }
@@ -25,20 +28,20 @@ export function Step2() {
 
   // Sync with store
   useEffect(() => {
-    if (composition.elementConfig) {
-      setConfig(composition.elementConfig);
+    if (currentPattern?.elementConfig) {
+      setConfig(currentPattern.elementConfig);
     }
-  }, [composition.elementConfig]);
+  }, [currentPattern?.elementConfig]);
 
   // Validate
   useEffect(() => {
-    const validation = validateStep2(composition.selectedPattern, config);
+    const validation = validateStep2(currentPattern?.selectedPattern || null, config);
     updateCompositionValidity(2, validation.valid);
     setElementConfig(config);
-  }, [config, composition.selectedPattern, setElementConfig, updateCompositionValidity]);
+  }, [config, currentPattern?.selectedPattern, setElementConfig, updateCompositionValidity]);
 
   const handleNext = () => {
-    const validation = validateStep2(composition.selectedPattern, config);
+    const validation = validateStep2(currentPattern?.selectedPattern || null, config);
     if (validation.valid) {
       setCompositionStep(3);
     }
@@ -91,7 +94,7 @@ export function Step2() {
       )}
 
       {/* Validation Status */}
-      {composition.isValid.step2 && (
+      {currentPattern?.isValid.step2 && (
         <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg p-3 text-sm text-green-800 dark:text-green-300 flex items-center gap-2">
           <Check className="h-5 w-5" />
           <span>Element configuration valid</span>
@@ -109,7 +112,7 @@ export function Step2() {
         <button
           data-slot="button"
           onClick={handleNext}
-          disabled={!composition.isValid.step2}
+          disabled={!currentPattern?.isValid.step2}
           className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 gap-2"
         >
           Next: Configure Action

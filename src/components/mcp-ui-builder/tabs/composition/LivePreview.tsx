@@ -5,7 +5,8 @@ import type { ElementConfig, ButtonStyle } from './types';
 
 export function LivePreview() {
   const { composition } = useUIBuilderStore();
-  const elementConfig = composition.elementConfig;
+  const currentPattern = composition.patterns[composition.currentPatternIndex];
+  const elementConfig = currentPattern?.elementConfig;
 
   if (!elementConfig) {
     return (

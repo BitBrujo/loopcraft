@@ -1,14 +1,15 @@
 'use client';
 
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
-import { Target, Box, Zap, Package, Check } from 'lucide-react';
+import { Target, Box, Zap, Package, Check, Trash2, Edit2, Plus } from 'lucide-react';
 import { Step1 } from './Step1';
 import { Step2 } from './Step2';
 import { Step3 } from './Step3';
 import { Step4 } from './Step4';
+import { getPattern } from '@/lib/composition-patterns';
 
 export function InsertPanel() {
-  const { composition, setCompositionStep } = useUIBuilderStore();
+  const { composition, setCompositionStep, setCurrentPatternIndex, removePattern } = useUIBuilderStore();
 
   const steps = [
     { number: 1, label: 'Pattern', Icon: Target },
@@ -20,7 +21,8 @@ export function InsertPanel() {
   const getStepStatus = (stepNumber: number): 'done' | 'current' | 'locked' => {
     if (stepNumber < composition.currentStep) {
       // Check if previous step is valid
-      const isValid = composition.isValid[`step${stepNumber}` as keyof typeof composition.isValid];
+      const currentPattern = composition.patterns[composition.currentPatternIndex];
+      const isValid = currentPattern?.isValid[`step${stepNumber}` as keyof typeof currentPattern.isValid];
       return isValid ? 'done' : 'current';
     }
     if (stepNumber === composition.currentStep) return 'current';
@@ -36,6 +38,69 @@ export function InsertPanel() {
 
   return (
     <div className="h-full flex flex-col">
+      {/* Pattern List Section */}
+      {composition.patterns.length > 1 && (
+        <div className="border-b bg-muted/30 px-6 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-foreground">Configured Patterns ({composition.patterns.length})</h3>
+          </div>
+          <div className="flex gap-2 overflow-x-auto">
+            {composition.patterns.map((pattern, index) => {
+              const isActive = index === composition.currentPatternIndex;
+              const patternDef = pattern.selectedPattern ? getPattern(pattern.selectedPattern) : null;
+              const isComplete = pattern.isValid.step1 && pattern.isValid.step2 && pattern.isValid.step3 && pattern.isValid.step4;
+
+              return (
+                <button
+                  key={pattern.id}
+                  onClick={() => setCurrentPatternIndex(index)}
+                  className={`
+                    flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all shrink-0
+                    ${isActive
+                      ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20'
+                      : 'border hover:border-orange-300 bg-card hover:bg-orange-50/50'
+                    }
+                  `}
+                >
+                  <span className="text-lg">{patternDef?.icon || '📝'}</span>
+                  <div className="text-left">
+                    <div className="text-sm font-medium text-foreground">
+                      {patternDef?.name || `Pattern ${index + 1}`}
+                    </div>
+                    {isComplete && (
+                      <div className="flex items-center gap-1 text-xs text-green-600">
+                        <Check className="h-3 w-3" />
+                        Complete
+                      </div>
+                    )}
+                  </div>
+                  {composition.patterns.length > 1 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete ${patternDef?.name || `Pattern ${index + 1}`}?`)) {
+                          removePattern(index);
+                        }
+                      }}
+                      className="p-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-colors ml-auto"
+                    >
+                      <Trash2 className="h-3 w-3 text-red-500" />
+                    </button>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Pattern Counter (always visible) */}
+      <div className="border-b bg-muted/10 px-6 py-2">
+        <div className="text-sm text-muted-foreground">
+          Pattern <span className="font-semibold text-foreground">{composition.currentPatternIndex + 1}</span> of <span className="font-semibold text-foreground">{composition.patterns.length}</span>
+        </div>
+      </div>
+
       {/* Horizontal Progress Indicator */}
       <div className="border-b bg-background px-6 py-4">
         <div className="flex items-center justify-between">

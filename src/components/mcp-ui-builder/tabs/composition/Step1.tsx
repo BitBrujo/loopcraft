@@ -21,25 +21,28 @@ export function Step1() {
   const { composition, setSelectedPattern, setCompositionStep, updateCompositionValidity } = useUIBuilderStore();
   const patterns = getAllPatterns();
 
+  // Get current pattern instance
+  const currentPattern = composition.patterns[composition.currentPatternIndex];
+
   // Validate on mount and when pattern changes
   useEffect(() => {
-    const validation = validateStep1(composition.selectedPattern);
+    const validation = validateStep1(currentPattern?.selectedPattern || null);
     updateCompositionValidity(1, validation.valid);
-  }, [composition.selectedPattern, updateCompositionValidity]);
+  }, [currentPattern?.selectedPattern, updateCompositionValidity]);
 
   const handlePatternSelect = (patternId: string) => {
     setSelectedPattern(patternId as PatternType);
   };
 
   const handleNext = () => {
-    const validation = validateStep1(composition.selectedPattern);
+    const validation = validateStep1(currentPattern?.selectedPattern || null);
     if (validation.valid) {
       setCompositionStep(2);
     }
   };
 
-  const selectedPattern = composition.selectedPattern
-    ? patterns.find(p => p.id === composition.selectedPattern)
+  const selectedPattern = currentPattern?.selectedPattern
+    ? patterns.find(p => p.id === currentPattern.selectedPattern)
     : null;
 
   return (
@@ -66,7 +69,7 @@ export function Step1() {
               key={pattern.id}
               onClick={() => handlePatternSelect(pattern.id)}
               className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                composition.selectedPattern === pattern.id
+                currentPattern?.selectedPattern === pattern.id
                   ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20'
                   : 'border hover:border-input bg-card'
               }`}
@@ -79,7 +82,7 @@ export function Step1() {
                 <div className="flex-1">
                   <div className="font-medium text-foreground">{pattern.name}</div>
                 </div>
-                {composition.selectedPattern === pattern.id && (
+                {currentPattern?.selectedPattern === pattern.id && (
                   <Check className="h-5 w-5 text-orange-500" />
                 )}
               </div>
@@ -89,7 +92,7 @@ export function Step1() {
       </div>
 
       {/* Validation Error */}
-      {!composition.isValid.step1 && composition.selectedPattern === null && (
+      {!currentPattern?.isValid.step1 && currentPattern?.selectedPattern === null && (
         <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 rounded-lg p-3 text-sm text-yellow-800 dark:text-yellow-300 flex items-center gap-2">
           <AlertTriangle className="h-4 w-4" />
           <span>Please select a pattern type to continue</span>
@@ -101,7 +104,7 @@ export function Step1() {
         <button
           data-slot="button"
           onClick={handleNext}
-          disabled={!composition.isValid.step1}
+          disabled={!currentPattern?.isValid.step1}
           className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 gap-2"
         >
           Next: Configure Element

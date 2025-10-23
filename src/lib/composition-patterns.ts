@@ -12,7 +12,7 @@ export const PATTERNS: Record<PatternType, Pattern> = {
   'button-tool-call': {
     id: 'button-tool-call',
     name: 'Button → Tool Call',
-    description: 'A button that executes an MCP tool when clicked. Displays the result in a container.',
+    description: 'A button that executes an MCP tool when clicked.',
     requiredSteps: ['element', 'action', 'handler'],
     elementType: 'button',
     actionType: 'tool',

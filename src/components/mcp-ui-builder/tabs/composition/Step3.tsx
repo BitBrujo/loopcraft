@@ -18,29 +18,32 @@ export function Step3() {
     updateCompositionValidity,
   } = useUIBuilderStore();
 
-  const pattern = composition.selectedPattern ? getPattern(composition.selectedPattern) : null;
+  // Get current pattern instance
+  const currentPattern = composition.patterns[composition.currentPatternIndex];
+  const pattern = currentPattern?.selectedPattern ? getPattern(currentPattern.selectedPattern) : null;
+
   const [config, setConfig] = useState<ActionConfig>(
-    composition.actionConfig || {
+    currentPattern?.actionConfig || {
       actionType: pattern?.actionType || 'tool',
     }
   );
 
   // Sync with store
   useEffect(() => {
-    if (composition.actionConfig) {
-      setConfig(composition.actionConfig);
+    if (currentPattern?.actionConfig) {
+      setConfig(currentPattern.actionConfig);
     }
-  }, [composition.actionConfig]);
+  }, [currentPattern?.actionConfig]);
 
   // Validate
   useEffect(() => {
-    const validation = validateStep3(composition.selectedPattern, config);
+    const validation = validateStep3(currentPattern?.selectedPattern || null, config);
     updateCompositionValidity(3, validation.valid);
     setActionConfig(config);
-  }, [config, composition.selectedPattern, setActionConfig, updateCompositionValidity]);
+  }, [config, currentPattern?.selectedPattern, setActionConfig, updateCompositionValidity]);
 
   const handleNext = () => {
-    const validation = validateStep3(composition.selectedPattern, config);
+    const validation = validateStep3(currentPattern?.selectedPattern || null, config);
     if (validation.valid) {
       setCompositionStep(4);
     }
@@ -68,8 +71,8 @@ export function Step3() {
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
           Pattern: <span className="font-medium">{pattern.name}</span>
-          {composition.elementConfig && (
-            <> • Trigger: <span className="font-medium">{composition.elementConfig.elementType} #{composition.elementConfig.id}</span></>
+          {currentPattern?.elementConfig && (
+            <> • Trigger: <span className="font-medium">{currentPattern.elementConfig.elementType} #{currentPattern.elementConfig.id}</span></>
           )}
         </p>
       </div>
@@ -88,7 +91,7 @@ export function Step3() {
           setConfig={setConfig}
           targetServerName={targetServerName}
           availableTools={availableTools}
-          elementConfig={composition.elementConfig}
+          elementConfig={currentPattern?.elementConfig || null}
         />
       )}
       {pattern.actionType === 'prompt' && (
@@ -105,7 +108,7 @@ export function Step3() {
       )}
 
       {/* Validation Status */}
-      {composition.isValid.step3 && (
+      {currentPattern?.isValid.step3 && (
         <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg p-3 text-sm text-green-800 dark:text-green-300 flex items-center gap-2">
           <Check className="h-5 w-5" />
           <span>Required parameters configured</span>
@@ -123,7 +126,7 @@ export function Step3() {
         <button
           data-slot="button"
           onClick={handleNext}
-          disabled={!composition.isValid.step3}
+          disabled={!currentPattern?.isValid.step3}
           className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 gap-2"
         >
           Next: Configure Handler
@@ -142,7 +145,13 @@ function ToolActionConfig({ config, setConfig, targetServerName, availableTools,
   availableTools: ToolSchema[];
   elementConfig: ElementConfig | null;
 }) {
+  const { selectedTools } = useUIBuilderStore();
   const [selectedTool, setSelectedTool] = useState<ToolSchema | null>(null);
+
+  // Filter available tools to only show tools selected in Config tab
+  const filteredTools = selectedTools.length > 0
+    ? availableTools.filter(tool => selectedTools.includes(tool.name))
+    : availableTools;
 
   useEffect(() => {
     if (config.toolName) {
@@ -186,6 +195,15 @@ function ToolActionConfig({ config, setConfig, targetServerName, availableTools,
     );
   }
 
+  if (filteredTools.length === 0 && selectedTools.length > 0) {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800 flex items-center gap-2">
+        <AlertTriangle className="h-4 w-4" />
+        <span>No tools selected in the Configure tab. Please select at least one tool to expose via this UI.</span>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div>
@@ -198,7 +216,7 @@ function ToolActionConfig({ config, setConfig, targetServerName, availableTools,
           className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
         >
           <option value="">Select a tool...</option>
-          {availableTools.map(tool => (
+          {filteredTools.map(tool => (
             <option key={tool.name} value={tool.name}>
               {tool.name}
             </option>

@@ -5,6 +5,7 @@
 
 import type {
   PatternType,
+  PatternInstance,
   ElementConfig,
   ActionConfig,
   HandlerConfig,
@@ -14,7 +15,122 @@ import type {
 import { getPattern } from './composition-patterns';
 
 /**
- * Generate complete pattern code
+ * Generate combined code for multiple patterns
+ * Useful for when user has configured multiple patterns and wants one HTML file
+ */
+export function generateMultiPatternCode(patterns: PatternInstance[]): string {
+  // Filter out incomplete patterns
+  const completePatterns = patterns.filter(
+    p => p.selectedPattern && p.elementConfig && p.actionConfig && p.handlerConfig
+  );
+
+  if (completePatterns.length === 0) {
+    return '<!-- No complete patterns to generate -->';
+  }
+
+  // If only one pattern, use the single pattern generator
+  if (completePatterns.length === 1) {
+    const p = completePatterns[0];
+    return generatePatternCode(
+      p.selectedPattern!,
+      p.elementConfig!,
+      p.actionConfig!,
+      p.handlerConfig!
+    );
+  }
+
+  // Generate HTML for each pattern
+  const patternsHTML = completePatterns
+    .map((p, index) => {
+      const patternMeta = getPattern(p.selectedPattern!);
+      const elementHTML = generateElementHTML(p.elementConfig!, patternMeta.elementType);
+      const handlerHTML = generateHandlerContainerHTML(p.handlerConfig!);
+      return `
+    <!-- Pattern ${index + 1}: ${patternMeta.name} -->
+    <div class="pattern-section mb-8 p-6 bg-gray-50 rounded-lg">
+      <h2 class="text-xl font-semibold mb-4 text-gray-700">${patternMeta.icon} ${patternMeta.name}</h2>
+      ${elementHTML}
+      ${handlerHTML}
+    </div>`;
+    })
+    .join('\n');
+
+  // Generate scripts for each pattern
+  const scriptsHTML = completePatterns
+    .map((p) => generateScript(p.elementConfig!, p.actionConfig!, p.handlerConfig!))
+    .join('\n');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Pattern Composition (${completePatterns.length} patterns)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 2rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 1rem;
+      padding: 2rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .pattern-section {
+      border-left: 4px solid #667eea;
+    }
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .error {
+      background-color: #fee;
+      border: 1px solid #fcc;
+      color: #c33;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-top: 1rem;
+    }
+    .success {
+      background-color: #efe;
+      border: 1px solid #cfc;
+      color: #3c3;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-3xl font-bold mb-8 text-gray-800">MCP-UI Composition</h1>
+    <p class="text-sm text-gray-600 mb-6">${completePatterns.length} pattern${completePatterns.length > 1 ? 's' : ''} configured</p>
+
+    ${patternsHTML}
+  </div>
+
+  ${scriptsHTML}
+</body>
+</html>`;
+}
+
+/**
+ * Generate complete pattern code (single pattern)
  */
 export function generatePatternCode(
   pattern: PatternType,
@@ -239,10 +355,7 @@ function generateLinkHTML(config: ElementConfig): string {
  * Generate handler container HTML
  */
 function generateHandlerContainerHTML(config: HandlerConfig): string {
-  if (config.handlerType === 'response' || config.handlerType === 'both') {
-    return `
-    <div id="${config.responseContainerId}" class="mt-6"></div>`;
-  }
+  // Containers removed - results are handled via notifications
   return '';
 }
 
@@ -432,32 +545,10 @@ function generateHandlerCode(config: HandlerConfig): string {
         if (result.error) {
           showError(result.error);
         } else {
-          displayResult(result);
-          ${config.handlerType === 'both' && config.successMessage ? `showNotification('${config.successMessage}', '${config.successVariant || 'success'}');` : ''}
+          console.log('Tool result:', result);
+          ${config.handlerType === 'both' && config.successMessage ? `showNotification('${config.successMessage}', '${config.successVariant || 'success'}');` : `showNotification('Operation completed successfully', 'success');`}
         }
       }
-    }
-
-    // Display result in container
-    function displayResult(result) {
-      const container = document.getElementById('${config.responseContainerId}');
-
-      if (!result || !result.content) {
-        container.innerHTML = '<div class="success">Operation completed successfully</div>';
-        return;
-      }
-
-      let html = '<div class="success">';
-      result.content.forEach(item => {
-        if (item.type === 'text') {
-          html += \`<pre class="whitespace-pre-wrap">\${item.text}</pre>\`;
-        } else if (item.type === 'image') {
-          html += \`<img src="\${item.data}" class="max-w-full h-auto rounded" />\`;
-        }
-      });
-      html += '</div>';
-
-      container.innerHTML = html;
     }`;
   }
 
@@ -465,24 +556,18 @@ function generateHandlerCode(config: HandlerConfig): string {
   code += `
     // Helper functions
     function showLoading(show) {
-      ${config.responseContainerId ? `
-      const container = document.getElementById('${config.responseContainerId}');
       if (show) {
-        container.innerHTML = '<div class="text-center"><div class="loading"></div><p class="mt-2 text-gray-600">Loading...</p></div>';
-      }` : ''}
+        console.log('Loading...');
+      }
     }
 
     function showError(message) {
-      ${config.responseContainerId ? `
-      const container = document.getElementById('${config.responseContainerId}');
-      container.innerHTML = \`<div class="error">Error: \${message}</div>\`;` : `
       console.error('Error:', message);
-      alert('Error: ' + message);`}
+      showNotification('Error: ' + message, 'error');
     }`;
 
-  // Notification handler
-  if (config.handlerType === 'notification' || config.handlerType === 'both') {
-    code += `
+  // Notification handler - always include since we use notifications for all responses
+  code += `
 
     function showNotification(message, variant = 'info') {
       window.parent.postMessage({
@@ -493,7 +578,7 @@ function generateHandlerCode(config: HandlerConfig): string {
         }
       }, '*');
     }`;
-  }
+
 
   return code;
 }

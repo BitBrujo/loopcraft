@@ -11,10 +11,20 @@ import type {
 import type {
   CompositionState,
   PatternType,
+  PatternInstance,
   ElementConfig,
   ActionConfig,
   HandlerConfig,
 } from '@/components/mcp-ui-builder/tabs/composition/types';
+
+// Simple UUID v4 generator that works in all environments
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 
 interface UIBuilderStore {
   // Current resource being edited
@@ -86,6 +96,11 @@ interface UIBuilderStore {
   updateCompositionValidity: (step: 1 | 2 | 3 | 4, isValid: boolean) => void;
   setGeneratedCode: (code: string | null) => void;
   resetComposition: () => void;
+
+  // Actions - Multi-Pattern Management
+  addNewPattern: () => void;
+  removePattern: (index: number) => void;
+  setCurrentPatternIndex: (index: number) => void;
 }
 
 const defaultResource: UIResource = {
@@ -151,16 +166,22 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
       // Composition workflow initial state
       composition: {
         currentStep: 1,
-        selectedPattern: null,
-        elementConfig: null,
-        actionConfig: null,
-        handlerConfig: null,
-        isValid: {
-          step1: false,
-          step2: false,
-          step3: false,
-          step4: false,
-        },
+        currentPatternIndex: 0,
+        patterns: [
+          {
+            id: generateUUID(),
+            selectedPattern: null,
+            elementConfig: null,
+            actionConfig: null,
+            handlerConfig: null,
+            isValid: {
+              step1: false,
+              step2: false,
+              step3: false,
+              step4: false,
+            },
+          },
+        ],
         generatedCode: null,
       },
 
@@ -306,47 +327,87 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
         })),
 
       setSelectedPattern: (pattern) =>
-        set((state) => ({
-          composition: {
-            ...state.composition,
+        set((state) => {
+          const { currentPatternIndex, patterns } = state.composition;
+          const updatedPatterns = [...patterns];
+          updatedPatterns[currentPatternIndex] = {
+            ...updatedPatterns[currentPatternIndex],
             selectedPattern: pattern,
-          },
-        })),
+          };
+          return {
+            composition: {
+              ...state.composition,
+              patterns: updatedPatterns,
+            },
+          };
+        }),
 
       setElementConfig: (config) =>
-        set((state) => ({
-          composition: {
-            ...state.composition,
+        set((state) => {
+          const { currentPatternIndex, patterns } = state.composition;
+          const updatedPatterns = [...patterns];
+          updatedPatterns[currentPatternIndex] = {
+            ...updatedPatterns[currentPatternIndex],
             elementConfig: config,
-          },
-        })),
+          };
+          return {
+            composition: {
+              ...state.composition,
+              patterns: updatedPatterns,
+            },
+          };
+        }),
 
       setActionConfig: (config) =>
-        set((state) => ({
-          composition: {
-            ...state.composition,
+        set((state) => {
+          const { currentPatternIndex, patterns } = state.composition;
+          const updatedPatterns = [...patterns];
+          updatedPatterns[currentPatternIndex] = {
+            ...updatedPatterns[currentPatternIndex],
             actionConfig: config,
-          },
-        })),
+          };
+          return {
+            composition: {
+              ...state.composition,
+              patterns: updatedPatterns,
+            },
+          };
+        }),
 
       setHandlerConfig: (config) =>
-        set((state) => ({
-          composition: {
-            ...state.composition,
+        set((state) => {
+          const { currentPatternIndex, patterns } = state.composition;
+          const updatedPatterns = [...patterns];
+          updatedPatterns[currentPatternIndex] = {
+            ...updatedPatterns[currentPatternIndex],
             handlerConfig: config,
-          },
-        })),
+          };
+          return {
+            composition: {
+              ...state.composition,
+              patterns: updatedPatterns,
+            },
+          };
+        }),
 
       updateCompositionValidity: (step, isValid) =>
-        set((state) => ({
-          composition: {
-            ...state.composition,
+        set((state) => {
+          const { currentPatternIndex, patterns } = state.composition;
+          const updatedPatterns = [...patterns];
+          updatedPatterns[currentPatternIndex] = {
+            ...updatedPatterns[currentPatternIndex],
             isValid: {
-              ...state.composition.isValid,
+              ...updatedPatterns[currentPatternIndex].isValid,
               [`step${step}`]: isValid,
             },
-          },
-        })),
+          };
+          return {
+            composition: {
+              ...state.composition,
+              patterns: updatedPatterns,
+            },
+          };
+        }),
 
       setGeneratedCode: (code) =>
         set((state) => ({
@@ -356,10 +417,10 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
           },
         })),
 
-      resetComposition: () =>
-        set((state) => ({
-          composition: {
-            currentStep: 1,
+      addNewPattern: () =>
+        set((state) => {
+          const newPattern: PatternInstance = {
+            id: generateUUID(),
             selectedPattern: null,
             elementConfig: null,
             actionConfig: null,
@@ -370,12 +431,120 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
               step3: false,
               step4: false,
             },
+          };
+          return {
+            composition: {
+              ...state.composition,
+              patterns: [...state.composition.patterns, newPattern],
+              currentPatternIndex: state.composition.patterns.length,
+              currentStep: 1,
+            },
+          };
+        }),
+
+      removePattern: (index) =>
+        set((state) => {
+          const patterns = state.composition.patterns.filter((_, i) => i !== index);
+          // If we removed all patterns, add a blank one
+          if (patterns.length === 0) {
+            patterns.push({
+              id: generateUUID(),
+              selectedPattern: null,
+              elementConfig: null,
+              actionConfig: null,
+              handlerConfig: null,
+              isValid: {
+                step1: false,
+                step2: false,
+                step3: false,
+                step4: false,
+              },
+            });
+          }
+          // Adjust currentPatternIndex if needed
+          let newIndex = state.composition.currentPatternIndex;
+          if (newIndex >= patterns.length) {
+            newIndex = patterns.length - 1;
+          }
+          return {
+            composition: {
+              ...state.composition,
+              patterns,
+              currentPatternIndex: newIndex,
+            },
+          };
+        }),
+
+      setCurrentPatternIndex: (index) =>
+        set((state) => ({
+          composition: {
+            ...state.composition,
+            currentPatternIndex: index,
+          },
+        })),
+
+      resetComposition: () =>
+        set((state) => ({
+          composition: {
+            currentStep: 1,
+            currentPatternIndex: 0,
+            patterns: [
+              {
+                id: generateUUID(),
+                selectedPattern: null,
+                elementConfig: null,
+                actionConfig: null,
+                handlerConfig: null,
+                isValid: {
+                  step1: false,
+                  step2: false,
+                  step3: false,
+                  step4: false,
+                },
+              },
+            ],
             generatedCode: null,
           },
         })),
     }),
     {
       name: 'ui-builder-storage',
+      version: 2, // Increment when state structure changes
+      migrate: (persistedState: any, version: number) => {
+        // Clear old state if version doesn't match
+        if (version < 2) {
+          console.log('Migrating UI Builder state from version', version, 'to 2');
+          return {
+            currentResource: defaultResource,
+            showPreview: true,
+            activeTab: 'configure',
+            activeDesignTab: 'composition',
+            targetServerName: null,
+            selectedTools: [],
+            composition: {
+              currentStep: 1,
+              currentPatternIndex: 0,
+              patterns: [
+                {
+                  id: generateUUID(),
+                  selectedPattern: null,
+                  elementConfig: null,
+                  actionConfig: null,
+                  handlerConfig: null,
+                  isValid: {
+                    step1: false,
+                    step2: false,
+                    step3: false,
+                    step4: false,
+                  },
+                },
+              ],
+              generatedCode: null,
+            },
+          };
+        }
+        return persistedState;
+      },
       partialize: (state) => ({
         currentResource: state.currentResource,
         showPreview: state.showPreview,

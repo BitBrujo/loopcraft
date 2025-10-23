@@ -213,13 +213,7 @@ export function validateStep4(
   }
 
   // Handler-specific validation
-  if (handlerConfig.handlerType === 'response' || handlerConfig.handlerType === 'both') {
-    if (!handlerConfig.responseContainerId || handlerConfig.responseContainerId.trim() === '') {
-      errors.push('Response container ID is required for response handler');
-    } else if (!/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(handlerConfig.responseContainerId)) {
-      errors.push('Response container ID must start with a letter and contain only letters, numbers, hyphens, and underscores');
-    }
-  }
+  // Note: responseContainerId is no longer required - responses are shown via notifications
 
   if (handlerConfig.handlerType === 'notification' || handlerConfig.handlerType === 'both') {
     if (!handlerConfig.successMessage || handlerConfig.successMessage.trim() === '') {
