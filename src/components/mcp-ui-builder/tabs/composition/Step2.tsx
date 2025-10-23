@@ -50,7 +50,7 @@ export function Step2() {
 
   if (!pattern) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-muted-foreground">
         No pattern selected. Please go back to Step 1.
       </div>
     );
@@ -60,18 +60,18 @@ export function Step2() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+        <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
           <Box className="h-6 w-6" />
           Step 2: Configure HTML Element
         </h2>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           Pattern: <span className="font-medium">{pattern.name}</span>
         </p>
       </div>
 
       {/* Element Type (auto-selected) */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-        <div className="text-sm text-gray-700">
+      <div className="bg-muted/50 border rounded-lg p-3">
+        <div className="text-sm text-foreground">
           <span className="font-medium">Element Type:</span> {pattern.elementType} (auto-selected)
         </div>
       </div>
@@ -92,7 +92,7 @@ export function Step2() {
 
       {/* Validation Status */}
       {composition.isValid.step2 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800 flex items-center gap-2">
+        <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg p-3 text-sm text-green-800 dark:text-green-300 flex items-center gap-2">
           <Check className="h-5 w-5" />
           <span>Element configuration valid</span>
         </div>
@@ -102,7 +102,7 @@ export function Step2() {
       <div className="flex justify-between pt-4 border-t">
         <button
           onClick={handleBack}
-          className="px-6 py-2 rounded-lg font-medium border border-gray-300 hover:bg-gray-50 transition-colors"
+          className="px-6 py-2 rounded-lg font-medium border hover:bg-muted/50 transition-colors"
         >
           ← Back
         </button>
@@ -112,7 +112,7 @@ export function Step2() {
           className={`px-6 py-2 rounded-lg font-medium transition-colors ${
             composition.isValid.step2
               ? 'bg-orange-500 hover:bg-orange-600 text-white'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-muted text-muted-foreground cursor-not-allowed'
           }`}
         >
           Next: Configure Action →
@@ -130,7 +130,7 @@ function ButtonConfig({ config, setConfig }: {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Element ID *
         </label>
         <input
@@ -138,13 +138,13 @@ function ButtonConfig({ config, setConfig }: {
           value={config.id}
           onChange={(e) => setConfig({ ...config, id: e.target.value })}
           placeholder="e.g., submit-btn"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-background"
         />
-        <p className="text-xs text-gray-500 mt-1">Must be unique and start with a letter</p>
+        <p className="text-xs text-muted-foreground mt-1">Must be unique and start with a letter</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Button Text *
         </label>
         <input
@@ -152,18 +152,18 @@ function ButtonConfig({ config, setConfig }: {
           value={config.buttonText || ''}
           onChange={(e) => setConfig({ ...config, buttonText: e.target.value })}
           placeholder="e.g., Execute Tool"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-background"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Button Style
         </label>
         <select
           value={config.buttonStyle || 'primary'}
           onChange={(e) => setConfig({ ...config, buttonStyle: e.target.value as ButtonStyle })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-background"
         >
           <option value="primary">Primary (Blue)</option>
           <option value="secondary">Secondary (Gray)</option>
@@ -208,7 +208,7 @@ function FormConfig({ config, setConfig }: {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Form ID *
         </label>
         <input
@@ -216,13 +216,13 @@ function FormConfig({ config, setConfig }: {
           value={config.id}
           onChange={(e) => setConfig({ ...config, id: e.target.value })}
           placeholder="e.g., contact-form"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-background"
         />
       </div>
 
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-foreground">
             Form Fields *
           </label>
           <button
@@ -235,9 +235,9 @@ function FormConfig({ config, setConfig }: {
 
         <div className="space-y-3">
           {fields.map((field, index) => (
-            <div key={index} className="border border-gray-200 rounded-lg p-3 space-y-2">
+            <div key={index} className="border rounded-lg p-3 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">Field {index + 1}</span>
+                <span className="text-sm font-medium text-foreground">Field {index + 1}</span>
                 <button
                   onClick={() => removeField(index)}
                   className="text-red-600 hover:text-red-700 text-sm"
@@ -252,14 +252,14 @@ function FormConfig({ config, setConfig }: {
                   value={field.name}
                   onChange={(e) => updateField(index, { name: e.target.value })}
                   placeholder="Field name"
-                  className="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500"
+                  className="px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-orange-500 bg-background"
                 />
                 <input
                   type="text"
                   value={field.label}
                   onChange={(e) => updateField(index, { label: e.target.value })}
                   placeholder="Field label"
-                  className="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500"
+                  className="px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-orange-500 bg-background"
                 />
               </div>
 
@@ -267,7 +267,7 @@ function FormConfig({ config, setConfig }: {
                 <select
                   value={field.type}
                   onChange={(e) => updateField(index, { type: e.target.value as FormField['type'] })}
-                  className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500"
+                  className="flex-1 px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-orange-500 bg-background"
                 >
                   <option value="text">Text</option>
                   <option value="textarea">Textarea</option>
@@ -292,7 +292,7 @@ function FormConfig({ config, setConfig }: {
           ))}
 
           {fields.length === 0 && (
-            <div className="text-center py-6 text-gray-500 text-sm border-2 border-dashed border-gray-300 rounded-lg">
+            <div className="text-center py-6 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
               No fields added yet. Click &ldquo;Add Field&rdquo; to start.
             </div>
           )}
@@ -310,7 +310,7 @@ function InputConfig({ config, setConfig }: {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Input ID *
         </label>
         <input
@@ -318,18 +318,18 @@ function InputConfig({ config, setConfig }: {
           value={config.id}
           onChange={(e) => setConfig({ ...config, id: e.target.value })}
           placeholder="e.g., search-input"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-background"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Input Type
         </label>
         <select
           value={config.inputType || 'text'}
           onChange={(e) => setConfig({ ...config, inputType: e.target.value as ElementConfig['inputType'] })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-background"
         >
           <option value="text">Text</option>
           <option value="search">Search</option>
@@ -339,7 +339,7 @@ function InputConfig({ config, setConfig }: {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Placeholder *
         </label>
         <input
@@ -347,7 +347,7 @@ function InputConfig({ config, setConfig }: {
           value={config.inputPlaceholder || ''}
           onChange={(e) => setConfig({ ...config, inputPlaceholder: e.target.value })}
           placeholder="e.g., Search files..."
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-background"
         />
       </div>
     </div>
@@ -362,7 +362,7 @@ function LinkConfig({ config, setConfig }: {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Link ID *
         </label>
         <input
@@ -370,12 +370,12 @@ function LinkConfig({ config, setConfig }: {
           value={config.id}
           onChange={(e) => setConfig({ ...config, id: e.target.value })}
           placeholder="e.g., action-link"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-background"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Link Text *
         </label>
         <input
@@ -383,12 +383,12 @@ function LinkConfig({ config, setConfig }: {
           value={config.linkText || ''}
           onChange={(e) => setConfig({ ...config, linkText: e.target.value })}
           placeholder="e.g., Click here to continue"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-background"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Link Href *
         </label>
         <input
@@ -396,9 +396,9 @@ function LinkConfig({ config, setConfig }: {
           value={config.linkHref || ''}
           onChange={(e) => setConfig({ ...config, linkHref: e.target.value })}
           placeholder="e.g., #"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-background"
         />
-        <p className="text-xs text-gray-500 mt-1">Use # for action-only links</p>
+        <p className="text-xs text-muted-foreground mt-1">Use # for action-only links</p>
       </div>
     </div>
   );

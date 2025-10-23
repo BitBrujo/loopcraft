@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Package, Check } from 'lucide-react';
+import { Package, Check, Link2 } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { getPattern } from '@/lib/composition-patterns';
 import { validateStep4 } from '@/lib/composition-validation';
@@ -65,7 +65,7 @@ export function Step4() {
 
   if (!pattern) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-muted-foreground">
         No pattern selected. Please go back to Step 1.
       </div>
     );
@@ -75,11 +75,11 @@ export function Step4() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+        <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
           <Package className="h-6 w-6" />
           Step 4: Configure Response Handler
         </h2>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           Pattern: <span className="font-medium">{pattern.name}</span>
           {composition.actionConfig && (
             <> • Tool: <span className="font-medium">{composition.actionConfig.toolName || composition.actionConfig.actionType}</span></>
@@ -89,7 +89,7 @@ export function Step4() {
 
       {/* Handler Type Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-foreground mb-2">
           Handler Type *
         </label>
         <div className="space-y-2">
@@ -99,19 +99,19 @@ export function Step4() {
               onClick={() => setConfig({ ...config, handlerType: type })}
               className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
                 config.handlerType === type
-                  ? 'border-orange-500 bg-orange-50'
-                  : 'border-gray-200 hover:border-gray-300 bg-white'
+                  ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20'
+                  : 'border hover:border bg-card'
               }`}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-medium text-gray-900">
+                  <div className="font-medium text-foreground">
                     {type === 'response' && 'Tool Response Handler'}
                     {type === 'notification' && 'Notification Only'}
                     {type === 'both' && 'Both (Response + Notification)'}
                     {type === 'none' && 'None (Fire and Forget)'}
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">
+                  <div className="text-sm text-muted-foreground mt-1">
                     {type === 'response' && 'Display result in a container'}
                     {type === 'notification' && 'Show toast message only'}
                     {type === 'both' && 'Display result and show notification'}
@@ -129,11 +129,11 @@ export function Step4() {
 
       {/* Response Display Configuration */}
       {(config.handlerType === 'response' || config.handlerType === 'both') && (
-        <div className="border border-gray-200 rounded-lg p-4 space-y-4">
-          <h3 className="font-medium text-gray-900">Response Display</h3>
+        <div className="border border rounded-lg p-4 space-y-4">
+          <h3 className="font-medium text-foreground">Response Display</h3>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Container ID *
             </label>
             <input
@@ -141,9 +141,9 @@ export function Step4() {
               value={config.responseContainerId || ''}
               onChange={(e) => setConfig({ ...config, responseContainerId: e.target.value })}
               placeholder="e.g., result-container"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
-            <p className="text-xs text-gray-500 mt-1">ID of the container where results will be displayed</p>
+            <p className="text-xs text-muted-foreground mt-1">ID of the container where results will be displayed</p>
           </div>
 
           <div className="space-y-2">
@@ -154,7 +154,7 @@ export function Step4() {
                 onChange={(e) => setConfig({ ...config, showLoadingIndicator: e.target.checked })}
                 className="rounded text-orange-500"
               />
-              <span className="text-sm text-gray-700">Show loading indicator</span>
+              <span className="text-sm text-foreground">Show loading indicator</span>
             </label>
 
             <label className="flex items-center gap-2">
@@ -164,7 +164,7 @@ export function Step4() {
                 onChange={(e) => setConfig({ ...config, handleErrors: e.target.checked })}
                 className="rounded text-orange-500"
               />
-              <span className="text-sm text-gray-700">Handle errors gracefully</span>
+              <span className="text-sm text-foreground">Handle errors gracefully</span>
             </label>
 
             <label className="flex items-center gap-2">
@@ -174,7 +174,7 @@ export function Step4() {
                 onChange={(e) => setConfig({ ...config, supportAllContentTypes: e.target.checked })}
                 className="rounded text-orange-500"
               />
-              <span className="text-sm text-gray-700">Support all MCP content types</span>
+              <span className="text-sm text-foreground">Support all MCP content types</span>
             </label>
           </div>
         </div>
@@ -182,11 +182,11 @@ export function Step4() {
 
       {/* Notification Configuration */}
       {(config.handlerType === 'notification' || config.handlerType === 'both') && (
-        <div className="border border-gray-200 rounded-lg p-4 space-y-4">
-          <h3 className="font-medium text-gray-900">Success Notification</h3>
+        <div className="border border rounded-lg p-4 space-y-4">
+          <h3 className="font-medium text-foreground">Success Notification</h3>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Message *
             </label>
             <input
@@ -194,18 +194,18 @@ export function Step4() {
               value={config.successMessage || ''}
               onChange={(e) => setConfig({ ...config, successMessage: e.target.value })}
               placeholder="e.g., Operation completed successfully!"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Variant
             </label>
             <select
               value={config.successVariant || 'success'}
               onChange={(e) => setConfig({ ...config, successVariant: e.target.value as NotificationVariant })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             >
               <option value="success">Success (Green)</option>
               <option value="info">Info (Blue)</option>
@@ -216,9 +216,12 @@ export function Step4() {
 
       {/* Multi-Step Workflow (Tool Chaining) */}
       {pattern.id === 'multi-step' && (
-        <div className="border border-orange-200 rounded-lg p-4 space-y-4 bg-orange-50">
+        <div className="border border-orange-200 rounded-lg p-4 space-y-4 bg-orange-50 dark:bg-orange-950/20">
           <div className="flex items-center justify-between">
-            <h3 className="font-medium text-orange-900">🔗 Tool Chaining</h3>
+            <h3 className="font-medium text-orange-900 flex items-center gap-2">
+              <Link2 className="h-4 w-4" />
+              Tool Chaining
+            </h3>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -231,7 +234,7 @@ export function Step4() {
           </div>
 
           {config.enableChaining && (
-            <div className="bg-white border border-orange-300 rounded p-3">
+            <div className="bg-card border border-orange-300 rounded p-3">
               <p className="text-sm text-orange-800 mb-2">
                 Tool chaining allows the output of this tool to feed into the next tool automatically.
               </p>
@@ -245,7 +248,7 @@ export function Step4() {
 
       {/* Validation Status */}
       {composition.isValid.step4 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800 flex items-center gap-2">
+        <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg p-3 text-sm text-green-800 dark:text-green-300 flex items-center gap-2">
           <Check className="h-5 w-5" />
           <span>Handler configuration complete</span>
         </div>
@@ -255,7 +258,7 @@ export function Step4() {
       <div className="flex justify-between pt-4 border-t">
         <button
           onClick={handleBack}
-          className="px-6 py-2 rounded-lg font-medium border border-gray-300 hover:bg-gray-50 transition-colors"
+          className="px-6 py-2 rounded-lg font-medium border hover:bg-muted/50 transition-colors"
         >
           ← Back
         </button>
@@ -265,7 +268,7 @@ export function Step4() {
           className={`px-6 py-2 rounded-lg font-medium transition-colors ${
             composition.isValid.step4
               ? 'bg-orange-500 hover:bg-orange-600 text-white'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-muted text-muted-foreground cursor-not-allowed'
           }`}
         >
           Generate Pattern Code →

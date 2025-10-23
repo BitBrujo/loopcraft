@@ -52,7 +52,7 @@ export function Step3() {
 
   if (!pattern) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-muted-foreground">
         No pattern selected. Please go back to Step 1.
       </div>
     );
@@ -62,11 +62,11 @@ export function Step3() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+        <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
           <Zap className="h-6 w-6" />
           Step 3: Configure Action
         </h2>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           Pattern: <span className="font-medium">{pattern.name}</span>
           {composition.elementConfig && (
             <> • Trigger: <span className="font-medium">{composition.elementConfig.elementType} #{composition.elementConfig.id}</span></>
@@ -75,8 +75,8 @@ export function Step3() {
       </div>
 
       {/* Action Type (auto-selected) */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-        <div className="text-sm text-gray-700">
+      <div className="bg-muted/50 border rounded-lg p-3">
+        <div className="text-sm text-foreground">
           <span className="font-medium">Action Type:</span> {pattern.actionType} (auto-selected)
         </div>
       </div>
@@ -106,7 +106,7 @@ export function Step3() {
 
       {/* Validation Status */}
       {composition.isValid.step3 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800 flex items-center gap-2">
+        <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg p-3 text-sm text-green-800 dark:text-green-300 flex items-center gap-2">
           <Check className="h-5 w-5" />
           <span>Required parameters configured</span>
         </div>
@@ -116,7 +116,7 @@ export function Step3() {
       <div className="flex justify-between pt-4 border-t">
         <button
           onClick={handleBack}
-          className="px-6 py-2 rounded-lg font-medium border border-gray-300 hover:bg-gray-50 transition-colors"
+          className="px-6 py-2 rounded-lg font-medium border hover:bg-muted/50 transition-colors"
         >
           ← Back
         </button>
@@ -126,7 +126,7 @@ export function Step3() {
           className={`px-6 py-2 rounded-lg font-medium transition-colors ${
             composition.isValid.step3
               ? 'bg-orange-500 hover:bg-orange-600 text-white'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-muted text-muted-foreground cursor-not-allowed'
           }`}
         >
           Next: Configure Handler →
@@ -191,13 +191,13 @@ function ToolActionConfig({ config, setConfig, targetServerName, availableTools,
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Select Tool *
         </label>
         <select
           value={config.toolName || ''}
           onChange={(e) => handleToolSelect(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
         >
           <option value="">Select a tool...</option>
           {availableTools.map(tool => (
@@ -207,28 +207,28 @@ function ToolActionConfig({ config, setConfig, targetServerName, availableTools,
           ))}
         </select>
         {selectedTool && (
-          <p className="text-xs text-gray-600 mt-1">{selectedTool.description}</p>
+          <p className="text-xs text-muted-foreground mt-1">{selectedTool.description}</p>
         )}
       </div>
 
       {selectedTool && config.toolParameters && config.toolParameters.length > 0 && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             Tool Parameters
           </label>
           <div className="space-y-3">
             {config.toolParameters.map((param, index) => (
-              <div key={param.name} className="border border-gray-200 rounded-lg p-3 space-y-2">
+              <div key={param.name} className="border border rounded-lg p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm font-medium text-foreground">
                     {param.name}
                     {param.required && <span className="text-red-500 ml-1">*</span>}
                   </span>
-                  <span className="text-xs text-gray-500">{param.type}</span>
+                  <span className="text-xs text-muted-foreground">{param.type}</span>
                 </div>
 
                 {param.description && (
-                  <p className="text-xs text-gray-600">{param.description}</p>
+                  <p className="text-xs text-muted-foreground">{param.description}</p>
                 )}
 
                 <div className="space-y-2">
@@ -264,7 +264,7 @@ function ToolActionConfig({ config, setConfig, targetServerName, availableTools,
                         staticValue: param.type === 'number' ? parseFloat(e.target.value) : e.target.value
                       })}
                       placeholder={`Enter ${param.name}`}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500"
+                      className="w-full px-3 py-2 text-sm border border rounded focus:ring-1 focus:ring-orange-500"
                     />
                   )}
 
@@ -272,7 +272,7 @@ function ToolActionConfig({ config, setConfig, targetServerName, availableTools,
                     <select
                       value={param.formFieldName || ''}
                       onChange={(e) => updateParameter(index, { formFieldName: e.target.value })}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500"
+                      className="w-full px-3 py-2 text-sm border border rounded focus:ring-1 focus:ring-orange-500"
                     >
                       <option value="">Select form field...</option>
                       {elementConfig.formFields.map((field: { name: string; label: string }) => (
@@ -300,7 +300,7 @@ function PromptActionConfig({ config, setConfig }: {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Prompt Text *
         </label>
         <textarea
@@ -308,9 +308,9 @@ function PromptActionConfig({ config, setConfig }: {
           onChange={(e) => setConfig({ ...config, promptText: e.target.value })}
           placeholder="e.g., Can you explain what this data means?"
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
         />
-        <p className="text-xs text-gray-500 mt-1">This text will be sent to the AI assistant</p>
+        <p className="text-xs text-muted-foreground mt-1">This text will be sent to the AI assistant</p>
       </div>
     </div>
   );
@@ -324,7 +324,7 @@ function LinkActionConfig({ config, setConfig }: {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Link URL *
         </label>
         <input
@@ -332,18 +332,18 @@ function LinkActionConfig({ config, setConfig }: {
           value={config.linkUrl || ''}
           onChange={(e) => setConfig({ ...config, linkUrl: e.target.value })}
           placeholder="https://example.com"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Link Target
         </label>
         <select
           value={config.linkTarget || '_blank'}
           onChange={(e) => setConfig({ ...config, linkTarget: e.target.value as '_blank' | '_self' })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
         >
           <option value="_blank">New Tab (_blank)</option>
           <option value="_self">Same Tab (_self)</option>
@@ -361,7 +361,7 @@ function IntentActionConfig({ config, setConfig }: {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Intent Name *
         </label>
         <input
@@ -369,13 +369,13 @@ function IntentActionConfig({ config, setConfig }: {
           value={config.intentName || ''}
           onChange={(e) => setConfig({ ...config, intentName: e.target.value })}
           placeholder="e.g., navigate:settings"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
         />
-        <p className="text-xs text-gray-500 mt-1">Common intents: navigate:*, open:*, close:*</p>
+        <p className="text-xs text-muted-foreground mt-1">Common intents: navigate:*, open:*, close:*</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Intent Data (JSON)
         </label>
         <textarea
@@ -390,7 +390,7 @@ function IntentActionConfig({ config, setConfig }: {
           }}
           placeholder='{"page": "settings"}'
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent font-mono text-sm"
+          className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent font-mono text-sm"
         />
       </div>
     </div>
@@ -405,7 +405,7 @@ function NotifyActionConfig({ config, setConfig }: {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Notification Message *
         </label>
         <input
@@ -413,18 +413,18 @@ function NotifyActionConfig({ config, setConfig }: {
           value={config.notificationMessage || ''}
           onChange={(e) => setConfig({ ...config, notificationMessage: e.target.value })}
           placeholder="e.g., Operation completed successfully!"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-foreground mb-1">
           Notification Variant
         </label>
         <select
           value={config.notificationVariant || 'success'}
           onChange={(e) => setConfig({ ...config, notificationVariant: e.target.value as NotificationVariant })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
         >
           <option value="success">Success (Green)</option>
           <option value="error">Error (Red)</option>

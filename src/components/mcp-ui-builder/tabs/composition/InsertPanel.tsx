@@ -37,7 +37,7 @@ export function InsertPanel() {
   return (
     <div className="h-full flex flex-col">
       {/* Horizontal Progress Indicator */}
-      <div className="border-b border-gray-200 bg-white px-6 py-4">
+      <div className="border-b bg-background px-6 py-4">
         <div className="flex items-center justify-between">
           {steps.map((step, index) => {
             const status = getStepStatus(step.number);
@@ -56,18 +56,18 @@ export function InsertPanel() {
                 >
                   <div
                     className={`
-                      w-12 h-12 rounded-full flex items-center justify-center text-xl font-semibold transition-all
+                      w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all
                       ${
                         status === 'done'
                           ? 'bg-green-500 text-white'
                           : status === 'current'
                           ? 'bg-orange-500 text-white ring-4 ring-orange-200'
-                          : 'bg-gray-200 text-gray-400'
+                          : 'bg-muted text-muted-foreground'
                       }
                     `}
                   >
                     {status === 'done' ? (
-                      <Check className="h-5 w-5" />
+                      <Check className="h-4 w-4" />
                     ) : (
                       step.number
                     )}
@@ -80,7 +80,7 @@ export function InsertPanel() {
                           ? 'text-orange-600'
                           : status === 'done'
                           ? 'text-green-600'
-                          : 'text-gray-400'
+                          : 'text-muted-foreground'
                       }
                     `}
                   >
@@ -94,7 +94,7 @@ export function InsertPanel() {
                     <div
                       className={`
                         h-full transition-all
-                        ${getStepStatus(step.number + 1) !== 'locked' ? 'bg-green-500' : 'bg-gray-200'}
+                        ${getStepStatus(step.number + 1) !== 'locked' ? 'bg-green-500' : 'bg-muted'}
                       `}
                     />
                   </div>
@@ -106,7 +106,7 @@ export function InsertPanel() {
       </div>
 
       {/* Step Content */}
-      <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+      <div className="flex-1 overflow-y-auto p-6 bg-muted/5">
         {composition.currentStep === 1 && <Step1 />}
         {composition.currentStep === 2 && <Step2 />}
         {composition.currentStep === 3 && <Step3 />}
