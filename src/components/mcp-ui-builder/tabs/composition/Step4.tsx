@@ -265,11 +265,24 @@ export function Step4() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className={config.enableChaining ? "grid grid-cols-2 gap-3 mt-4" : "flex flex-col gap-3 mt-4"}>
+          {/* Chain Enabled Indicator */}
+          {config.enableChaining && (
+            <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 rounded-lg p-3 mt-4">
+              <div className="flex items-center gap-2 text-orange-800 dark:text-orange-200">
+                <Link2 className="h-4 w-4" />
+                <span className="text-sm font-medium">Tool Chaining Enabled</span>
+              </div>
+              <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">
+                The next tool you create will receive the result from this tool.
+              </p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3 mt-4">
             <button
               onClick={() => {
                 setShowSuccessDialog(false);
-                setCompositionStep(1);
+                addNewPattern({ isChained: false });
               }}
               className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 has-[>svg]:px-3 gap-2"
             >
@@ -277,18 +290,17 @@ export function Step4() {
               Create Another Element
             </button>
 
-            {config.enableChaining && (
-              <button
-                onClick={() => {
-                  setShowSuccessDialog(false);
-                  setCompositionStep(1);
-                }}
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border border-primary text-primary hover:bg-primary/10 h-10 px-4 py-2 has-[>svg]:px-3 gap-2"
-              >
-                <Link2 className="h-4 w-4" />
-                Chain Another Tool
-              </button>
-            )}
+            <button
+              onClick={() => {
+                setShowSuccessDialog(false);
+                addNewPattern({ isChained: true });
+              }}
+              disabled={!config.enableChaining}
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border border-primary text-primary hover:bg-primary/10 h-10 px-4 py-2 has-[>svg]:px-3 gap-2"
+            >
+              <Link2 className="h-4 w-4" />
+              Chain Another Tool
+            </button>
 
             <button
               onClick={() => {

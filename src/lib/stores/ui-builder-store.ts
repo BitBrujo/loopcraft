@@ -98,7 +98,7 @@ interface UIBuilderStore {
   resetComposition: () => void;
 
   // Actions - Multi-Pattern Management
-  addNewPattern: () => void;
+  addNewPattern: (options?: { isChained?: boolean }) => void;
   removePattern: (index: number) => void;
   setCurrentPatternIndex: (index: number) => void;
 }
@@ -174,6 +174,8 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
             elementConfig: null,
             actionConfig: null,
             handlerConfig: null,
+            isChained: false,
+            chainedFromPatternId: undefined,
             isValid: {
               step1: false,
               step2: false,
@@ -222,6 +224,8 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
                 elementConfig: null,
                 actionConfig: null,
                 handlerConfig: null,
+                isChained: false,
+                chainedFromPatternId: undefined,
                 isValid: {
                   step1: false,
                   step2: false,
@@ -439,14 +443,21 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
           },
         })),
 
-      addNewPattern: () =>
+      addNewPattern: (options) =>
         set((state) => {
+          const isChained = options?.isChained || false;
+          const previousPattern = isChained
+            ? state.composition.patterns[state.composition.currentPatternIndex]
+            : null;
+
           const newPattern: PatternInstance = {
             id: generateUUID(),
             selectedPattern: null,
             elementConfig: null,
             actionConfig: null,
             handlerConfig: null,
+            isChained,
+            chainedFromPatternId: previousPattern?.id,
             isValid: {
               step1: false,
               step2: false,
@@ -475,6 +486,8 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
               elementConfig: null,
               actionConfig: null,
               handlerConfig: null,
+              isChained: false,
+              chainedFromPatternId: undefined,
               isValid: {
                 step1: false,
                 step2: false,
@@ -517,6 +530,8 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
                 elementConfig: null,
                 actionConfig: null,
                 handlerConfig: null,
+                isChained: false,
+                chainedFromPatternId: undefined,
                 isValid: {
                   step1: false,
                   step2: false,
@@ -531,11 +546,11 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
     }),
     {
       name: 'ui-builder-storage',
-      version: 2, // Increment when state structure changes
+      version: 3, // Increment when state structure changes (v3 adds tool chaining)
       migrate: (persistedState: unknown, version: number) => {
         // Clear old state if version doesn't match
-        if (version < 2) {
-          console.log('Migrating UI Builder state from version', version, 'to 2');
+        if (version < 3) {
+          console.log('Migrating UI Builder state from version', version, 'to 3 (adding tool chaining support)');
           return {
             currentResource: defaultResource,
             showPreview: true,
@@ -553,6 +568,8 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
                   elementConfig: null,
                   actionConfig: null,
                   handlerConfig: null,
+                  isChained: false,
+                  chainedFromPatternId: undefined,
                   isValid: {
                     step1: false,
                     step2: false,

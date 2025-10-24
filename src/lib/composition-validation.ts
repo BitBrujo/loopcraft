@@ -161,6 +161,15 @@ export function validateStep3(
               errors.push(`Parameter "${param.name}" is required but has no value`);
             } else if (param.valueSource === 'formField' && !param.formFieldName) {
               errors.push(`Parameter "${param.name}" is required but has no form field mapping`);
+            } else if (param.valueSource === 'previousResult' && !param.previousResultPath) {
+              errors.push(`Parameter "${param.name}" is required but has no result path specified`);
+            }
+          }
+
+          // Validate previousResult parameters have paths (even if not required)
+          if (param.valueSource === 'previousResult') {
+            if (!param.previousResultPath || param.previousResultPath.trim() === '') {
+              errors.push(`Parameter "${param.name}" uses previous result but has no result path specified`);
             }
           }
         });

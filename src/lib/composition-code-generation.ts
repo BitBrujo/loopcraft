@@ -17,6 +17,7 @@ import { getPattern } from './composition-patterns';
 /**
  * Generate combined code for multiple patterns
  * Useful for when user has configured multiple patterns and wants one HTML file
+ * NOW SUPPORTS TOOL CHAINING - chains are detected and rendered sequentially
  */
 export function generateMultiPatternCode(patterns: PatternInstance[]): string {
   // Filter out incomplete patterns
@@ -39,38 +40,68 @@ export function generateMultiPatternCode(patterns: PatternInstance[]): string {
     );
   }
 
-  // Generate HTML for each pattern
-  const patternsHTML = completePatterns
-    .map((p, index) => {
-      const patternMeta = getPattern(p.selectedPattern!);
-      // Skip invalid patterns (e.g., legacy 'multi-step' that no longer exists)
-      if (!patternMeta) {
-        console.warn(`Skipping invalid pattern: ${p.selectedPattern}`);
-        return '';
+  // Detect chains: group patterns by chain relationships
+  const chains: PatternInstance[][] = [];
+  const independent: PatternInstance[] = [];
+
+  completePatterns.forEach((p, idx) => {
+    if (!p.isChained) {
+      // Pattern is not chained - it's either independent or starts a new chain
+      const nextPattern = completePatterns[idx + 1];
+      if (nextPattern?.isChained && nextPattern.chainedFromPatternId === p.id) {
+        // This pattern starts a chain
+        chains.push([p]);
+      } else {
+        // Independent pattern
+        independent.push(p);
       }
-      const elementHTML = generateElementHTML(p.elementConfig!, patternMeta.elementType);
-      const handlerHTML = generateHandlerContainerHTML(p.handlerConfig!);
-      return `
-    <!-- Pattern ${index + 1}: ${patternMeta.name} -->
+    } else {
+      // Find the chain this belongs to
+      const chainIndex = chains.findIndex(chain =>
+        chain[chain.length - 1].id === p.chainedFromPatternId
+      );
+      if (chainIndex >= 0) {
+        chains[chainIndex].push(p);
+      } else {
+        // Orphaned chained pattern (shouldn't happen, but handle gracefully)
+        independent.push(p);
+      }
+    }
+  });
+
+  // Generate HTML for chains
+  const chainsHTML = chains.map((chain, idx) =>
+    generateChainHTML(chain, idx)
+  ).join('\n');
+
+  // Generate HTML for independent patterns
+  const independentHTML = independent.map((p, idx) => {
+    const patternMeta = getPattern(p.selectedPattern!);
+    if (!patternMeta) {
+      console.warn(`Skipping invalid pattern: ${p.selectedPattern}`);
+      return '';
+    }
+    const elementHTML = generateElementHTML(p.elementConfig!, patternMeta.elementType);
+    return `
+    <!-- Independent Pattern ${idx + 1}: ${patternMeta.name} -->
     <div class="pattern-section mb-8 p-6 bg-gray-50 rounded-lg">
       <h2 class="text-xl font-semibold mb-4 text-gray-700">${patternMeta.icon} ${patternMeta.name}</h2>
       ${elementHTML}
-      ${handlerHTML}
     </div>`;
-    })
-    .join('\n');
+  }).join('\n');
 
-  // Generate scripts for each pattern
-  const scriptsHTML = completePatterns
-    .map((p) => generateScript(p.elementConfig!, p.actionConfig!, p.handlerConfig!))
-    .join('\n');
+  // Generate scripts
+  const scriptsHTML = [
+    ...chains.map((chain, idx) => generateChainScript(chain, idx)),
+    ...independent.map(p => generateScript(p.elementConfig!, p.actionConfig!, p.handlerConfig!))
+  ].join('\n\n');
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Multi-Pattern Composition (${completePatterns.length} patterns)</title>
+  <title>Multi-Pattern Composition (${completePatterns.length} patterns${chains.length > 0 ? `, ${chains.length} chain${chains.length > 1 ? 's' : ''}` : ''})</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -89,6 +120,23 @@ export function generateMultiPatternCode(patterns: PatternInstance[]): string {
     }
     .pattern-section {
       border-left: 4px solid #667eea;
+    }
+    .chain-section {
+      border-left: 4px solid #f97316;
+    }
+    .step-section {
+      position: relative;
+    }
+    .step-section::before {
+      content: '→';
+      position: absolute;
+      left: -1.5rem;
+      top: 1rem;
+      font-size: 1.5rem;
+      color: #f97316;
+    }
+    .step-section:first-child::before {
+      content: '';
     }
     .loading {
       display: inline-block;
@@ -119,14 +167,30 @@ export function generateMultiPatternCode(patterns: PatternInstance[]): string {
       border-radius: 0.5rem;
       margin-top: 1rem;
     }
+    .result-container {
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-top: 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      max-height: 300px;
+      overflow-y: auto;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1 class="text-3xl font-bold mb-8 text-gray-800">MCP-UI Composition</h1>
-    <p class="text-sm text-gray-600 mb-6">${completePatterns.length} pattern${completePatterns.length > 1 ? 's' : ''} configured</p>
+    <p class="text-sm text-gray-600 mb-6">
+      ${completePatterns.length} pattern${completePatterns.length > 1 ? 's' : ''}
+      ${chains.length > 0 ? ` • ${chains.length} tool chain${chains.length > 1 ? 's' : ''}` : ''}
+      ${independent.length > 0 ? ` • ${independent.length} independent` : ''}
+    </p>
 
-    ${patternsHTML}
+    ${chainsHTML}
+    ${independentHTML}
   </div>
 
   ${scriptsHTML}
@@ -219,6 +283,161 @@ export function generatePatternCode(
   ${scriptCode}
 </body>
 </html>`;
+}
+
+/**
+ * Generate HTML for a tool chain
+ */
+function generateChainHTML(chain: PatternInstance[], chainIndex: number): string {
+  const stepsHTML = chain.map((p, stepIdx) => {
+    const patternMeta = getPattern(p.selectedPattern!);
+    if (!patternMeta) return '';
+
+    const elementHTML = generateElementHTML(p.elementConfig!, patternMeta.elementType);
+    const resultContainerId = `result-chain${chainIndex}-step${stepIdx}`;
+    const showResult = stepIdx < chain.length - 1; // Show intermediate results
+
+    return `
+      <div class="step-section mb-4 p-4 bg-white rounded-lg ${stepIdx > 0 ? 'border-l-4 border-orange-400 ml-6' : ''}">
+        <h3 class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+          <span class="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">${stepIdx + 1}</span>
+          ${patternMeta.name}
+          ${stepIdx > 0 ? '<span class="text-orange-600 text-xs ml-2">← Uses result from Step ' + stepIdx + '</span>' : ''}
+        </h3>
+        ${elementHTML}
+        ${showResult ? `<div id="${resultContainerId}" class="result-container hidden mt-3">
+          <div class="text-xs text-gray-500 mb-1">Step ${stepIdx + 1} Result:</div>
+          <pre class="text-xs"></pre>
+        </div>` : ''}
+      </div>`;
+  }).join('\n');
+
+  return `
+    <!-- Tool Chain ${chainIndex + 1}: ${chain.length} steps -->
+    <div class="chain-section mb-8 p-6 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg">
+      <h2 class="text-xl font-semibold mb-4 text-orange-700 flex items-center gap-2">
+        🔗 Tool Chain ${chainIndex + 1}
+        <span class="text-sm font-normal text-gray-600">(${chain.length} steps)</span>
+      </h2>
+      ${stepsHTML}
+      <div id="chain${chainIndex}-final-result" class="hidden mt-4 p-4 bg-green-50 border-2 border-green-200 rounded-lg">
+        <div class="text-sm font-semibold text-green-700 mb-2">✓ Chain Completed</div>
+        <div class="text-xs text-gray-600">All steps executed successfully</div>
+      </div>
+    </div>`;
+}
+
+/**
+ * Generate script for a tool chain
+ */
+function generateChainScript(chain: PatternInstance[], chainIndex: number): string {
+
+  // Generate async step execution functions
+  const stepFunctions = chain.map((p, stepIdx) => {
+    const toolName = p.actionConfig!.toolName;
+    const params = p.actionConfig!.toolParameters || [];
+    const elementId = p.elementConfig!.id;
+
+    // Build params code with previous result support
+    let paramsCode = '      const params = {\n';
+    params.forEach(param => {
+      if (param.valueSource === 'previousResult' && stepIdx > 0) {
+        // Extract from previous result using path
+        const path = param.previousResultPath || 'content[0].text';
+        const pathParts = path.split('.');
+        let accessor = 'previousResults[' + (stepIdx - 1) + ']';
+        pathParts.forEach(part => {
+          if (part.includes('[')) {
+            accessor += '.' + part;
+          } else {
+            accessor += '?.' + part;
+          }
+        });
+        paramsCode += `        "${param.name}": ${accessor},\n`;
+      } else if (param.valueSource === 'static') {
+        const value = typeof param.staticValue === 'string'
+          ? `"${param.staticValue}"`
+          : param.staticValue;
+        paramsCode += `        "${param.name}": ${value},\n`;
+      } else if (param.valueSource === 'formField' && param.formFieldName) {
+        paramsCode += `        "${param.name}": formData.get('${param.formFieldName}'),\n`;
+      }
+    });
+    paramsCode += '      };';
+
+    return `
+    // Step ${stepIdx + 1}: ${toolName}
+    async function executeStep${stepIdx}(previousResults, formData) {
+${paramsCode}
+
+      return new Promise((resolve, reject) => {
+        window.parent.postMessage({
+          type: 'tool',
+          payload: { toolName: '${toolName}', params: params }
+        }, '*');
+
+        const handler = (event) => {
+          if (event.data.type === 'mcp-ui-tool-response') {
+            window.removeEventListener('message', handler);
+            const result = event.data.result;
+
+            if (result.error) {
+              reject(result.error);
+            } else {
+              ${stepIdx < chain.length - 1 ? `
+              // Display intermediate result
+              const container = document.getElementById('result-chain${chainIndex}-step${stepIdx}');
+              if (container) {
+                container.classList.remove('hidden');
+                container.querySelector('pre').textContent = JSON.stringify(result, null, 2);
+              }
+              ` : ''}
+              resolve(result);
+            }
+          }
+        };
+        window.addEventListener('message', handler);
+      });
+    }`;
+  }).join('\n');
+
+  // Generate chain execution code
+  const elementId = chain[0].elementConfig!.id;
+  const eventType = chain[0].elementConfig!.elementType === 'form' ? 'submit' : 'click';
+
+  return `  <script>
+${stepFunctions}
+
+    // Execute chain
+    document.getElementById('${elementId}').addEventListener('${eventType}', async (e) => {
+      ${chain[0].elementConfig!.elementType === 'form' ? 'e.preventDefault();' : ''}
+      const previousResults = [];
+      ${chain[0].elementConfig!.elementType === 'form' ? 'const formData = new FormData(e.target);' : 'const formData = null;'}
+
+      try {
+${chain.map((_, stepIdx) => `
+        // Execute Step ${stepIdx + 1}
+        showNotification('Executing step ${stepIdx + 1}...', 'info');
+        const result${stepIdx} = await executeStep${stepIdx}(previousResults, formData);
+        previousResults.push(result${stepIdx});
+`).join('')}
+
+        // Chain completed
+        document.getElementById('chain${chainIndex}-final-result').classList.remove('hidden');
+        showNotification('Chain completed successfully! 🎉', 'success');
+      } catch (error) {
+        console.error('Chain execution failed:', error);
+        showNotification('Chain failed: ' + error, 'error');
+      }
+    });
+
+    function showNotification(message, variant = 'info') {
+      window.parent.postMessage({
+        type: 'notify',
+        payload: { message, variant }
+      }, '*');
+    }
+  </script>`;
 }
 
 /**

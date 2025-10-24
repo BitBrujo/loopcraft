@@ -111,9 +111,10 @@ export interface ToolParameter {
   type: string; // JSON schema type
   required: boolean;
   description?: string;
-  valueSource: 'static' | 'formField';
+  valueSource: 'static' | 'formField' | 'previousResult';
   staticValue?: string | number | boolean;
   formFieldName?: string; // if valueSource is 'formField'
+  previousResultPath?: string; // JSONPath to extract from previous tool's result (e.g., "data.userId")
 }
 
 /**
@@ -156,6 +157,10 @@ export interface PatternInstance {
     step3: boolean;
     step4: boolean;
   };
+
+  // Tool chaining fields
+  isChained: boolean;              // Is this pattern chained to previous?
+  chainedFromPatternId?: string;   // ID of the previous pattern in chain
 }
 
 /**

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Zap, Check, ArrowRight } from 'lucide-react';
+import { Zap, Check, ArrowRight, Link2 } from 'lucide-react';
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
 import { getPattern } from '@/lib/composition-patterns';
 import { validateStep3 } from '@/lib/composition-validation';
@@ -93,6 +93,7 @@ export function Step3() {
           targetServerName={targetServerName}
           availableTools={availableTools}
           elementConfig={currentPattern?.elementConfig || null}
+          isChained={currentPattern?.isChained || false}
         />
       )}
       {pattern.actionType === 'prompt' && (
@@ -131,12 +132,13 @@ export function Step3() {
 }
 
 // Tool Action Configuration
-function ToolActionConfig({ config, setConfig, targetServerName, availableTools, elementConfig }: {
+function ToolActionConfig({ config, setConfig, targetServerName, availableTools, elementConfig, isChained }: {
   config: ActionConfig;
   setConfig: (config: ActionConfig) => void;
   targetServerName: string | null;
   availableTools: ToolSchema[];
   elementConfig: ElementConfig | null;
+  isChained: boolean;
 }) {
   const { selectedTools } = useUIBuilderStore();
   const [selectedTool, setSelectedTool] = useState<ToolSchema | null>(null);
@@ -237,12 +239,12 @@ function ToolActionConfig({ config, setConfig, targetServerName, availableTools,
                 )}
 
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <label className="flex items-center gap-1">
                       <input
                         type="radio"
                         checked={param.valueSource === 'static'}
-                        onChange={() => updateParameter(index, { valueSource: 'static', formFieldName: undefined })}
+                        onChange={() => updateParameter(index, { valueSource: 'static', formFieldName: undefined, previousResultPath: undefined })}
                         className="text-orange-500"
                       />
                       <span className="text-sm">Static Value</span>
@@ -253,10 +255,26 @@ function ToolActionConfig({ config, setConfig, targetServerName, availableTools,
                         <input
                           type="radio"
                           checked={param.valueSource === 'formField'}
-                          onChange={() => updateParameter(index, { valueSource: 'formField', staticValue: undefined })}
+                          onChange={() => updateParameter(index, { valueSource: 'formField', staticValue: undefined, previousResultPath: undefined })}
                           className="text-orange-500"
                         />
                         <span className="text-sm">Form Field</span>
+                      </label>
+                    )}
+
+                    {/* Previous Result option - only show if chained */}
+                    {isChained && (
+                      <label className="flex items-center gap-1 bg-orange-50 dark:bg-orange-950/20 px-2 py-1 rounded border border-orange-200">
+                        <input
+                          type="radio"
+                          checked={param.valueSource === 'previousResult'}
+                          onChange={() => updateParameter(index, { valueSource: 'previousResult', staticValue: undefined, formFieldName: undefined })}
+                          className="text-orange-500"
+                        />
+                        <span className="text-sm flex items-center gap-1">
+                          <Link2 className="h-3 w-3" />
+                          Previous Result
+                        </span>
                       </label>
                     )}
                   </div>
@@ -286,6 +304,21 @@ function ToolActionConfig({ config, setConfig, targetServerName, availableTools,
                         </option>
                       ))}
                     </select>
+                  )}
+
+                  {param.valueSource === 'previousResult' && (
+                    <div className="space-y-1">
+                      <input
+                        type="text"
+                        value={param.previousResultPath || ''}
+                        onChange={(e) => updateParameter(index, { previousResultPath: e.target.value })}
+                        placeholder="e.g., data.userId or result[0].id"
+                        className="w-full px-3 py-2 text-sm border border-orange-200 rounded focus:ring-1 focus:ring-orange-500 bg-orange-50/50 dark:bg-orange-950/10"
+                      />
+                      <p className="text-xs text-orange-700 dark:text-orange-300">
+                        Path to extract value from previous tool result (JSONPath syntax)
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>

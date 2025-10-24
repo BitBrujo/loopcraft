@@ -1,7 +1,7 @@
 'use client';
 
 import { useUIBuilderStore } from '@/lib/stores/ui-builder-store';
-import { Target, Box, Zap, Package, Check, Trash2, Edit2, Plus } from 'lucide-react';
+import { Target, Box, Zap, Package, Check, Trash2, Edit2, Plus, ArrowRight, Link2 } from 'lucide-react';
 import { Step1 } from './Step1';
 import { Step2 } from './Step2';
 import { Step3 } from './Step3';
@@ -62,6 +62,13 @@ export function InsertPanel() {
                     }
                   `}
                 >
+                  {/* Show chain arrow if this is a chained pattern */}
+                  {pattern.isChained && (
+                    <div className="flex items-center gap-1 text-orange-500">
+                      <ArrowRight className="h-4 w-4" />
+                    </div>
+                  )}
+
                   <span className="text-lg">{patternDef?.icon || '📝'}</span>
                   <div className="text-left">
                     <div className="text-sm font-medium text-foreground">
@@ -71,6 +78,13 @@ export function InsertPanel() {
                       <div className="flex items-center gap-1 text-xs text-green-600">
                         <Check className="h-3 w-3" />
                         Complete
+                      </div>
+                    )}
+                    {/* Show chain badge */}
+                    {pattern.isChained && (
+                      <div className="flex items-center gap-1 text-xs text-orange-600">
+                        <Link2 className="h-3 w-3" />
+                        Chained
                       </div>
                     )}
                   </div>

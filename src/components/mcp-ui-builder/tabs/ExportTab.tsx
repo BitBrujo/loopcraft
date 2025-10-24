@@ -80,7 +80,7 @@ export function ExportTab() {
         {/* Companion Mode Info Banner */}
         {targetServerName && (
           <Alert className="border-orange-500/30 bg-orange-50/30 dark:bg-orange-950/10">
-            <Puzzle className="h-4 w-4 text-orange-600" />
+            <Puzzle className="h-4 w-4 text-white" />
             <AlertTitle className="text-orange-900 dark:text-orange-100">
               Portable Companion UI for {targetServerName}
             </AlertTitle>
@@ -118,7 +118,7 @@ export function ExportTab() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Rocket className="h-5 w-5 text-orange-600" />
+              <Rocket className="h-5 w-5 text-white" />
               Deploy Companion Server
             </CardTitle>
             <CardDescription>
