@@ -19,7 +19,7 @@ interface ToastState {
   toasts: Toast[]
 }
 
-type ToastAction =
+type ToastActionType =
   | { type: "ADD_TOAST"; toast: Toast }
   | { type: "REMOVE_TOAST"; id: string }
 
@@ -30,7 +30,7 @@ function generateId() {
   return toastCount.toString()
 }
 
-const toastReducer = (state: ToastState, action: ToastAction): ToastState => {
+const toastReducer = (state: ToastState, action: ToastActionType): ToastState => {
   switch (action.type) {
     case "ADD_TOAST":
       return {
@@ -51,7 +51,7 @@ const listeners: Array<(state: ToastState) => void> = []
 
 let memoryState: ToastState = { toasts: [] }
 
-function dispatch(action: ToastAction) {
+function dispatch(action: ToastActionType) {
   memoryState = toastReducer(memoryState, action)
   listeners.forEach((listener) => {
     listener(memoryState)
@@ -94,7 +94,7 @@ function useToast() {
         listeners.splice(index, 1)
       }
     }
-  }, [state])
+  }, []) // Empty dependency array - only register/unregister listener on mount/unmount
 
   return {
     ...state,

@@ -42,19 +42,23 @@ export function Step4() {
 
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
-  // Sync with store
+  // Sync with store - Only when switching between patterns, not on every store update
   useEffect(() => {
-    if (currentPattern?.handlerConfig) {
-      setConfig(currentPattern.handlerConfig);
-    }
-  }, [currentPattern?.handlerConfig]);
+    const freshConfig = currentPattern?.handlerConfig || {
+      handlerType: 'response',
+      showLoadingIndicator: true,
+      handleErrors: true,
+      supportAllContentTypes: true,
+    };
+    setConfig(freshConfig);
+  }, [composition.currentPatternIndex]); // Only sync when pattern index changes
 
-  // Validate
+  // Validate and update store
   useEffect(() => {
     const validation = validateStep4(currentPattern?.selectedPattern || null, config);
     updateCompositionValidity(4, validation.valid);
     setHandlerConfig(config);
-  }, [config, currentPattern?.selectedPattern, setHandlerConfig, updateCompositionValidity]);
+  }, [config, currentPattern?.selectedPattern]); // Removed setters - they're stable Zustand actions
 
   const handleBack = () => {
     setCompositionStep(3);
@@ -207,7 +211,7 @@ export function Step4() {
                 Tool chaining allows you to create multi-step workflows where the output of one tool feeds into the next.
               </p>
               <p className="text-xs text-orange-700">
-                After generating this pattern, use the "Chain Another Tool" button to add the next step in your workflow.
+                After generating this pattern, use the &quot;Chain Another Tool&quot; button to add the next step in your workflow.
               </p>
             </div>
           )}

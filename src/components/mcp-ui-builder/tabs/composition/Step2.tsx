@@ -26,19 +26,21 @@ export function Step2() {
     }
   );
 
-  // Sync with store
+  // Sync with store - Only when switching between patterns, not on every store update
   useEffect(() => {
-    if (currentPattern?.elementConfig) {
-      setConfig(currentPattern.elementConfig);
-    }
-  }, [currentPattern?.elementConfig]);
+    const freshConfig = currentPattern?.elementConfig || {
+      elementType: pattern?.elementType || 'button',
+      id: '',
+    };
+    setConfig(freshConfig);
+  }, [composition.currentPatternIndex]); // Only sync when pattern index changes
 
-  // Validate
+  // Validate and update store
   useEffect(() => {
     const validation = validateStep2(currentPattern?.selectedPattern || null, config);
     updateCompositionValidity(2, validation.valid);
     setElementConfig(config);
-  }, [config, currentPattern?.selectedPattern, setElementConfig, updateCompositionValidity]);
+  }, [config, currentPattern?.selectedPattern]); // Removed setters - they're stable Zustand actions
 
   const handleNext = () => {
     const validation = validateStep2(currentPattern?.selectedPattern || null, config);

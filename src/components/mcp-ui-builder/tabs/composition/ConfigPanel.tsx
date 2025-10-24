@@ -21,8 +21,8 @@ export function ConfigPanel() {
   const currentPattern = composition.patterns[composition.currentPatternIndex];
   const pattern = currentPattern?.selectedPattern ? getPattern(currentPattern.selectedPattern) : null;
 
-  // Helper functions defined before JSX to prevent infinite loops
-  const getFrameSizePreset = React.useMemo((): string => {
+  // Memoized getter functions to prevent unnecessary re-renders
+  const frameSizePreset = React.useMemo((): string => {
     const size = currentResource?.uiMetadata?.['preferred-frame-size'];
     if (!size) return 'medium';
     const [width, height] = size as [string, string];
@@ -41,16 +41,17 @@ export function ConfigPanel() {
       full: ['100%', '600px'],
     };
     if (sizes[preset]) {
+      const currentState = useUIBuilderStore.getState();
       updateResource({
         uiMetadata: {
-          ...currentResource?.uiMetadata,
+          ...(currentState.currentResource?.uiMetadata || {}),
           'preferred-frame-size': sizes[preset],
         },
       });
     }
-  }, [currentResource?.uiMetadata, updateResource]);
+  }, []);
 
-  const getAutoResizeValue = React.useMemo((): string => {
+  const autoResizeValue = React.useMemo((): string => {
     const autoResize = currentResource?.uiMetadata?.['auto-resize-iframe'];
     if (autoResize === true) return 'both';
     if (typeof autoResize === 'object') {
@@ -67,15 +68,16 @@ export function ConfigPanel() {
     else if (value === 'width') autoResize = { width: true };
     else if (value === 'height') autoResize = { height: true };
 
+    const currentState = useUIBuilderStore.getState();
     updateResource({
       uiMetadata: {
-        ...currentResource?.uiMetadata,
+        ...(currentState.currentResource?.uiMetadata || {}),
         'auto-resize-iframe': autoResize,
       },
     });
-  }, [currentResource?.uiMetadata, updateResource]);
+  }, []);
 
-  const getSandboxPermissions = React.useMemo((): string => {
+  const sandboxPermissions = React.useMemo((): string => {
     const permissions = currentResource?.uiMetadata?.['sandbox-permissions'] as string | undefined;
     if (!permissions) return 'standard';
     if (permissions.includes('allow-same-origin') && permissions.includes('allow-scripts')) return 'standard';
@@ -89,44 +91,67 @@ export function ConfigPanel() {
       strict: 'allow-forms',
       permissive: 'allow-forms allow-scripts allow-same-origin allow-popups allow-downloads',
     };
+    const currentState = useUIBuilderStore.getState();
     updateResource({
       uiMetadata: {
-        ...currentResource?.uiMetadata,
+        ...(currentState.currentResource?.uiMetadata || {}),
         'sandbox-permissions': presets[preset],
       },
     });
-  }, [currentResource?.uiMetadata, updateResource]);
+  }, []);
 
-  const getIframeTitle = React.useMemo((): string => {
+  const iframeTitle = React.useMemo((): string => {
     return (currentResource?.uiMetadata?.['iframe-title'] as string) || '';
   }, [currentResource?.uiMetadata]);
 
   const handleIframeTitleChange = React.useCallback((value: string) => {
+    const currentState = useUIBuilderStore.getState();
     updateResource({
       uiMetadata: {
-        ...currentResource?.uiMetadata,
+        ...(currentState.currentResource?.uiMetadata || {}),
         'iframe-title': value,
       },
     });
-  }, [currentResource?.uiMetadata, updateResource]);
+  }, []);
 
-  const getMinHeight = React.useMemo((): string => {
+  const minHeight = React.useMemo((): string => {
     const style = currentResource?.uiMetadata?.['container-style'] as { minHeight?: string } | undefined;
     return style?.minHeight || '';
   }, [currentResource?.uiMetadata]);
 
   const handleMinHeightChange = React.useCallback((value: string) => {
-    const currentStyle = (currentResource?.uiMetadata?.['container-style'] || {}) as Record<string, unknown>;
+    const currentState = useUIBuilderStore.getState();
+    const currentStyle = (currentState.currentResource?.uiMetadata?.['container-style'] || {}) as Record<string, unknown>;
     updateResource({
       uiMetadata: {
-        ...currentResource?.uiMetadata,
+        ...(currentState.currentResource?.uiMetadata || {}),
         'container-style': {
           ...currentStyle,
           minHeight: value,
         },
       },
     });
-  }, [currentResource?.uiMetadata, updateResource]);
+  }, []);
+
+  const handleTitleChange = React.useCallback((value: string) => {
+    const currentState = useUIBuilderStore.getState();
+    updateResource({
+      metadata: {
+        ...(currentState.currentResource?.metadata || {}),
+        title: value,
+      },
+    });
+  }, []);
+
+  const handleDescriptionChange = React.useCallback((value: string) => {
+    const currentState = useUIBuilderStore.getState();
+    updateResource({
+      metadata: {
+        ...(currentState.currentResource?.metadata || {}),
+        description: value,
+      },
+    });
+  }, []);
 
   // If no pattern selected, show placeholder
   if (!pattern) {
@@ -181,9 +206,7 @@ export function ConfigPanel() {
             <Input
               id="title"
               value={currentResource?.metadata?.title || pattern.name}
-              onChange={(e) => updateResource({
-                metadata: { ...currentResource?.metadata, title: e.target.value }
-              })}
+              onChange={(e) => handleTitleChange(e.target.value)}
               placeholder="Resource title"
             />
           </div>
@@ -195,9 +218,7 @@ export function ConfigPanel() {
             <Textarea
               id="description"
               value={currentResource?.metadata?.description || pattern.description}
-              onChange={(e) => updateResource({
-                metadata: { ...currentResource?.metadata, description: e.target.value }
-              })}
+              onChange={(e) => handleDescriptionChange(e.target.value)}
               placeholder="Resource description"
               rows={3}
             />
@@ -228,7 +249,7 @@ export function ConfigPanel() {
             <Label htmlFor="frameSize" className="text-sm font-medium">
               Preferred Frame Size
             </Label>
-            <Select value={getFrameSizePreset} onValueChange={handleFrameSizeChange}>
+            <Select value={frameSizePreset} onValueChange={handleFrameSizeChange}>
               <SelectTrigger id="frameSize">
                 <SelectValue placeholder="Select frame size" />
               </SelectTrigger>
@@ -246,7 +267,7 @@ export function ConfigPanel() {
             <Label htmlFor="autoResize" className="text-sm font-medium">
               Auto-Resize
             </Label>
-            <Select value={getAutoResizeValue} onValueChange={handleAutoResizeChange}>
+            <Select value={autoResizeValue} onValueChange={handleAutoResizeChange}>
               <SelectTrigger id="autoResize">
                 <SelectValue placeholder="Select auto-resize behavior" />
               </SelectTrigger>
@@ -284,7 +305,7 @@ export function ConfigPanel() {
             <Label htmlFor="sandboxPermissions" className="text-sm font-medium">
               Sandbox Permissions
             </Label>
-            <Select value={getSandboxPermissions} onValueChange={handleSandboxChange}>
+            <Select value={sandboxPermissions} onValueChange={handleSandboxChange}>
               <SelectTrigger id="sandboxPermissions">
                 <SelectValue placeholder="Select security level" />
               </SelectTrigger>
@@ -302,7 +323,7 @@ export function ConfigPanel() {
             </Label>
             <Input
               id="iframeTitle"
-              value={getIframeTitle}
+              value={iframeTitle}
               onChange={(e) => handleIframeTitleChange(e.target.value)}
               placeholder="Interactive UI"
             />
@@ -314,7 +335,7 @@ export function ConfigPanel() {
             </Label>
             <Input
               id="minHeight"
-              value={getMinHeight}
+              value={minHeight}
               onChange={(e) => handleMinHeightChange(e.target.value)}
               placeholder="400px"
             />

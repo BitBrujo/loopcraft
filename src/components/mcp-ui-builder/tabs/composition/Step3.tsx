@@ -28,19 +28,20 @@ export function Step3() {
     }
   );
 
-  // Sync with store
+  // Sync with store - Only when switching between patterns, not on every store update
   useEffect(() => {
-    if (currentPattern?.actionConfig) {
-      setConfig(currentPattern.actionConfig);
-    }
-  }, [currentPattern?.actionConfig]);
+    const freshConfig = currentPattern?.actionConfig || {
+      actionType: pattern?.actionType || 'tool',
+    };
+    setConfig(freshConfig);
+  }, [composition.currentPatternIndex]); // Only sync when pattern index changes
 
-  // Validate
+  // Validate and update store
   useEffect(() => {
     const validation = validateStep3(currentPattern?.selectedPattern || null, config);
     updateCompositionValidity(3, validation.valid);
     setActionConfig(config);
-  }, [config, currentPattern?.selectedPattern, setActionConfig, updateCompositionValidity]);
+  }, [config, currentPattern?.selectedPattern]); // Removed setters - they're stable Zustand actions
 
   const handleNext = () => {
     const validation = validateStep3(currentPattern?.selectedPattern || null, config);
@@ -150,23 +151,33 @@ function ToolActionConfig({ config, setConfig, targetServerName, availableTools,
       const tool = availableTools.find((t: ToolSchema) => t.name === config.toolName);
       setSelectedTool(tool || null);
 
-      // Initialize parameters from tool schema
+      // Initialize parameters from tool schema only if tool has schema
+      // and current parameters don't match the schema
       if (tool && tool.inputSchema?.properties) {
-        const params: ToolParameter[] = Object.entries(tool.inputSchema.properties).map(([name, schema]: [string, { type?: string; description?: string }]) => {
-          const existingParam = config.toolParameters?.find(p => p.name === name);
-          return existingParam || {
-            name,
-            type: schema.type || 'string',
-            required: tool.inputSchema?.required?.includes(name) || false,
-            description: schema.description,
-            valueSource: 'static',
-            staticValue: '',
-          };
-        });
-        setConfig({ ...config, toolParameters: params });
+        const schemaParamNames = Object.keys(tool.inputSchema.properties);
+        const currentParamNames = config.toolParameters?.map(p => p.name) || [];
+
+        // Only update if parameters are missing or don't match schema
+        const needsUpdate = schemaParamNames.length !== currentParamNames.length ||
+          schemaParamNames.some(name => !currentParamNames.includes(name));
+
+        if (needsUpdate) {
+          const params: ToolParameter[] = Object.entries(tool.inputSchema.properties).map(([name, schema]: [string, { type?: string; description?: string }]) => {
+            const existingParam = config.toolParameters?.find(p => p.name === name);
+            return existingParam || {
+              name,
+              type: schema.type || 'string',
+              required: tool.inputSchema?.required?.includes(name) || false,
+              description: schema.description,
+              valueSource: 'static',
+              staticValue: '',
+            };
+          });
+          setConfig({ ...config, toolParameters: params });
+        }
       }
     }
-  }, [config.toolName, availableTools]);
+  }, [config.toolName, availableTools]); // Only depend on tool name and available tools
 
   const handleToolSelect = (toolName: string) => {
     setConfig({ ...config, toolName });

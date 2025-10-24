@@ -208,8 +208,30 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
           availableTools: [],
           selectedTools: [],
           activeTab: 'configure',
+          activeDesignTab: 'composition',
           showPreview: true,
           error: null,
+          // Reset composition workflow state
+          composition: {
+            currentStep: 1,
+            currentPatternIndex: 0,
+            patterns: [
+              {
+                id: generateUUID(),
+                selectedPattern: null,
+                elementConfig: null,
+                actionConfig: null,
+                handlerConfig: null,
+                isValid: {
+                  step1: false,
+                  step2: false,
+                  step3: false,
+                  step4: false,
+                },
+              },
+            ],
+            generatedCode: null,
+          },
         }),
 
       setSavedTemplates: (templates) =>
@@ -510,7 +532,7 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
     {
       name: 'ui-builder-storage',
       version: 2, // Increment when state structure changes
-      migrate: (persistedState: any, version: number) => {
+      migrate: (persistedState: unknown, version: number) => {
         // Clear old state if version doesn't match
         if (version < 2) {
           console.log('Migrating UI Builder state from version', version, 'to 2');

@@ -51,11 +51,11 @@ export function InsertPanel() {
               const isComplete = pattern.isValid.step1 && pattern.isValid.step2 && pattern.isValid.step3 && pattern.isValid.step4;
 
               return (
-                <button
+                <div
                   key={pattern.id}
                   onClick={() => setCurrentPatternIndex(index)}
                   className={`
-                    flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all shrink-0
+                    flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all shrink-0 cursor-pointer
                     ${isActive
                       ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20'
                       : 'border hover:border-orange-300 bg-card hover:bg-orange-50/50'
@@ -87,7 +87,7 @@ export function InsertPanel() {
                       <Trash2 className="h-3 w-3 text-red-500" />
                     </button>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>
@@ -103,13 +103,13 @@ export function InsertPanel() {
 
       {/* Horizontal Progress Indicator */}
       <div className="border-b bg-background px-6 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-center gap-4">
           {steps.map((step, index) => {
             const status = getStepStatus(step.number);
             const isLast = index === steps.length - 1;
 
             return (
-              <div key={step.number} className="flex items-center flex-1">
+              <div key={step.number} className="flex items-center">
                 {/* Step Circle */}
                 <button
                   onClick={() => handleStepClick(step.number)}
@@ -139,7 +139,7 @@ export function InsertPanel() {
                   </span>
                   <div
                     className={`
-                      text-sm font-medium transition-colors
+                      text-sm font-medium transition-colors text-center
                       ${
                         status === 'current'
                           ? 'text-foreground'
@@ -155,7 +155,7 @@ export function InsertPanel() {
 
                 {/* Connector Line */}
                 {!isLast && (
-                  <div className="flex-1 h-px mx-2">
+                  <div className="w-16 h-px mx-2">
                     <div
                       className={`
                         h-full transition-all
