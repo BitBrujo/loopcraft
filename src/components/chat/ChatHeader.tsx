@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,13 +16,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "./ThemeToggle";
 import { MobileSidebar } from "./MobileSidebar";
-import { MessageSquare, Settings, User, LogOut } from "lucide-react";
+import { SaveDialog } from "@/components/mcp-ui-builder/SaveDialog";
+import { LoadDialog } from "@/components/mcp-ui-builder/LoadDialog";
+import { MessageSquare, Settings, User, LogOut, Save, FolderOpen } from "lucide-react";
 
 export function ChatHeader() {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<{ id: number; email: string } | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [modelName, setModelName] = useState<string>("Ollama");
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showLoadDialog, setShowLoadDialog] = useState(false);
+
+  // Check if we're on the UI Builder page
+  const isUIBuilderPage = pathname === "/mcp-ui-builder";
 
   useEffect(() => {
     // Check if user is logged in
@@ -102,6 +110,19 @@ export function ChatHeader() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {isUIBuilderPage && (
+                  <>
+                    <DropdownMenuItem onClick={() => setShowSaveDialog(true)} className="cursor-pointer">
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Template
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowLoadDialog(true)} className="cursor-pointer">
+                      <FolderOpen className="h-4 w-4 mr-2" />
+                      Load Template
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem asChild className="cursor-pointer">
                   <Link href="/settings" className="flex items-center">
                     <Settings className="h-4 w-4 mr-2" />
@@ -127,6 +148,14 @@ export function ChatHeader() {
 
       {/* Test Server Banner */}
       {/* Test server banner removed with MCP-UI Builder simplification */}
+
+      {/* Save/Load Dialogs - Only render when on UI Builder page */}
+      {isUIBuilderPage && (
+        <>
+          <SaveDialog open={showSaveDialog} onOpenChange={setShowSaveDialog} />
+          <LoadDialog open={showLoadDialog} onOpenChange={setShowLoadDialog} />
+        </>
+      )}
     </header>
   );
 }

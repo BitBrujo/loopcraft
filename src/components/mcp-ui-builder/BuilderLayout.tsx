@@ -6,9 +6,7 @@ import { ConfigureTab } from "./tabs/ConfigureTab";
 import { DesignTab } from "./tabs/DesignTab";
 import { ExportTab } from "./tabs/ExportTab";
 import { Button } from "@/components/ui/button";
-import { SaveDialog } from "./SaveDialog";
-import { LoadDialog } from "./LoadDialog";
-import { Save, FolderOpen, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -17,12 +15,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import type { TabId } from "@/types/ui-builder";
 
 const tabs: Array<{ id: TabId; label: string; description: string }> = [
@@ -36,8 +28,6 @@ const tabs: Array<{ id: TabId; label: string; description: string }> = [
 ];
 
 export function BuilderLayout() {
-    const [showSaveDialog, setShowSaveDialog] = useState(false);
-    const [showLoadDialog, setShowLoadDialog] = useState(false);
     const [showResetConfirmation, setShowResetConfirmation] = useState(false);
     const { activeTab, setActiveTab, resetResource } = useUIBuilderStore();
 
@@ -72,8 +62,8 @@ export function BuilderLayout() {
                     </p>
                 </div>
 
-                {/* Reset Button and File Dropdown - Absolute Right */}
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                {/* Reset Button - Absolute Left */}
+                <div className="absolute left-6 top-1/2 -translate-y-1/2">
                     <Button
                         variant="outline"
                         className="gap-2 text-destructive hover:bg-destructive/10"
@@ -82,29 +72,6 @@ export function BuilderLayout() {
                         <RotateCcw className="h-4 w-4" />
                         Reset
                     </Button>
-
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="gap-2">
-                                <Save className="h-4 w-4" />
-                                File
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                                onClick={() => setShowSaveDialog(true)}
-                            >
-                                <Save className="h-4 w-4 mr-2" />
-                                Save Template
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => setShowLoadDialog(true)}
-                            >
-                                <FolderOpen className="h-4 w-4 mr-2" />
-                                Load Template
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                 </div>
             </div>
 
@@ -169,16 +136,7 @@ export function BuilderLayout() {
                 </div>
             </div>
 
-            {/* Dialogs */}
-            <SaveDialog
-                open={showSaveDialog}
-                onOpenChange={setShowSaveDialog}
-            />
-            <LoadDialog
-                open={showLoadDialog}
-                onOpenChange={setShowLoadDialog}
-            />
-
+            {/* Reset Confirmation Dialog */}
             <Dialog
                 open={showResetConfirmation}
                 onOpenChange={setShowResetConfirmation}
