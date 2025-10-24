@@ -166,11 +166,11 @@ export function validateStep3(
             }
           }
 
-          // Validate previousResult parameters have paths (even if not required)
+          // Validate previousResult parameters
+          // Note: Empty path means "use entire result object" which is valid
           if (param.valueSource === 'previousResult') {
-            if (!param.previousResultPath || param.previousResultPath.trim() === '') {
-              errors.push(`Parameter "${param.name}" uses previous result but has no result path specified`);
-            }
+            // previousResultPath can be empty (means entire result)
+            // No validation needed here - empty string is valid
           }
         });
       }

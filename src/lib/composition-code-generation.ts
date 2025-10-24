@@ -343,17 +343,24 @@ function generateChainScript(chain: PatternInstance[], chainIndex: number): stri
     params.forEach(param => {
       if (param.valueSource === 'previousResult' && stepIdx > 0) {
         // Extract from previous result using path
-        const path = param.previousResultPath || 'content[0].text';
-        const pathParts = path.split('.');
-        let accessor = 'previousResults[' + (stepIdx - 1) + ']';
-        pathParts.forEach(part => {
-          if (part.includes('[')) {
-            accessor += '.' + part;
-          } else {
-            accessor += '?.' + part;
-          }
-        });
-        paramsCode += `        "${param.name}": ${accessor},\n`;
+        const path = param.previousResultPath;
+
+        if (!path || path.trim() === '') {
+          // Empty path = use entire result object
+          paramsCode += `        "${param.name}": previousResults[${stepIdx - 1}],\n`;
+        } else {
+          // Build accessor from path (e.g., "content[0].text" -> previousResults[0]?.content[0]?.text)
+          const pathParts = path.split('.');
+          let accessor = 'previousResults[' + (stepIdx - 1) + ']';
+          pathParts.forEach(part => {
+            if (part.includes('[')) {
+              accessor += '.' + part;
+            } else {
+              accessor += '?.' + part;
+            }
+          });
+          paramsCode += `        "${param.name}": ${accessor},\n`;
+        }
       } else if (param.valueSource === 'static') {
         const value = typeof param.staticValue === 'string'
           ? `"${param.staticValue}"`

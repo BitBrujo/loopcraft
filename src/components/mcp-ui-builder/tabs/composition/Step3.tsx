@@ -307,16 +307,41 @@ function ToolActionConfig({ config, setConfig, targetServerName, availableTools,
                   )}
 
                   {param.valueSource === 'previousResult' && (
-                    <div className="space-y-1">
-                      <input
-                        type="text"
-                        value={param.previousResultPath || ''}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-medium text-orange-700 dark:text-orange-300">
+                        What to extract from previous result?
+                      </label>
+                      <select
+                        value={param.previousResultPath || 'content[0].text'}
                         onChange={(e) => updateParameter(index, { previousResultPath: e.target.value })}
-                        placeholder="e.g., data.userId or result[0].id"
                         className="w-full px-3 py-2 text-sm border border-orange-200 rounded focus:ring-1 focus:ring-orange-500 bg-orange-50/50 dark:bg-orange-950/10"
-                      />
-                      <p className="text-xs text-orange-700 dark:text-orange-300">
-                        Path to extract value from previous tool result (JSONPath syntax)
+                      >
+                        <option value="content[0].text">Text response (Most common)</option>
+                        <option value="">Entire result object</option>
+                        <option value="content[0]">First content item</option>
+                        <option value="content">All content</option>
+                        <option value="isError">Success/Error status</option>
+                        <option value="__custom__">Custom path (Advanced)...</option>
+                      </select>
+
+                      {param.previousResultPath === '__custom__' && (
+                        <div className="space-y-1">
+                          <input
+                            type="text"
+                            value=""
+                            onChange={(e) => updateParameter(index, { previousResultPath: e.target.value })}
+                            placeholder="e.g., data.userId or result[0].id"
+                            className="w-full px-3 py-2 text-sm border border-orange-200 rounded focus:ring-1 focus:ring-orange-500 bg-orange-50/50 dark:bg-orange-950/10"
+                            autoFocus
+                          />
+                          <p className="text-xs text-orange-600 dark:text-orange-400">
+                            Enter custom JSONPath (for advanced users)
+                          </p>
+                        </div>
+                      )}
+
+                      <p className="text-xs text-orange-600 dark:text-orange-400">
+                        💡 Tip: Most tools return text in <code className="bg-orange-100 dark:bg-orange-900/30 px-1 rounded">content[0].text</code>
                       </p>
                     </div>
                   )}
