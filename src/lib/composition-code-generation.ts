@@ -771,6 +771,8 @@ function generateHandlerCode(config: HandlerConfig): string {
 
   // Response handler
   if (config.handlerType === 'response' || config.handlerType === 'both') {
+    const destination = config.responseDestination || 'ui'; // Default to UI
+
     code += `
     // Tool response handler
     function handleToolResponse(event) {
@@ -782,7 +784,28 @@ function generateHandlerCode(config: HandlerConfig): string {
           showError(result.error);
         } else {
           console.log('Tool result:', result);
-          ${config.handlerType === 'both' && config.successMessage ? `showNotification('${config.successMessage}', '${config.successVariant || 'success'}');` : `showNotification('Operation completed successfully', 'success');`}
+
+          // Route response based on destination: ${destination}`;
+
+    // Generate routing logic based on destination
+    if (destination === 'ui' || destination === 'both') {
+      code += `
+          // Send to UI
+          ${config.handlerType === 'both' && config.successMessage ? `showNotification('${config.successMessage}', '${config.successVariant || 'success'}');` : `showNotification('Operation completed successfully', 'success');`}`;
+    }
+
+    if (destination === 'agent' || destination === 'both') {
+      code += `
+          // Send to agent
+          sendToAgent(result);`;
+    }
+
+    if (destination === 'none') {
+      code += `
+          // Fire and forget - no routing`;
+    }
+
+    code += `
         }
       }
     }`;
@@ -815,6 +838,21 @@ function generateHandlerCode(config: HandlerConfig): string {
       }, '*');
     }`;
 
+  // Send to agent helper - include if responseDestination is 'agent' or 'both'
+  if (config.responseDestination === 'agent' || config.responseDestination === 'both') {
+    code += `
+
+    function sendToAgent(result) {
+      // Send result to AI agent for processing
+      window.parent.postMessage({
+        type: 'agent-message',
+        payload: {
+          role: 'tool',
+          content: JSON.stringify(result, null, 2)
+        }
+      }, '*');
+    }`;
+  }
 
   return code;
 }

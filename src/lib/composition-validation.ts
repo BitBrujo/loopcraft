@@ -239,6 +239,14 @@ export function validateStep4(
     errors.push(`Handler type "${handlerConfig.handlerType}" is not supported for this pattern. Supported types: ${patternMeta.handlerTypes.join(', ')}`);
   }
 
+  // Validate response destination for tool actions with non-none handlers
+  // Note: Only tool actions have response destinations, and UI only shows this for tool actions
+  if (patternMeta.actionType === 'tool' && handlerConfig.handlerType !== 'none') {
+    if (!handlerConfig.responseDestination) {
+      errors.push('Response destination is required (choose where to send the tool response)');
+    }
+  }
+
   // Handler-specific validation
   // Note: responseContainerId is no longer required - responses are shown via notifications
 

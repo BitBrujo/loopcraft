@@ -34,6 +34,7 @@ export function Step4() {
   const [config, setConfig] = useState<HandlerConfig>(
     currentPattern?.handlerConfig || {
       handlerType: 'response',
+      responseDestination: 'ui', // Default: send to UI only
       showLoadingIndicator: true,
       handleErrors: true,
       supportAllContentTypes: true,
@@ -46,6 +47,7 @@ export function Step4() {
   useEffect(() => {
     const freshConfig = currentPattern?.handlerConfig || {
       handlerType: 'response',
+      responseDestination: 'ui', // Default: send to UI only
       showLoadingIndicator: true,
       handleErrors: true,
       supportAllContentTypes: true,
@@ -181,6 +183,104 @@ export function Step4() {
               <option value="success">Success (Green)</option>
               <option value="info">Info (Blue)</option>
             </select>
+          </div>
+        </div>
+      )}
+
+      {/* Response Routing - Only for tool actions with non-none handlers */}
+      {currentPattern?.actionConfig?.actionType === 'tool' && config.handlerType !== 'none' && (
+        <div className="border border rounded-lg p-4 space-y-4">
+          <div>
+            <h3 className="font-medium text-foreground">Response Routing</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Control where the tool response is sent
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <button
+              onClick={() => setConfig({ ...config, responseDestination: 'ui' })}
+              className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                config.responseDestination === 'ui'
+                  ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20'
+                  : 'border hover:border bg-card'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-foreground">UI Only</div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    Display result in interface only (don&apos;t send to agent)
+                  </div>
+                </div>
+                {config.responseDestination === 'ui' && (
+                  <Check className="h-5 w-5 text-orange-500" />
+                )}
+              </div>
+            </button>
+
+            <button
+              onClick={() => setConfig({ ...config, responseDestination: 'agent' })}
+              className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                config.responseDestination === 'agent'
+                  ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20'
+                  : 'border hover:border bg-card'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-foreground">Agent Only</div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    Send to AI assistant for processing (don&apos;t show in UI)
+                  </div>
+                </div>
+                {config.responseDestination === 'agent' && (
+                  <Check className="h-5 w-5 text-orange-500" />
+                )}
+              </div>
+            </button>
+
+            <button
+              onClick={() => setConfig({ ...config, responseDestination: 'both' })}
+              className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                config.responseDestination === 'both'
+                  ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20'
+                  : 'border hover:border bg-card'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-foreground">Both</div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    Show in UI and send to agent
+                  </div>
+                </div>
+                {config.responseDestination === 'both' && (
+                  <Check className="h-5 w-5 text-orange-500" />
+                )}
+              </div>
+            </button>
+
+            <button
+              onClick={() => setConfig({ ...config, responseDestination: 'none' })}
+              className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                config.responseDestination === 'none'
+                  ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20'
+                  : 'border hover:border bg-card'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-foreground">None</div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    Fire and forget (no routing)
+                  </div>
+                </div>
+                {config.responseDestination === 'none' && (
+                  <Check className="h-5 w-5 text-orange-500" />
+                )}
+              </div>
+            </button>
           </div>
         </div>
       )}

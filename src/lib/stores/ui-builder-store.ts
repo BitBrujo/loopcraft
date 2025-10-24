@@ -546,11 +546,11 @@ export const useUIBuilderStore = create<UIBuilderStore>()(
     }),
     {
       name: 'ui-builder-storage',
-      version: 3, // Increment when state structure changes (v3 adds tool chaining)
+      version: 4, // Increment when state structure changes (v4 adds response destination)
       migrate: (persistedState: unknown, version: number) => {
         // Clear old state if version doesn't match
-        if (version < 3) {
-          console.log('Migrating UI Builder state from version', version, 'to 3 (adding tool chaining support)');
+        if (version < 4) {
+          console.log('Migrating UI Builder state from version', version, 'to 4 (adding response destination support)');
           return {
             currentResource: defaultResource,
             showPreview: true,
