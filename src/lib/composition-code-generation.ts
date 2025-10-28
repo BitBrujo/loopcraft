@@ -797,9 +797,15 @@ function generateHandlerCode(config: HandlerConfig): string {
     code += `
     // Tool response handler
     function handleToolResponse(event) {
-      if (event.data.type === 'mcp-ui-tool-response') {
+      console.log('📨 Message received:', event.data);
+      // Handle both message types: ui-message-response (from @mcp-ui/client) and mcp-ui-tool-response (legacy)
+      if (event.data.type === 'ui-message-response' || event.data.type === 'mcp-ui-tool-response') {
+        console.log('✅ Matched tool response message');
         showLoading(false);
-        const result = event.data.result;
+        // Extract result from correct location:
+        // - @mcp-ui/client sends: event.data.payload.response
+        // - Legacy format: event.data.result
+        const result = event.data.payload?.response || event.data.result;
 
         if (result.error) {
           showError(result.error);

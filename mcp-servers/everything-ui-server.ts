@@ -36,7 +36,7 @@ const server = new FastMCP({
 // No dynamic placeholders - UI is static
 server.addTool({
   name: 'get_resource',
-  description: 'call UI resource',
+  description: 'A new MCP-UI resource',
   parameters: z.object({}),
   execute: async (args) => {
     // Prepare content
@@ -98,23 +98,23 @@ server.addTool({
     <h1 class="text-2xl font-bold mb-6 text-gray-800">Button → Tool Call</h1>
 
         <button
-      id="submit"
+      id="sub"
       class="px-6 py-3 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500"
     >
-      Show ENV
+      Call ENV
     </button>
 
+    
     <!-- Results Display Container -->
     <div id="results" class="mt-4 hidden">
       <h2 class="text-lg font-semibold mb-2 text-gray-700">Results:</h2>
       <div id="results-content" class="bg-gray-50 border border-gray-200 rounded-lg p-4 overflow-auto max-h-96"></div>
     </div>
-
   </div>
 
     <script>
     // Action: tool
-    const element = document.getElementById('submit');
+    const element = document.getElementById('sub');
     element.addEventListener('click', async (e) => {
       
 
@@ -141,9 +141,15 @@ server.addTool({
 
     // Tool response handler
     function handleToolResponse(event) {
-      if (event.data.type === 'mcp-ui-tool-response') {
+      console.log('📨 Message received:', event.data);
+      // Handle both message types: ui-message-response (from @mcp-ui/client) and mcp-ui-tool-response (legacy)
+      if (event.data.type === 'ui-message-response' || event.data.type === 'mcp-ui-tool-response') {
+        console.log('✅ Matched tool response message');
         showLoading(false);
-        const result = event.data.result;
+        // Extract result from correct location:
+        // - @mcp-ui/client sends: event.data.payload.response
+        // - Legacy format: event.data.result
+        const result = event.data.payload?.response || event.data.result;
 
         if (result.error) {
           showError(result.error);
@@ -151,7 +157,7 @@ server.addTool({
           console.log('Tool result:', result);
 
           // Route response based on destination: ui
-          // Extract and display actual tool data
+          // Send to UI
           displayToolResult(result);
         }
       }
@@ -220,7 +226,6 @@ server.addTool({
       // Also show a success notification
       showNotification('Results loaded successfully', 'success');
     }
-
     // Helper functions
     function showLoading(show) {
       if (show) {
@@ -261,8 +266,8 @@ function createUIResourceHelper(content: string, args: Record<string, unknown>) 
     encoding: 'text',
       metadata: {
         title: 'New UI Resource',
-        description: 'call UI resource',
-        lastModified: '2025-10-28T13:05:10.453Z'
+        description: 'A new MCP-UI resource',
+        lastModified: '2025-10-28T13:47:39.528Z'
       },
       uiMetadata: {
         'preferred-frame-size': ['800px', '600px']

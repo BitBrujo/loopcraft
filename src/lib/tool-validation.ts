@@ -340,9 +340,14 @@ ${formFields}
 
   // Listen for response from parent window
   window.addEventListener('message', function(event) {
-    if (event.data.type === 'mcp-ui-tool-response' && event.data.messageId === messageId) {
+    // Handle both message types: ui-message-response (from @mcp-ui/client) and mcp-ui-tool-response (legacy)
+    if ((event.data.type === 'ui-message-response' || event.data.type === 'mcp-ui-tool-response') && event.data.messageId === messageId) {
       const result = document.getElementById('result');
-      result.textContent = JSON.stringify(event.data.result, null, 2);
+      // Extract result from correct location:
+      // - @mcp-ui/client sends: event.data.payload.response
+      // - Legacy format: event.data.result
+      const toolResult = event.data.payload?.response || event.data.result;
+      result.textContent = JSON.stringify(toolResult, null, 2);
       result.classList.remove('hidden');
     }
   });
