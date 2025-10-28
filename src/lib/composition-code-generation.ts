@@ -722,8 +722,8 @@ ${elementConfig.elementType === 'form' ? paramsCode : '        const params = {}
           }
         }, '*');
 
-        // Listen for response
-        window.addEventListener('message', handleToolResponse, { once: true });
+        // Listen for response - DON'T use { once: true } because we need to ignore acknowledgment
+        window.addEventListener('message', handleToolResponse);
       } catch (error) {
         showError(error.message || 'An error occurred');
       }`;
@@ -798,9 +798,20 @@ function generateHandlerCode(config: HandlerConfig): string {
     // Tool response handler
     function handleToolResponse(event) {
       console.log('📨 Message received:', event.data);
-      // Handle both message types: ui-message-response (from @mcp-ui/client) and mcp-ui-tool-response (legacy)
+
+      // Ignore acknowledgment message - keep listening for actual response
+      if (event.data.type === 'ui-message-received') {
+        console.log('⏳ Acknowledgment received, waiting for result...');
+        return; // Keep listener active
+      }
+
+      // Handle response message types: ui-message-response (from @mcp-ui/client) and mcp-ui-tool-response (legacy)
       if (event.data.type === 'ui-message-response' || event.data.type === 'mcp-ui-tool-response') {
-        console.log('✅ Matched tool response message');
+        console.log('✅ Tool response received!');
+
+        // Remove listener now that we got the response
+        window.removeEventListener('message', handleToolResponse);
+
         showLoading(false);
         // Extract result from correct location:
         // - @mcp-ui/client sends: event.data.payload.response

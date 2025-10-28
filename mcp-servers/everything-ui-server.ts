@@ -101,7 +101,7 @@ server.addTool({
       id="sub"
       class="px-6 py-3 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500"
     >
-      Call ENV
+      Show ENV
     </button>
 
     
@@ -132,8 +132,8 @@ server.addTool({
           }
         }, '*');
 
-        // Listen for response
-        window.addEventListener('message', handleToolResponse, { once: true });
+        // Listen for response - DON'T use { once: true } because we need to ignore acknowledgment
+        window.addEventListener('message', handleToolResponse);
       } catch (error) {
         showError(error.message || 'An error occurred');
       }
@@ -142,9 +142,20 @@ server.addTool({
     // Tool response handler
     function handleToolResponse(event) {
       console.log('📨 Message received:', event.data);
-      // Handle both message types: ui-message-response (from @mcp-ui/client) and mcp-ui-tool-response (legacy)
+
+      // Ignore acknowledgment message - keep listening for actual response
+      if (event.data.type === 'ui-message-received') {
+        console.log('⏳ Acknowledgment received, waiting for result...');
+        return; // Keep listener active
+      }
+
+      // Handle response message types: ui-message-response (from @mcp-ui/client) and mcp-ui-tool-response (legacy)
       if (event.data.type === 'ui-message-response' || event.data.type === 'mcp-ui-tool-response') {
-        console.log('✅ Matched tool response message');
+        console.log('✅ Tool response received!');
+
+        // Remove listener now that we got the response
+        window.removeEventListener('message', handleToolResponse);
+
         showLoading(false);
         // Extract result from correct location:
         // - @mcp-ui/client sends: event.data.payload.response
@@ -267,7 +278,7 @@ function createUIResourceHelper(content: string, args: Record<string, unknown>) 
       metadata: {
         title: 'New UI Resource',
         description: 'A new MCP-UI resource',
-        lastModified: '2025-10-28T13:47:39.528Z'
+        lastModified: '2025-10-28T13:58:23.454Z'
       },
       uiMetadata: {
         'preferred-frame-size': ['800px', '600px']

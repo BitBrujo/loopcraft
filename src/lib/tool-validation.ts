@@ -339,9 +339,20 @@ ${formFields}
   }
 
   // Listen for response from parent window
-  window.addEventListener('message', function(event) {
-    // Handle both message types: ui-message-response (from @mcp-ui/client) and mcp-ui-tool-response (legacy)
+  window.addEventListener('message', function handleToolResponse(event) {
+    // Ignore acknowledgment message - keep listening for actual response
+    if (event.data.type === 'ui-message-received') {
+      console.log('⏳ Acknowledgment received, waiting for result...');
+      return; // Keep listener active
+    }
+
+    // Handle response message types: ui-message-response (from @mcp-ui/client) and mcp-ui-tool-response (legacy)
     if ((event.data.type === 'ui-message-response' || event.data.type === 'mcp-ui-tool-response') && event.data.messageId === messageId) {
+      console.log('✅ Tool response received!');
+
+      // Remove listener now that we got the response
+      window.removeEventListener('message', handleToolResponse);
+
       const result = document.getElementById('result');
       // Extract result from correct location:
       // - @mcp-ui/client sends: event.data.payload.response
