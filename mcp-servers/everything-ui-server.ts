@@ -104,6 +104,7 @@ server.addTool({
       Get Image
     </button>
 
+    
     <!-- Results Display Container -->
     <div id="results" class="mt-4 hidden">
       <h2 class="text-lg font-semibold mb-2 text-gray-700">Results:</h2>
@@ -166,33 +167,12 @@ server.addTool({
         } else {
           console.log('Tool result:', result);
 
-          // Display result in UI
+          // Route response based on destination: ui
+          // Display in UI (MCP-UI standard)
           displayToolResult(result);
         }
       }
     }
-    // Helper functions
-    function showLoading(show) {
-      if (show) {
-        console.log('Loading...');
-      }
-    }
-
-    function showError(message) {
-      console.error('Error:', message);
-      showNotification('Error: ' + message, 'error');
-    }
-
-    function showNotification(message, variant = 'info') {
-      window.parent.postMessage({
-        type: 'notify',
-        payload: {
-          message: message,
-          variant: variant
-        }
-      }, '*');
-    }
-
     // Display tool result in UI
     function displayToolResult(result) {
       const resultsDiv = document.getElementById('results');
@@ -263,6 +243,27 @@ server.addTool({
       // Also show a success notification
       showNotification('Results loaded successfully', 'success');
     }
+    // Helper functions
+    function showLoading(show) {
+      if (show) {
+        console.log('Loading...');
+      }
+    }
+
+    function showError(message) {
+      console.error('Error:', message);
+      showNotification('Error: ' + message, 'error');
+    }
+
+    function showNotification(message, variant = 'info') {
+      window.parent.postMessage({
+        type: 'notify',
+        payload: {
+          message: message,
+          variant: variant
+        }
+      }, '*');
+    }
   </script>
 </body>
 </html>`;
@@ -283,7 +284,7 @@ function createUIResourceHelper(content: string, args: Record<string, unknown>) 
       metadata: {
         title: 'New UI Resource',
         description: 'A new MCP-UI resource',
-        lastModified: '2025-10-28T15:39:56.752Z'
+        lastModified: '2025-10-28T16:03:15.199Z'
       },
       uiMetadata: {
         'preferred-frame-size': ['800px', '600px']
