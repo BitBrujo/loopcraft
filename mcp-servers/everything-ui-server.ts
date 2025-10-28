@@ -101,10 +101,9 @@ server.addTool({
       id="sub"
       class="px-6 py-3 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500"
     >
-      CALL ENV
+      Get Image
     </button>
 
-    
     <!-- Results Display Container -->
     <div id="results" class="mt-4 hidden">
       <h2 class="text-lg font-semibold mb-2 text-gray-700">Results:</h2>
@@ -127,7 +126,7 @@ server.addTool({
         window.parent.postMessage({
           type: 'tool',
           payload: {
-            toolName: 'mcp_everything_printEnv',
+            toolName: 'mcp_everything_getTinyImage',
             params: params
           }
         }, '*');
@@ -167,14 +166,33 @@ server.addTool({
         } else {
           console.log('Tool result:', result);
 
-          // Route response based on destination: both
-          // Send to UI
+          // Display result in UI
           displayToolResult(result);
-          // Send to agent
-          sendToAgent(result);
         }
       }
     }
+    // Helper functions
+    function showLoading(show) {
+      if (show) {
+        console.log('Loading...');
+      }
+    }
+
+    function showError(message) {
+      console.error('Error:', message);
+      showNotification('Error: ' + message, 'error');
+    }
+
+    function showNotification(message, variant = 'info') {
+      window.parent.postMessage({
+        type: 'notify',
+        payload: {
+          message: message,
+          variant: variant
+        }
+      }, '*');
+    }
+
     // Display tool result in UI
     function displayToolResult(result) {
       const resultsDiv = document.getElementById('results');
@@ -211,7 +229,13 @@ server.addTool({
           }
         } else if (item.type === 'image') {
           const img = document.createElement('img');
-          img.src = item.data || item.source || '';
+          // Convert base64 data to data URL for proper display
+          const mimeType = item.mimeType || 'image/png';
+          if (item.data.startsWith('data:')) {
+            img.src = item.data;  // Already a data URL
+          } else {
+            img.src = 'data:' + mimeType + ';base64,' + item.data;  // Convert base64 to data URL
+          }
           img.alt = item.alt || 'Tool result image';
           img.className = 'max-w-full h-auto rounded border border-gray-300';
           itemDiv.appendChild(img);
@@ -239,38 +263,6 @@ server.addTool({
       // Also show a success notification
       showNotification('Results loaded successfully', 'success');
     }
-    // Helper functions
-    function showLoading(show) {
-      if (show) {
-        console.log('Loading...');
-      }
-    }
-
-    function showError(message) {
-      console.error('Error:', message);
-      showNotification('Error: ' + message, 'error');
-    }
-
-    function showNotification(message, variant = 'info') {
-      window.parent.postMessage({
-        type: 'notify',
-        payload: {
-          message: message,
-          variant: variant
-        }
-      }, '*');
-    }
-
-    function sendToAgent(result) {
-      // Send result to AI agent for processing
-      window.parent.postMessage({
-        type: 'agent-message',
-        payload: {
-          role: 'tool',
-          content: JSON.stringify(result, null, 2)
-        }
-      }, '*');
-    }
   </script>
 </body>
 </html>`;
@@ -291,7 +283,7 @@ function createUIResourceHelper(content: string, args: Record<string, unknown>) 
       metadata: {
         title: 'New UI Resource',
         description: 'A new MCP-UI resource',
-        lastModified: '2025-10-28T14:14:17.978Z'
+        lastModified: '2025-10-28T15:39:56.752Z'
       },
       uiMetadata: {
         'preferred-frame-size': ['800px', '600px']

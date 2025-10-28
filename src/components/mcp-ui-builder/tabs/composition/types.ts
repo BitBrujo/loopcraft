@@ -19,8 +19,8 @@ export type ActionType = 'tool' | 'prompt' | 'link' | 'intent' | 'notify';
 // Handler types for tool responses
 export type HandlerType = 'response' | 'notification' | 'both' | 'none';
 
-// Response destination - where tool results are sent
-export type ResponseDestination = 'ui' | 'agent' | 'both' | 'none';
+// Response destination - where tool results are sent (MCP-UI compliant only)
+export type ResponseDestination = 'ui' | 'none';
 
 // Button style variants
 export type ButtonStyle = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info';

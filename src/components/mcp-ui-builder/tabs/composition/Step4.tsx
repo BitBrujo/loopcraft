@@ -211,54 +211,12 @@ export function Step4() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-medium text-foreground">UI Only</div>
+                  <div className="font-medium text-foreground">Display in UI</div>
                   <div className="text-sm text-muted-foreground mt-1">
-                    Display result in interface only (don&apos;t send to agent)
+                    Display result in the interface (MCP-UI standard)
                   </div>
                 </div>
                 {config.responseDestination === 'ui' && (
-                  <Check className="h-5 w-5 text-orange-500" />
-                )}
-              </div>
-            </button>
-
-            <button
-              onClick={() => setConfig({ ...config, responseDestination: 'agent' })}
-              className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
-                config.responseDestination === 'agent'
-                  ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20'
-                  : 'border hover:border bg-card'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-foreground">Agent Only</div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    Send to AI assistant for processing (don&apos;t show in UI)
-                  </div>
-                </div>
-                {config.responseDestination === 'agent' && (
-                  <Check className="h-5 w-5 text-orange-500" />
-                )}
-              </div>
-            </button>
-
-            <button
-              onClick={() => setConfig({ ...config, responseDestination: 'both' })}
-              className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
-                config.responseDestination === 'both'
-                  ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20'
-                  : 'border hover:border bg-card'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-foreground">Both</div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    Show in UI and send to agent
-                  </div>
-                </div>
-                {config.responseDestination === 'both' && (
                   <Check className="h-5 w-5 text-orange-500" />
                 )}
               </div>
@@ -274,9 +232,9 @@ export function Step4() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-medium text-foreground">None</div>
+                  <div className="font-medium text-foreground">None (Fire and Forget)</div>
                   <div className="text-sm text-muted-foreground mt-1">
-                    Fire and forget (no routing)
+                    Execute action without displaying result
                   </div>
                 </div>
                 {config.responseDestination === 'none' && (

@@ -592,10 +592,10 @@ function generateLinkHTML(config: ElementConfig): string {
  * Generate handler container HTML
  */
 function generateHandlerContainerHTML(config: HandlerConfig): string {
-  // Add results display container for 'ui' and 'both' destinations
+  // Add results display container for 'ui' destination (MCP-UI compliant only)
   const destination = config.responseDestination || 'ui';
 
-  if (destination === 'ui' || destination === 'both') {
+  if (destination === 'ui') {
     return `
     <!-- Results Display Container -->
     <div id="results" class="mt-4 hidden">
@@ -825,20 +825,12 @@ function generateHandlerCode(config: HandlerConfig): string {
 
           // Route response based on destination: ${destination}`;
 
-    // Generate routing logic based on destination
-    if (destination === 'ui' || destination === 'both') {
+    // Generate routing logic (MCP-UI compliant only)
+    if (destination === 'ui') {
       code += `
-          // Send to UI
+          // Display in UI (MCP-UI standard)
           displayToolResult(result);`;
-    }
-
-    if (destination === 'agent' || destination === 'both') {
-      code += `
-          // Send to agent
-          sendToAgent(result);`;
-    }
-
-    if (destination === 'none') {
+    } else if (destination === 'none') {
       code += `
           // Fire and forget - no routing`;
     }
@@ -849,8 +841,8 @@ function generateHandlerCode(config: HandlerConfig): string {
     }`;
   }
 
-  // Add displayToolResult function if destination is 'ui' or 'both'
-  if (config.responseDestination === 'ui' || config.responseDestination === 'both') {
+  // Add displayToolResult function if destination is 'ui'
+  if (config.responseDestination === 'ui') {
     code += `
     // Display tool result in UI
     function displayToolResult(result) {
@@ -888,7 +880,13 @@ function generateHandlerCode(config: HandlerConfig): string {
           }
         } else if (item.type === 'image') {
           const img = document.createElement('img');
-          img.src = item.data || item.source || '';
+          // Convert base64 data to data URL for proper display
+          const mimeType = item.mimeType || 'image/png';
+          if (item.data.startsWith('data:')) {
+            img.src = item.data;  // Already a data URL
+          } else {
+            img.src = 'data:' + mimeType + ';base64,' + item.data;  // Convert base64 to data URL
+          }
           img.alt = item.alt || 'Tool result image';
           img.className = 'max-w-full h-auto rounded border border-gray-300';
           itemDiv.appendChild(img);
@@ -945,21 +943,8 @@ function generateHandlerCode(config: HandlerConfig): string {
       }, '*');
     }`;
 
-  // Send to agent helper - include if responseDestination is 'agent' or 'both'
-  if (config.responseDestination === 'agent' || config.responseDestination === 'both') {
-    code += `
-
-    function sendToAgent(result) {
-      // Send result to AI agent for processing
-      window.parent.postMessage({
-        type: 'agent-message',
-        payload: {
-          role: 'tool',
-          content: JSON.stringify(result, null, 2)
-        }
-      }, '*');
-    }`;
-  }
+  // Note: agent-message action removed for MCP-UI spec compliance
+  // All responses now default to UI display only
 
   return code;
 }
