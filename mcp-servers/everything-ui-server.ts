@@ -101,7 +101,7 @@ server.addTool({
       id="sub"
       class="px-6 py-3 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500"
     >
-      Show ENV
+      CALL ENV
     </button>
 
     
@@ -167,9 +167,11 @@ server.addTool({
         } else {
           console.log('Tool result:', result);
 
-          // Route response based on destination: ui
+          // Route response based on destination: both
           // Send to UI
           displayToolResult(result);
+          // Send to agent
+          sendToAgent(result);
         }
       }
     }
@@ -258,6 +260,17 @@ server.addTool({
         }
       }, '*');
     }
+
+    function sendToAgent(result) {
+      // Send result to AI agent for processing
+      window.parent.postMessage({
+        type: 'agent-message',
+        payload: {
+          role: 'tool',
+          content: JSON.stringify(result, null, 2)
+        }
+      }, '*');
+    }
   </script>
 </body>
 </html>`;
@@ -278,7 +291,7 @@ function createUIResourceHelper(content: string, args: Record<string, unknown>) 
       metadata: {
         title: 'New UI Resource',
         description: 'A new MCP-UI resource',
-        lastModified: '2025-10-28T13:58:23.454Z'
+        lastModified: '2025-10-28T14:14:17.978Z'
       },
       uiMetadata: {
         'preferred-frame-size': ['800px', '600px']
