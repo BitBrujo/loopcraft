@@ -36,7 +36,7 @@ const server = new FastMCP({
 // No dynamic placeholders - UI is static
 server.addTool({
   name: 'get_resource',
-  description: 'call UI',
+  description: 'call UI resource',
   parameters: z.object({}),
   execute: async (args) => {
     // Prepare content
@@ -98,18 +98,23 @@ server.addTool({
     <h1 class="text-2xl font-bold mb-6 text-gray-800">Button → Tool Call</h1>
 
         <button
-      id="ui"
+      id="submit"
       class="px-6 py-3 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500"
     >
-      Call ENV
+      Show ENV
     </button>
 
-    
+    <!-- Results Display Container -->
+    <div id="results" class="mt-4 hidden">
+      <h2 class="text-lg font-semibold mb-2 text-gray-700">Results:</h2>
+      <div id="results-content" class="bg-gray-50 border border-gray-200 rounded-lg p-4 overflow-auto max-h-96"></div>
+    </div>
+
   </div>
 
     <script>
     // Action: tool
-    const element = document.getElementById('ui');
+    const element = document.getElementById('submit');
     element.addEventListener('click', async (e) => {
       
 
@@ -122,7 +127,7 @@ server.addTool({
         window.parent.postMessage({
           type: 'tool',
           payload: {
-            toolName: 'printEnv',
+            toolName: 'mcp_everything_printEnv',
             params: params
           }
         }, '*');
@@ -146,11 +151,76 @@ server.addTool({
           console.log('Tool result:', result);
 
           // Route response based on destination: ui
-          // Send to UI
-          showNotification('Operation completed successfully', 'success');
+          // Extract and display actual tool data
+          displayToolResult(result);
         }
       }
     }
+    // Display tool result in UI
+    function displayToolResult(result) {
+      const resultsDiv = document.getElementById('results');
+      const resultsContent = document.getElementById('results-content');
+
+      if (!result.content || result.content.length === 0) {
+        resultsContent.innerHTML = '<p class="text-gray-500">No data returned</p>';
+        resultsDiv.classList.remove('hidden');
+        return;
+      }
+
+      // Clear previous results
+      resultsContent.innerHTML = '';
+
+      // Process each content item
+      result.content.forEach((item, index) => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'mb-3 last:mb-0';
+
+        if (item.type === 'text') {
+          // Try to parse as JSON for pretty printing
+          try {
+            const jsonData = JSON.parse(item.text);
+            const pre = document.createElement('pre');
+            pre.className = 'bg-gray-800 text-green-400 p-3 rounded text-sm overflow-x-auto';
+            pre.textContent = JSON.stringify(jsonData, null, 2);
+            itemDiv.appendChild(pre);
+          } catch {
+            // Not JSON, display as plain text
+            const p = document.createElement('p');
+            p.className = 'text-gray-800 whitespace-pre-wrap';
+            p.textContent = item.text;
+            itemDiv.appendChild(p);
+          }
+        } else if (item.type === 'image') {
+          const img = document.createElement('img');
+          img.src = item.data || item.source || '';
+          img.alt = item.alt || 'Tool result image';
+          img.className = 'max-w-full h-auto rounded border border-gray-300';
+          itemDiv.appendChild(img);
+        } else if (item.type === 'resource') {
+          const link = document.createElement('a');
+          link.href = item.uri || '#';
+          link.textContent = item.uri || 'Resource';
+          link.className = 'text-blue-600 hover:underline';
+          link.target = '_blank';
+          itemDiv.appendChild(link);
+        } else {
+          // Unknown type, display as string
+          const p = document.createElement('p');
+          p.className = 'text-gray-600 italic';
+          p.textContent = JSON.stringify(item);
+          itemDiv.appendChild(p);
+        }
+
+        resultsContent.appendChild(itemDiv);
+      });
+
+      // Show the results container
+      resultsDiv.classList.remove('hidden');
+
+      // Also show a success notification
+      showNotification('Results loaded successfully', 'success');
+    }
+
     // Helper functions
     function showLoading(show) {
       if (show) {
@@ -191,8 +261,8 @@ function createUIResourceHelper(content: string, args: Record<string, unknown>) 
     encoding: 'text',
       metadata: {
         title: 'New UI Resource',
-        description: 'call UI',
-        lastModified: '2025-10-28T12:51:09.161Z'
+        description: 'call UI resource',
+        lastModified: '2025-10-28T13:05:10.453Z'
       },
       uiMetadata: {
         'preferred-frame-size': ['800px', '600px']
