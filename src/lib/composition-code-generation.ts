@@ -205,7 +205,8 @@ export function generatePatternCode(
   pattern: PatternType,
   elementConfig: ElementConfig,
   actionConfig: ActionConfig,
-  handlerConfig: HandlerConfig
+  handlerConfig: HandlerConfig,
+  targetServerName: string | null = null
 ): string {
   const patternMeta = getPattern(pattern);
 
@@ -216,7 +217,7 @@ export function generatePatternCode(
 
   const htmlCode = generateElementHTML(elementConfig, patternMeta.elementType);
   const handlerContainerHTML = generateHandlerContainerHTML(handlerConfig);
-  const scriptCode = generateScript(elementConfig, actionConfig, handlerConfig);
+  const scriptCode = generateScript(elementConfig, actionConfig, handlerConfig, targetServerName);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -601,9 +602,10 @@ function generateHandlerContainerHTML(config: HandlerConfig): string {
 function generateScript(
   elementConfig: ElementConfig,
   actionConfig: ActionConfig,
-  handlerConfig: HandlerConfig
+  handlerConfig: HandlerConfig,
+  targetServerName: string | null = null
 ): string {
-  const actionCode = generateActionCode(elementConfig, actionConfig);
+  const actionCode = generateActionCode(elementConfig, actionConfig, targetServerName);
   const handlerCode = generateHandlerCode(handlerConfig);
 
   return `  <script>
@@ -617,7 +619,8 @@ ${handlerCode}
  */
 function generateActionCode(
   elementConfig: ElementConfig,
-  actionConfig: ActionConfig
+  actionConfig: ActionConfig,
+  targetServerName: string | null = null
 ): string {
   const elementId = elementConfig.id;
   const elementType = elementConfig.elementType;
@@ -631,7 +634,7 @@ function generateActionCode(
   }
 
   // Build action payload
-  const actionPayload = generateActionPayload(elementConfig, actionConfig);
+  const actionPayload = generateActionPayload(elementConfig, actionConfig, targetServerName);
 
   return `    // Action: ${actionConfig.actionType}
     const element = document.getElementById('${elementId}');
@@ -647,11 +650,12 @@ function generateActionCode(
  */
 function generateActionPayload(
   elementConfig: ElementConfig,
-  actionConfig: ActionConfig
+  actionConfig: ActionConfig,
+  targetServerName: string | null = null
 ): string {
   switch (actionConfig.actionType) {
     case 'tool':
-      return generateToolCallCode(elementConfig, actionConfig);
+      return generateToolCallCode(elementConfig, actionConfig, targetServerName);
     case 'prompt':
       return generatePromptCode(actionConfig);
     case 'link':
@@ -670,7 +674,8 @@ function generateActionPayload(
  */
 function generateToolCallCode(
   elementConfig: ElementConfig,
-  actionConfig: ActionConfig
+  actionConfig: ActionConfig,
+  targetServerName: string | null = null
 ): string {
   const params = actionConfig.toolParameters || [];
 
@@ -688,6 +693,11 @@ function generateToolCallCode(
   });
   paramsCode += '        };\n';
 
+  // Prefix tool name with MCP format if targetServerName is provided
+  const toolName = targetServerName
+    ? `mcp_${targetServerName}_${actionConfig.toolName}`
+    : actionConfig.toolName;
+
   return `      try {
         showLoading(true);
 ${elementConfig.elementType === 'form' ? paramsCode : '        const params = {};\n'}
@@ -696,7 +706,7 @@ ${elementConfig.elementType === 'form' ? paramsCode : '        const params = {}
         window.parent.postMessage({
           type: 'tool',
           payload: {
-            toolName: '${actionConfig.toolName}',
+            toolName: '${toolName}',
             params: params
           }
         }, '*');

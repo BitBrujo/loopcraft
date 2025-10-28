@@ -18,6 +18,7 @@ import type { HandlerConfig, HandlerType, NotificationVariant } from './types';
 export function Step4() {
   const {
     composition,
+    targetServerName,
     setHandlerConfig,
     setCompositionStep,
     updateCompositionValidity,
@@ -76,7 +77,8 @@ export function Step4() {
       currentPattern.selectedPattern,
       currentPattern.elementConfig,
       currentPattern.actionConfig,
-      config
+      config,
+      targetServerName || null
     );
 
     setGeneratedCode(code);
