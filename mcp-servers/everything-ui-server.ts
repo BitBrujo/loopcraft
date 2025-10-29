@@ -45,7 +45,7 @@ server.addTool({
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Button → Tool Call</title>
+  <title>Form Submit → Tool Call</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -95,14 +95,30 @@ server.addTool({
 </head>
 <body>
   <div class="container">
-    <h1 class="text-2xl font-bold mb-6 text-gray-800">Button → Tool Call</h1>
+    <h1 class="text-2xl font-bold mb-6 text-gray-800">Form Submit → Tool Call</h1>
 
-        <button
-      id="sub"
-      class="px-6 py-3 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500"
-    >
-      Get Image
-    </button>
+        <form id="form" class="space-y-4">
+      <div>
+        <label for="datain" class="block text-sm font-medium text-gray-700 mb-1">
+          Data to Transform
+        </label>
+        <textarea
+          id="datain"
+          name="datain"
+          
+          placeholder=""
+          rows="4"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        ></textarea>
+      </div>
+
+      <button
+        type="submit"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+      >
+        Submit
+      </button>
+    </form>
 
     
     <!-- Results Display Container -->
@@ -114,20 +130,22 @@ server.addTool({
 
     <script>
     // Action: tool
-    const element = document.getElementById('sub');
-    element.addEventListener('click', async (e) => {
-      
+    const element = document.getElementById('form');
+    element.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
             try {
         showLoading(true);
-        const params = {};
+        const params = {
+          "location": document.getElementById('datain').value,
+        };
 
 
         // Call MCP tool via postMessage
         window.parent.postMessage({
           type: 'tool',
           payload: {
-            toolName: 'mcp_everything_getTinyImage',
+            toolName: 'mcp_everything_structuredContent',
             params: params
           }
         }, '*');
@@ -284,7 +302,7 @@ function createUIResourceHelper(content: string, args: Record<string, unknown>) 
       metadata: {
         title: 'New UI Resource',
         description: 'A new MCP-UI resource',
-        lastModified: '2025-10-28T16:03:15.199Z'
+        lastModified: '2025-10-29T12:18:09.131Z'
       },
       uiMetadata: {
         'preferred-frame-size': ['800px', '600px']

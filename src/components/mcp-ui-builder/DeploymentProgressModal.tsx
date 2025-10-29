@@ -36,6 +36,8 @@ interface DeploymentProgressModalProps {
   resource: UIResource;
   format: 'standalone' | 'fastmcp';
   language: 'typescript' | 'javascript';
+  exportMode?: 'two-file' | 'single-file';
+  htmlContent?: string;
   onDeploymentComplete?: (result: DeploymentResult) => void;
 }
 
@@ -62,6 +64,8 @@ export function DeploymentProgressModal({
   resource,
   format,
   language,
+  exportMode = 'single-file',
+  htmlContent,
   onDeploymentComplete
 }: DeploymentProgressModalProps) {
   // Get companion server state from store (always companion mode now)
@@ -113,6 +117,8 @@ export function DeploymentProgressModal({
           resource,
           format,
           language,
+          exportMode,
+          htmlContent,
           // Include companion server data for proper code generation
           targetServerName: targetServerName || null,
           selectedTools: selectedTools || []

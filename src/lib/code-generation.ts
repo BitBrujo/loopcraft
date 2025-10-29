@@ -209,10 +209,40 @@ export function generateServerCode(
   options?: {
     targetServerName?: string;
     selectedTools?: string[];
+    mode?: 'two-file' | 'single-file';
   }
 ): string {
   // Always use FastMCP format (companion mode is the only mode)
   return generateFastMCPCode(resource, options);
+}
+
+/**
+ * Generate standalone HTML file for two-file mode
+ * Extracts just the HTML content with tool response handler injected
+ */
+export function generateHTMLFile(resource: UIResource): string {
+  if (resource.contentType !== 'rawHtml') {
+    throw new Error('HTML file generation only supported for rawHtml content type');
+  }
+
+  // Auto-inject tool response handler if tool bindings exist
+  let htmlContent = resource.content;
+  const hasToolBindings = resource.toolBindings && resource.toolBindings.length > 0;
+
+  if (hasToolBindings) {
+    // Import the response handler code
+    const responseHandler = getToolResponseHandlerCode();
+
+    // Inject handler before closing </body> tag
+    if (htmlContent.includes('</body>')) {
+      htmlContent = htmlContent.replace('</body>', `\n${responseHandler}\n</body>`);
+    } else {
+      // If no </body> tag, append at the end
+      htmlContent += '\n' + responseHandler;
+    }
+  }
+
+  return htmlContent;
 }
 
 /**
@@ -224,39 +254,54 @@ export function generateFastMCPCode(
   options?: {
     targetServerName?: string;
     selectedTools?: string[];
+    mode?: 'two-file' | 'single-file';
   }
 ): string {
+  const mode = options?.mode || 'single-file';
   // Handle server naming (always companion mode now)
   const serverName = options?.targetServerName
     ? `${options.targetServerName}-ui`
     : resource.uri.split('/')[2] || 'my-ui-server';
   const agentPlaceholders = resource.templatePlaceholders || [];
 
-  // Generate content configuration based on type
+  // Generate content configuration based on type and mode
   let contentConfig: string;
   let contentVariable = 'content';
+  let additionalImports = '';
 
   if (resource.contentType === 'rawHtml') {
     contentVariable = 'htmlContent';
 
-    // Auto-inject tool response handler if tool bindings exist
-    let htmlWithHandler = resource.content;
-    const hasToolBindings = resource.toolBindings && resource.toolBindings.length > 0;
+    if (mode === 'two-file') {
+      // Two-file mode: Load HTML from external file
+      additionalImports = `import * as fs from 'fs';
+import * as path from 'path';
 
-    if (hasToolBindings) {
-      // Import the response handler code
-      const responseHandler = getToolResponseHandlerCode();
+`;
+      contentConfig = `// Load HTML from external file
+    const htmlPath = path.join(__dirname, 'ui.html');
+    let ${contentVariable} = fs.readFileSync(htmlPath, 'utf-8');`;
+    } else {
+      // Single-file mode: Embed HTML as template literal
+      // Auto-inject tool response handler if tool bindings exist
+      let htmlWithHandler = resource.content;
+      const hasToolBindings = resource.toolBindings && resource.toolBindings.length > 0;
 
-      // Inject handler before closing </body> tag
-      if (htmlWithHandler.includes('</body>')) {
-        htmlWithHandler = htmlWithHandler.replace('</body>', `\n${responseHandler}\n</body>`);
-      } else {
-        // If no </body> tag, append at the end
-        htmlWithHandler += '\n' + responseHandler;
+      if (hasToolBindings) {
+        // Import the response handler code
+        const responseHandler = getToolResponseHandlerCode();
+
+        // Inject handler before closing </body> tag
+        if (htmlWithHandler.includes('</body>')) {
+          htmlWithHandler = htmlWithHandler.replace('</body>', `\n${responseHandler}\n</body>`);
+        } else {
+          // If no </body> tag, append at the end
+          htmlWithHandler += '\n' + responseHandler;
+        }
       }
-    }
 
-    contentConfig = `let ${contentVariable} = \`${htmlWithHandler.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;`;
+      contentConfig = `let ${contentVariable} = \`${htmlWithHandler.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;`;
+    }
   } else if (resource.contentType === 'externalUrl') {
     contentConfig = `const ${contentVariable} = { type: 'externalUrl', iframeUrl: '${resource.content}' };`;
   } else {
@@ -330,7 +375,7 @@ ${toolBindingsComment}// =======================================================
 import { FastMCP } from "fastmcp";
 import { z } from "zod";
 import { createUIResource } from '@mcp-ui/server';
-
+${additionalImports}
 ${companionComment}const server = new FastMCP({
   name: '${serverName}',
   version: '1.0.0',

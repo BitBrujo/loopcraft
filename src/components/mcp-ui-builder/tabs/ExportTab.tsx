@@ -7,10 +7,10 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Copy, Download, Check, Rocket, BookOpen, Puzzle, ChevronDown } from 'lucide-react';
+import { Copy, Download, Check, Rocket, BookOpen, Puzzle, ChevronDown, FileText, Package } from 'lucide-react';
 import { Editor } from '@monaco-editor/react';
-import { generateFastMCPCode } from '@/lib/code-generation';
-import type { ExportLanguage } from '@/types/ui-builder';
+import { generateFastMCPCode, generateHTMLFile } from '@/lib/code-generation';
+import type { ExportLanguage, ExportFormat } from '@/types/ui-builder';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DeploymentProgressModal } from '@/components/mcp-ui-builder/DeploymentProgressModal';
 import { copyToClipboard } from '@/lib/utils';
@@ -21,6 +21,7 @@ export function ExportTab() {
     targetServerName,
     selectedTools,
   } = useUIBuilderStore();
+  const [exportMode, setExportMode] = useState<ExportFormat>('single-file');
   const [language, setLanguage] = useState<ExportLanguage>('typescript');
   const [copied, setCopied] = useState(false);
   const [showDeploymentModal, setShowDeploymentModal] = useState(false);
@@ -40,13 +41,21 @@ export function ExportTab() {
       ? {
           targetServerName,
           selectedTools: selectedTools || [],
+          mode: exportMode,
         }
-      : undefined;
+      : {
+          mode: exportMode,
+        };
 
     return generateFastMCPCode(currentResource, options);
   };
 
   const code = generateCode();
+
+  // Generate HTML file for two-file mode (only for rawHtml)
+  const htmlCode = currentResource.contentType === 'rawHtml' && exportMode === 'two-file'
+    ? generateHTMLFile(currentResource)
+    : null;
 
   const handleCopy = async () => {
     const success = await copyToClipboard(code);
@@ -57,17 +66,32 @@ export function ExportTab() {
   };
 
   const handleDownload = () => {
-    const filename = targetServerName
-      ? `${targetServerName}-ui-server.${language === 'typescript' ? 'ts' : 'js'}`
-      : `companion-ui-server.${language === 'typescript' ? 'ts' : 'js'}`;
+    const baseFilename = targetServerName
+      ? `${targetServerName}-ui-server`
+      : `companion-ui-server`;
+    const ext = language === 'typescript' ? 'ts' : 'js';
 
-    const blob = new Blob([code], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
+    // Download server file
+    const serverBlob = new Blob([code], { type: 'text/plain' });
+    const serverUrl = URL.createObjectURL(serverBlob);
+    const serverLink = document.createElement('a');
+    serverLink.href = serverUrl;
+    serverLink.download = `${baseFilename}.${ext}`;
+    serverLink.click();
+    URL.revokeObjectURL(serverUrl);
+
+    // Download HTML file if in two-file mode
+    if (htmlCode) {
+      setTimeout(() => {
+        const htmlBlob = new Blob([htmlCode], { type: 'text/html' });
+        const htmlUrl = URL.createObjectURL(htmlBlob);
+        const htmlLink = document.createElement('a');
+        htmlLink.href = htmlUrl;
+        htmlLink.download = 'ui.html';
+        htmlLink.click();
+        URL.revokeObjectURL(htmlUrl);
+      }, 100); // Small delay to avoid browser blocking multiple downloads
+    }
   };
 
   const handleDeploy = () => {
@@ -103,6 +127,8 @@ export function ExportTab() {
             resource={currentResource}
             format="fastmcp"
             language={language}
+            exportMode={exportMode}
+            htmlContent={htmlCode || undefined}
             onDeploymentComplete={(result) => {
               if (result.success) {
                 console.log('Deployment successful:', result);
@@ -126,6 +152,37 @@ export function ExportTab() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Export Mode Selection */}
+            <div className="space-y-2">
+              <Label>Export Mode</Label>
+              <RadioGroup value={exportMode} onValueChange={(v) => setExportMode(v as ExportFormat)}>
+                <div className="flex items-start space-x-2 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
+                  <RadioGroupItem value="two-file" id="two-file" className="mt-1" />
+                  <div className="flex-1">
+                    <Label htmlFor="two-file" className="font-medium cursor-pointer flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Two-File FastMCP (Recommended)
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Clean separation: server.ts + ui.html. Easy to edit HTML with full IDE support.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-2 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
+                  <RadioGroupItem value="single-file" id="single-file" className="mt-1" />
+                  <div className="flex-1">
+                    <Label htmlFor="single-file" className="font-medium cursor-pointer flex items-center gap-2">
+                      <Package className="h-4 w-4" />
+                      Single-File FastMCP (Portable)
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      All-in-one: HTML embedded in server file. Zero dependencies, single file portability.
+                    </p>
+                  </div>
+                </div>
+              </RadioGroup>
+            </div>
+
             {/* Language Selection */}
             <div className="space-y-2">
               <Label>Language</Label>
@@ -159,9 +216,14 @@ export function ExportTab() {
         {/* Code Preview */}
         <Card>
           <CardHeader>
-            <CardTitle>Generated FastMCP Server</CardTitle>
+            <CardTitle>
+              {exportMode === 'two-file' ? 'Generated Server File (server.ts)' : 'Generated FastMCP Server'}
+            </CardTitle>
             <CardDescription>
-              Lightweight, portable MCP server using the FastMCP framework
+              {exportMode === 'two-file'
+                ? 'Server file with fs.readFileSync() - HTML loaded from ui.html'
+                : 'Lightweight, portable MCP server with embedded HTML'
+              }
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -186,13 +248,23 @@ export function ExportTab() {
             <div className="flex gap-2">
               <Button onClick={handleCopy} variant="outline" className="flex-1">
                 {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
-                {copied ? 'Copied!' : 'Copy Code'}
+                {copied ? 'Copied!' : 'Copy Server Code'}
               </Button>
               <Button onClick={handleDownload} variant="outline" className="flex-1">
                 <Download className="h-4 w-4 mr-2" />
-                Download File
+                {exportMode === 'two-file' ? 'Download Files (2)' : 'Download File'}
               </Button>
             </div>
+
+            {/* Two-file mode info */}
+            {exportMode === 'two-file' && htmlCode && (
+              <Alert>
+                <FileText className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  <strong>Two-file mode:</strong> Download will provide both <code className="text-xs bg-muted px-1 py-0.5 rounded">server.{language === 'typescript' ? 'ts' : 'js'}</code> and <code className="text-xs bg-muted px-1 py-0.5 rounded">ui.html</code> files. Place them in the same directory.
+                </AlertDescription>
+              </Alert>
+            )}
           </CardContent>
         </Card>
 

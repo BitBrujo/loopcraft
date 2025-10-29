@@ -316,8 +316,8 @@ export type TabId = 'configure' | 'design' | 'export';
 /** Design tab sub-tabs - Composition for guided pattern building, Code for manual editing, Preview for live testing */
 export type DesignSubTab = 'composition' | 'code' | 'preview';
 
-/** Export format options */
-export type ExportFormat = 'integration' | 'standalone' | 'fastmcp';
+/** Export format options - both use FastMCP */
+export type ExportFormat = 'two-file' | 'single-file';
 
 /** Language options for code generation */
 export type ExportLanguage = 'typescript' | 'javascript';

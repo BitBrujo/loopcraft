@@ -12,6 +12,8 @@ interface DeployRequest {
   resource: UIResource;
   format: 'standalone' | 'fastmcp';
   language: 'typescript' | 'javascript';
+  exportMode?: 'two-file' | 'single-file';
+  htmlContent?: string;
   // Companion server settings (always companion mode now)
   targetServerName?: string | null;
   selectedTools?: string[];
@@ -28,6 +30,8 @@ interface DeploymentStep {
 interface DeploymentState {
   fileCreated: boolean;
   filePath?: string;
+  htmlFileCreated: boolean;
+  htmlFilePath?: string;
   dependenciesInstalled: boolean;
   testServerConnected: boolean;
   testServerName?: string;
@@ -202,15 +206,29 @@ function categorizeError(error: Error): CategorizedError {
  */
 
 async function rollbackFile(state: DeploymentState): Promise<string> {
+  const results: string[] = [];
+
+  // Delete server file
   if (state.fileCreated && state.filePath) {
     try {
       await unlink(state.filePath);
-      return `Deleted file: ${state.filePath}`;
+      results.push(`Deleted server file: ${state.filePath}`);
     } catch (error) {
-      return `Failed to delete file: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      results.push(`Failed to delete server file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
-  return 'No file to delete';
+
+  // Delete HTML file if it was created
+  if (state.htmlFileCreated && state.htmlFilePath) {
+    try {
+      await unlink(state.htmlFilePath);
+      results.push(`Deleted HTML file: ${state.htmlFilePath}`);
+    } catch (error) {
+      results.push(`Failed to delete HTML file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  return results.length > 0 ? results.join('\n') : 'No files to delete';
 }
 
 async function rollbackDatabase(state: DeploymentState): Promise<string> {
@@ -560,7 +578,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body: DeployRequest = await request.json();
-    const { resource, format, language, targetServerName, selectedTools } = body;
+    const { resource, format, language, exportMode, htmlContent, targetServerName, selectedTools } = body;
 
     // Validate input
     if (!resource || !format || !language) {
@@ -593,6 +611,7 @@ export async function POST(request: NextRequest) {
         // Initialize deployment state tracking
         const deploymentState: DeploymentState = {
           fileCreated: false,
+          htmlFileCreated: false,
           dependenciesInstalled: false,
           testServerConnected: false,
           dbEntryCreated: false,
@@ -632,28 +651,42 @@ export async function POST(request: NextRequest) {
           const codeGenOptions = targetServerName
             ? {
                 targetServerName: targetServerName,
-                selectedTools: selectedTools || []
+                selectedTools: selectedTools || [],
+                mode: exportMode || 'single-file',
               }
-            : undefined;
+            : {
+                mode: exportMode || 'single-file',
+              };
 
           // Generate code with companion mode support
           const code = format === 'fastmcp'
             ? generateFastMCPCode(resource, codeGenOptions)
             : generateServerCode(resource, codeGenOptions);
 
-          // Write file
+          // Write server file
           await writeFile(filePath, code, 'utf-8');
 
           // Track state
           deploymentState.fileCreated = true;
           deploymentState.filePath = filePath;
 
+          let logs = `Server file: ${fileName}\nPath: ${filePath}\nSize: ${code.length} bytes`;
+
+          // Write HTML file if in two-file mode
+          if (exportMode === 'two-file' && htmlContent) {
+            const htmlFilePath = join(serverDir, 'ui.html');
+            await writeFile(htmlFilePath, htmlContent, 'utf-8');
+            deploymentState.htmlFileCreated = true;
+            deploymentState.htmlFilePath = htmlFilePath;
+            logs += `\n\nHTML file: ui.html\nPath: ${htmlFilePath}\nSize: ${htmlContent.length} bytes`;
+          }
+
           sendUpdate({
             step: 1,
             total: 7,
-            message: `Server file written: ${filePath}`,
+            message: exportMode === 'two-file' ? `Server and HTML files written` : `Server file written: ${filePath}`,
             status: 'success',
-            logs: `File: ${fileName}\nPath: ${filePath}\nSize: ${code.length} bytes`
+            logs
           });
 
           // Step 2: Install dependencies
