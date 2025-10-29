@@ -75,13 +75,12 @@ export function ExportTab() {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownloadServer = () => {
     const baseFilename = targetServerName
       ? `${targetServerName}-ui-server`
       : `companion-ui-server`;
     const ext = language === 'typescript' ? 'ts' : 'js';
 
-    // Download server file
     const serverBlob = new Blob([code], { type: 'text/plain' });
     const serverUrl = URL.createObjectURL(serverBlob);
     const serverLink = document.createElement('a');
@@ -91,21 +90,20 @@ export function ExportTab() {
     serverLink.click();
     document.body.removeChild(serverLink);
     URL.revokeObjectURL(serverUrl);
+  };
 
-    // Download HTML file if in two-file mode
-    if (htmlCode) {
-      setTimeout(() => {
-        const htmlBlob = new Blob([htmlCode], { type: 'text/html' });
-        const htmlUrl = URL.createObjectURL(htmlBlob);
-        const htmlLink = document.createElement('a');
-        htmlLink.href = htmlUrl;
-        htmlLink.download = 'ui.html';
-        document.body.appendChild(htmlLink);
-        htmlLink.click();
-        document.body.removeChild(htmlLink);
-        URL.revokeObjectURL(htmlUrl);
-      }, 500); // Increased delay to prevent browser blocking
-    }
+  const handleDownloadHtml = () => {
+    if (!htmlCode) return;
+
+    const htmlBlob = new Blob([htmlCode], { type: 'text/html' });
+    const htmlUrl = URL.createObjectURL(htmlBlob);
+    const htmlLink = document.createElement('a');
+    htmlLink.href = htmlUrl;
+    htmlLink.download = 'ui.html';
+    document.body.appendChild(htmlLink);
+    htmlLink.click();
+    document.body.removeChild(htmlLink);
+    URL.revokeObjectURL(htmlUrl);
   };
 
   const handleDeploy = () => {
@@ -259,14 +257,14 @@ export function ExportTab() {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2">
-              <Button onClick={handleCopy} variant="outline" className="flex-1">
+            <div className="space-y-2">
+              <Button onClick={handleCopy} variant="outline" className="w-full">
                 {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
                 {copied ? 'Copied!' : 'Copy Server Code'}
               </Button>
-              <Button onClick={handleDownload} variant="outline" className="flex-1">
+              <Button onClick={handleDownloadServer} variant="outline" className="w-full">
                 <Download className="h-4 w-4 mr-2" />
-                {exportMode === 'two-file' ? 'Download Files (2)' : 'Download File'}
+                Download Server Code
               </Button>
             </div>
 
@@ -309,11 +307,17 @@ export function ExportTab() {
                 />
               </div>
 
-              {/* Copy HTML Button */}
-              <Button onClick={handleCopyHtml} variant="outline" className="w-full">
-                {copiedHtml ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
-                {copiedHtml ? 'Copied!' : 'Copy HTML Code'}
-              </Button>
+              {/* HTML Actions */}
+              <div className="space-y-2">
+                <Button onClick={handleCopyHtml} variant="outline" className="w-full">
+                  {copiedHtml ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+                  {copiedHtml ? 'Copied!' : 'Copy HTML Code'}
+                </Button>
+                <Button onClick={handleDownloadHtml} variant="outline" className="w-full">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download HTML File
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}
