@@ -24,6 +24,7 @@ export function ExportTab() {
   const [exportMode, setExportMode] = useState<ExportFormat>('single-file');
   const [language, setLanguage] = useState<ExportLanguage>('typescript');
   const [copied, setCopied] = useState(false);
+  const [copiedHtml, setCopiedHtml] = useState(false);
   const [showDeploymentModal, setShowDeploymentModal] = useState(false);
   const [showQuickStart, setShowQuickStart] = useState(false);
 
@@ -65,6 +66,15 @@ export function ExportTab() {
     }
   };
 
+  const handleCopyHtml = async () => {
+    if (!htmlCode) return;
+    const success = await copyToClipboard(htmlCode);
+    if (success) {
+      setCopiedHtml(true);
+      setTimeout(() => setCopiedHtml(false), 2000);
+    }
+  };
+
   const handleDownload = () => {
     const baseFilename = targetServerName
       ? `${targetServerName}-ui-server`
@@ -77,7 +87,9 @@ export function ExportTab() {
     const serverLink = document.createElement('a');
     serverLink.href = serverUrl;
     serverLink.download = `${baseFilename}.${ext}`;
+    document.body.appendChild(serverLink);
     serverLink.click();
+    document.body.removeChild(serverLink);
     URL.revokeObjectURL(serverUrl);
 
     // Download HTML file if in two-file mode
@@ -88,9 +100,11 @@ export function ExportTab() {
         const htmlLink = document.createElement('a');
         htmlLink.href = htmlUrl;
         htmlLink.download = 'ui.html';
+        document.body.appendChild(htmlLink);
         htmlLink.click();
+        document.body.removeChild(htmlLink);
         URL.revokeObjectURL(htmlUrl);
-      }, 100); // Small delay to avoid browser blocking multiple downloads
+      }, 500); // Increased delay to prevent browser blocking
     }
   };
 
@@ -161,7 +175,7 @@ export function ExportTab() {
                   <div className="flex-1">
                     <Label htmlFor="two-file" className="font-medium cursor-pointer flex items-center gap-2">
                       <FileText className="h-4 w-4" />
-                      Two-File FastMCP (Recommended)
+                      Two-File FastMCP
                     </Label>
                     <p className="text-xs text-muted-foreground mt-1">
                       Clean separation: server.ts + ui.html. Easy to edit HTML with full IDE support.
@@ -267,6 +281,42 @@ export function ExportTab() {
             )}
           </CardContent>
         </Card>
+
+        {/* HTML File Preview (Two-File Mode) */}
+        {exportMode === 'two-file' && htmlCode && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Generated HTML File (ui.html)</CardTitle>
+              <CardDescription>
+                Standalone HTML file - edit with full IDE support
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="rounded-md overflow-hidden border">
+                <Editor
+                  height="400px"
+                  language="html"
+                  value={htmlCode}
+                  theme="vs-dark"
+                  options={{
+                    readOnly: true,
+                    minimap: { enabled: false },
+                    wordWrap: 'on',
+                    scrollBeyondLastLine: false,
+                    fontSize: 13,
+                    lineNumbers: 'on',
+                  }}
+                />
+              </div>
+
+              {/* Copy HTML Button */}
+              <Button onClick={handleCopyHtml} variant="outline" className="w-full">
+                {copiedHtml ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+                {copiedHtml ? 'Copied!' : 'Copy HTML Code'}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Quick Start Guide */}
         <Card>
