@@ -1,3 +1,6 @@
+
+![Loopcraft](https://github.com/user-attachments/assets/19667424-4d8c-47c4-acb9-42548c9325b9)
+
 # LoopCraft
 
 An application that integrates the Model Context Protocol (MCP) with an AI-powered chat interface. LoopCraft serves as an MCP client with MCP-UI integration, allowing AI assistants to interact with external tools and resources through MCP servers while rendering interactive UI components.
@@ -13,6 +16,9 @@ An application that integrates the Model Context Protocol (MCP) with an AI-power
 - **User-specific MCP servers** managed through Settings UI
 - Support for stdio, SSE, and HTTP transports
 - Dynamic tool registration and resource handling
+
+![loopcraft_2](https://github.com/user-attachments/assets/a2f854de-05f7-4104-9fd9-f59b87ddeca6)
+
 
 ### 🎨 MCP-UI Builder
 
@@ -41,6 +47,8 @@ All 5 action types fully implemented for bidirectional communication:
 3. **Link** - Open external URL (documentation, dashboards)
 4. **Intent** - Trigger app actions (navigation, settings)
 5. **Notify** - Show notification (success/error feedback with auto-variant detection)
+
+![loopcraft_3](https://github.com/user-attachments/assets/2435ad66-b08a-4566-9e48-3fb3a9bac441)
 
 ## 🚀 Quick Start
 
