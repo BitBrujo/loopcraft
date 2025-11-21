@@ -106,10 +106,11 @@ export function ConfigureTab() {
         const data = await response.json();
         setAvailableTools(data.tools || []);
       } else {
+        console.error(`Failed to fetch tools from ${serverName}:`, response.status);
         setAvailableTools([]);
       }
     } catch (error) {
-      console.error('Failed to fetch tools:', error);
+      console.error(`Failed to fetch tools from ${serverName}:`, error);
       setAvailableTools([]);
     }
 

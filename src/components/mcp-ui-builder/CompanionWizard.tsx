@@ -44,7 +44,7 @@ export function CompanionWizard({
   handleContentTypeChange,
   setActiveTab,
 }: CompanionWizardProps) {
-  const isStep1Complete = targetServerName !== '';
+  const isStep1Complete = targetServerName !== null && targetServerName !== '';
   const isStep2Complete = selectedTools.length > 0;
 
   return (
@@ -87,7 +87,10 @@ export function CompanionWizard({
           <CardContent className="space-y-4">
             <div>
               <label className="text-sm font-medium block mb-4">Target MCP Server</label>
-              <Select value={targetServerName ?? undefined} onValueChange={onTargetServerChange}>
+              <Select
+                value={targetServerName || ''}
+                onValueChange={onTargetServerChange}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a server..." />
                 </SelectTrigger>
