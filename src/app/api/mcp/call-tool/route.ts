@@ -1,10 +1,14 @@
 import { mcpClientManager } from "@/lib/mcp-client";
 import { initializeAllMCPServers } from "@/lib/mcp-init";
+import { ensureWeaveInitialized, traceMCPToolCall } from "@/lib/weave-init";
 
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
   try {
+    // Initialize Weave tracing
+    await ensureWeaveInitialized();
+
     // Initialize MCP servers (including user-specific ones)
     await initializeAllMCPServers(req);
 
@@ -43,8 +47,16 @@ export async function POST(req: Request) {
 
     console.log(`[MCP Tool Call] ${serverName}.${toolName}`, args);
 
-    // Call the tool
-    const result = await mcpClientManager.callTool(serverName, toolName, args || {});
+    // Call the tool with Weave tracing
+    const tracedToolCall = traceMCPToolCall(
+      serverName,
+      toolName,
+      async () => {
+        return await mcpClientManager.callTool(serverName, toolName, args || {});
+      }
+    );
+
+    const result = await tracedToolCall();
 
     console.log(`[MCP Tool Result] ${serverName}.${toolName}:`, result);
 

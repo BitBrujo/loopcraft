@@ -3,6 +3,7 @@ import { loadMCPConfig } from "@/lib/mcp-config";
 import { getUserFromRequest } from "@/lib/auth";
 import { query } from "@/lib/db";
 import type { MCPServer as DBMCPServer } from "@/types/database";
+import { ensureWeaveInitialized, traceMCPConnection } from "@/lib/weave-init";
 
 // Track initialization state
 let globalMCPInitialized = false;
@@ -40,6 +41,9 @@ export async function initializeGlobalMCP(): Promise<void> {
  */
 export async function loadUserMCPServers(request: Request): Promise<void> {
   console.log('[MCP-INIT] loadUserMCPServers called');
+
+  // Initialize Weave tracing
+  await ensureWeaveInitialized();
 
   try {
     const user = await getUserFromRequest(request);
@@ -81,8 +85,16 @@ export async function loadUserMCPServers(request: Request): Promise<void> {
 
         console.log(`[MCP-INIT] Attempting to connect to ${dbServer.name}...`);
 
-        // connectToServer is idempotent - will skip if already connected
-        await mcpClientManager.connectToServer(mcpServer);
+        // Wrap connection with Weave tracing
+        const tracedConnect = traceMCPConnection(
+          dbServer.name,
+          async () => {
+            // connectToServer is idempotent - will skip if already connected
+            await mcpClientManager.connectToServer(mcpServer);
+          }
+        );
+
+        await tracedConnect();
         mcpClientManager.trackUserServer(user.userId, dbServer.name);
         currentServerNames.push(dbServer.name);
         console.log(`[MCP-INIT] ✓ Successfully connected to user's MCP server: ${dbServer.name}`);
