@@ -7,11 +7,15 @@ import { initializeAllMCPServers } from "@/lib/mcp-init";
 import { getUserFromRequest } from "@/lib/auth";
 import { queryOne } from "@/lib/db";
 import { Setting } from "@/types/database";
+import { ensureWeaveInitialized, traceChatCompletion } from "@/lib/weave-init";
 // import { createUIResource } from "@mcp-ui/server"; // For future use
 
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
+  // Initialize Weave tracing
+  await ensureWeaveInitialized();
+
   // Initialize all MCP servers (global + user-specific)
   await initializeAllMCPServers(req);
 
@@ -157,11 +161,16 @@ export async function POST(req: Request) {
       }
     } as { description: string; parameters: object; execute: (args: Record<string, unknown>) => Promise<unknown> };
 
-    const result = streamText({
-      model,
-      // @ts-expect-error - Type conversion is correct, TS inference issue
-      messages: convertedMessages,
-      system: system || `You are LoopCraft, an advanced AI assistant with access to Model Context Protocol (MCP) tools and resources. You can interact with various external services, file systems, and data sources through MCP. You can also render interactive UI components.
+    // Wrap the streamText call with Weave tracing
+    const tracedStreamText = traceChatCompletion(
+      provider,
+      modelName,
+      async () => {
+        return streamText({
+          model,
+          // @ts-expect-error - Type conversion is correct, TS inference issue
+          messages: convertedMessages,
+          system: system || `You are LoopCraft, an advanced AI assistant with access to Model Context Protocol (MCP) tools and resources. You can interact with various external services, file systems, and data sources through MCP. You can also render interactive UI components.
 
 IMPORTANT: When responding to questions or prompts that originated from UI components:
 - Answer with text only unless explicitly asked to show a UI
@@ -172,14 +181,17 @@ IMPORTANT: When responding to questions or prompts that originated from UI compo
   3. User asks to see a different interface
 
 You are knowledgeable, helpful, and provide clear, detailed responses.`,
-      tools: {
-        ...frontendTools(tools || {}),
-        ...mcpToolsForAI,
-        // @ts-expect-error - Tool schema type inference issue with AI SDK
-        getMCPResource: getMCPResourceTool,
-      },
-    });
+          tools: {
+            ...frontendTools(tools || {}),
+            ...mcpToolsForAI,
+            // @ts-expect-error - Tool schema type inference issue with AI SDK
+            getMCPResource: getMCPResourceTool,
+          },
+        });
+      }
+    );
 
+    const result = await tracedStreamText();
     return result.toUIMessageStreamResponse();
   } catch (error) {
     console.error("API Error:", error);
