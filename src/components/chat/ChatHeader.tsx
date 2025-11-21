@@ -34,13 +34,15 @@ export function ChatHeader() {
 
   // Format model name for display
   const formatModelName = (modelName: string): string => {
+    const lowerModel = modelName.toLowerCase();
+
     // Claude model patterns
-    if (modelName.includes('claude')) {
-      if (modelName.includes('sonnet')) {
+    if (lowerModel.includes('claude')) {
+      if (lowerModel.includes('sonnet')) {
         return 'Claude Sonnet';
-      } else if (modelName.includes('opus')) {
+      } else if (lowerModel.includes('opus')) {
         return 'Claude Opus';
-      } else if (modelName.includes('haiku')) {
+      } else if (lowerModel.includes('haiku')) {
         return 'Claude Haiku';
       }
       return 'Claude';
@@ -72,8 +74,13 @@ export function ChatHeader() {
       }
     }
 
-    // Fetch AI config to get model name
-    fetch("/api/ai-config")
+    // Fetch AI config to get model name (with auth token if available)
+    const headers: HeadersInit = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    fetch("/api/ai-config", { headers })
       .then((res) => res.json())
       .then((data) => {
         if (data.modelName) {

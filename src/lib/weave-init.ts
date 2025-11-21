@@ -146,8 +146,11 @@ export function traceChatCompletion<T extends (...args: unknown[]) => Promise<un
   model: string,
   fn: T
 ): T {
+  // Sanitize model name for use in operation name (replace special chars with underscores)
+  const sanitizedModel = model.replace(/[^a-zA-Z0-9]/g, '_');
+
   return createTracedOperation(
-    `chat_completion_${provider}`,
+    `chat_completion_${provider}_${sanitizedModel}`,
     fn,
     { provider, model }
   );
