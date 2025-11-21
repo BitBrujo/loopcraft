@@ -32,6 +32,29 @@ export function ChatHeader() {
   // Check if we're on the UI Builder page
   const isUIBuilderPage = pathname === "/mcp-ui-builder";
 
+  // Format model name for display
+  const formatModelName = (modelName: string): string => {
+    // Claude model patterns
+    if (modelName.includes('claude')) {
+      if (modelName.includes('sonnet')) {
+        return 'Claude Sonnet';
+      } else if (modelName.includes('opus')) {
+        return 'Claude Opus';
+      } else if (modelName.includes('haiku')) {
+        return 'Claude Haiku';
+      }
+      return 'Claude';
+    }
+
+    // Ollama models - just show the model name
+    if (modelName.includes(':')) {
+      return modelName.split(':')[0]; // e.g., "llama3.2:latest" -> "llama3.2"
+    }
+
+    // Default - return as is
+    return modelName;
+  };
+
   useEffect(() => {
     // Check if user is logged in
     const token = localStorage.getItem("token");
@@ -85,7 +108,7 @@ export function ChatHeader() {
           </Link>
           <Separator orientation="vertical" className="h-6 hidden sm:block" />
           <Badge variant="secondary" className="text-xs hidden sm:block">
-            {modelName}
+            {formatModelName(modelName)}
           </Badge>
         </div>
 
