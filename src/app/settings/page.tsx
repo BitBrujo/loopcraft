@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { User, Cpu } from "lucide-react";
 
 export default function SettingsPage() {
@@ -16,6 +17,8 @@ export default function SettingsPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [provider, setProvider] = useState("ollama");
+  const [apiKey, setApiKey] = useState("");
   const [apiUrl, setApiUrl] = useState("");
   const [modelName, setModelName] = useState("");
   const [isLoadingAIConfig, setIsLoadingAIConfig] = useState(false);
@@ -33,6 +36,8 @@ export default function SettingsPage() {
 
       if (response.ok) {
         const config = await response.json();
+        setProvider(config.provider || "ollama");
+        setApiKey(config.apiKey || "");
         setApiUrl(config.apiUrl || "");
         setModelName(config.modelName || "");
       }
@@ -78,8 +83,14 @@ export default function SettingsPage() {
   };
 
   const handleAISettingsUpdate = async () => {
-    if (!apiUrl.trim() && !modelName.trim()) {
-      alert("Please provide at least one setting (API URL or Model Name)");
+    // Validate provider-specific requirements
+    if (provider === 'anthropic' && !apiKey.trim()) {
+      alert("Anthropic API key is required for Claude provider");
+      return;
+    }
+
+    if (!modelName.trim()) {
+      alert("Please provide a model name");
       return;
     }
 
@@ -92,6 +103,8 @@ export default function SettingsPage() {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
+          provider: provider,
+          apiKey: apiKey.trim() || undefined,
           apiUrl: apiUrl.trim() || undefined,
           modelName: modelName.trim() || undefined,
         }),
@@ -201,33 +214,108 @@ export default function SettingsPage() {
                   ) : (
                     <>
                       <div className="space-y-2">
-                        <Label htmlFor="apiUrl">Model Provider API URL</Label>
-                        <Input
-                          id="apiUrl"
-                          type="url"
-                          value={apiUrl}
-                          onChange={(e) => setApiUrl(e.target.value)}
-                          placeholder="http://localhost:11434/api"
-                          disabled={isSavingAIConfig}
-                        />
+                        <Label htmlFor="provider">AI Provider</Label>
+                        <Select value={provider} onValueChange={setProvider} disabled={isSavingAIConfig}>
+                          <SelectTrigger id="provider">
+                            <SelectValue placeholder="Select provider" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ollama">Ollama (Local)</SelectItem>
+                            <SelectItem value="anthropic">Anthropic Claude</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <p className="text-sm text-muted-foreground">
-                          API endpoint for your model provider (Ollama, OpenAI-compatible, etc.)
+                          Choose your AI model provider
                         </p>
                       </div>
 
+                      {provider === 'anthropic' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="apiKey">Anthropic API Key</Label>
+                          <Input
+                            id="apiKey"
+                            type="password"
+                            value={apiKey}
+                            onChange={(e) => setApiKey(e.target.value)}
+                            placeholder="sk-ant-xxxxx"
+                            disabled={isSavingAIConfig}
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Get your API key from{" "}
+                            <a
+                              href="https://console.anthropic.com"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline"
+                            >
+                              console.anthropic.com
+                            </a>
+                          </p>
+                        </div>
+                      )}
+
+                      {provider === 'ollama' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="apiUrl">Ollama API URL</Label>
+                          <Input
+                            id="apiUrl"
+                            type="url"
+                            value={apiUrl}
+                            onChange={(e) => setApiUrl(e.target.value)}
+                            placeholder="http://localhost:11434/api"
+                            disabled={isSavingAIConfig}
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            API endpoint for your local Ollama server
+                          </p>
+                        </div>
+                      )}
+
                       <div className="space-y-2">
                         <Label htmlFor="modelName">Model Name</Label>
-                        <Input
-                          id="modelName"
-                          type="text"
-                          value={modelName}
-                          onChange={(e) => setModelName(e.target.value)}
-                          placeholder="llama3.2:latest"
-                          disabled={isSavingAIConfig}
-                        />
-                        <p className="text-sm text-muted-foreground">
-                          The model identifier to use (e.g., llama3.2:latest, gpt-4, claude-3-5-sonnet-20241022)
-                        </p>
+                        {provider === 'anthropic' ? (
+                          <>
+                            <Select value={modelName} onValueChange={setModelName} disabled={isSavingAIConfig}>
+                              <SelectTrigger id="modelName">
+                                <SelectValue placeholder="Select Claude model" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="claude-sonnet-4-5-20250514">
+                                  Claude Sonnet 4.5 (Latest & Best)
+                                </SelectItem>
+                                <SelectItem value="claude-sonnet-4-20250514">
+                                  Claude Sonnet 4.0
+                                </SelectItem>
+                                <SelectItem value="claude-3-5-sonnet-20241022">
+                                  Claude 3.5 Sonnet
+                                </SelectItem>
+                                <SelectItem value="claude-3-5-haiku-20241022">
+                                  Claude 3.5 Haiku (Fast & Affordable)
+                                </SelectItem>
+                                <SelectItem value="claude-3-opus-20240229">
+                                  Claude 3 Opus
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <p className="text-sm text-muted-foreground">
+                              Select from available Claude models. Recommended: Claude Sonnet 4.5 for best performance.
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <Input
+                              id="modelName"
+                              type="text"
+                              value={modelName}
+                              onChange={(e) => setModelName(e.target.value)}
+                              placeholder="llama3.2:latest"
+                              disabled={isSavingAIConfig}
+                            />
+                            <p className="text-sm text-muted-foreground">
+                              The model identifier (e.g., llama3.2:latest, mistral:latest)
+                            </p>
+                          </>
+                        )}
                       </div>
                     </>
                   )}

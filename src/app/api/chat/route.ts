@@ -1,4 +1,5 @@
 import { createOllama } from "ollama-ai-provider-v2";
+import { createAnthropic } from "@ai-sdk/anthropic";
 import { frontendTools } from "@assistant-ui/react-ai-sdk";
 import { streamText } from "ai";
 import { mcpClientManager } from "@/lib/mcp-client";
@@ -45,6 +46,8 @@ export async function POST(req: Request) {
   });
 
   // Get AI configuration (user settings or environment variables)
+  let provider = 'ollama'; // default provider
+  let apiKey = '';
   let baseURL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434/api';
   let modelName = process.env.OLLAMA_MODEL || 'llama3.2:latest';
 
@@ -52,33 +55,38 @@ export async function POST(req: Request) {
   const user = getUserFromRequest(req);
   if (user) {
     try {
-      const userApiUrl = await queryOne<Setting>(
-        'SELECT * FROM settings WHERE user_id = ? AND `key` = ?',
-        [user.userId, 'ollama_base_url']
-      );
+      const [providerSetting, apiKeySetting, baseUrlSetting, modelSetting] = await Promise.all([
+        queryOne<Setting>('SELECT * FROM settings WHERE user_id = ? AND `key` = ?', [user.userId, 'ai_provider']),
+        queryOne<Setting>('SELECT * FROM settings WHERE user_id = ? AND `key` = ?', [user.userId, 'ai_api_key']),
+        queryOne<Setting>('SELECT * FROM settings WHERE user_id = ? AND `key` = ?', [user.userId, 'ai_base_url']),
+        queryOne<Setting>('SELECT * FROM settings WHERE user_id = ? AND `key` = ?', [user.userId, 'ai_model']),
+      ]);
 
-      const userModelName = await queryOne<Setting>(
-        'SELECT * FROM settings WHERE user_id = ? AND `key` = ?',
-        [user.userId, 'ollama_model']
-      );
-
-      // Use user settings if they exist
-      if (userApiUrl && userApiUrl.value) {
-        baseURL = userApiUrl.value;
-      }
-      if (userModelName && userModelName.value) {
-        modelName = userModelName.value;
-      }
+      // Apply user settings if they exist
+      if (providerSetting?.value) provider = providerSetting.value;
+      if (apiKeySetting?.value) apiKey = apiKeySetting.value;
+      if (baseUrlSetting?.value) baseURL = baseUrlSetting.value;
+      if (modelSetting?.value) modelName = modelSetting.value;
     } catch (error) {
       console.error('Error fetching user AI settings:', error);
       // Continue with environment variable defaults
     }
   }
 
-  // Configure Ollama provider
-  const ollama = createOllama({
-    baseURL,
-  });
+  // Create provider instance based on selection
+  let model;
+  if (provider === 'anthropic') {
+    const anthropic = createAnthropic({
+      apiKey: apiKey || process.env.ANTHROPIC_API_KEY,
+    });
+    model = anthropic(modelName || 'claude-sonnet-4-5-20250514');
+  } else {
+    // Default to Ollama
+    const ollama = createOllama({
+      baseURL,
+    });
+    model = ollama(modelName);
+  }
 
   try {
     console.log("Model name:", modelName);
@@ -150,7 +158,7 @@ export async function POST(req: Request) {
     } as { description: string; parameters: object; execute: (args: Record<string, unknown>) => Promise<unknown> };
 
     const result = streamText({
-      model: ollama(modelName),
+      model,
       // @ts-expect-error - Type conversion is correct, TS inference issue
       messages: convertedMessages,
       system: system || `You are LoopCraft, an advanced AI assistant with access to Model Context Protocol (MCP) tools and resources. You can interact with various external services, file systems, and data sources through MCP. You can also render interactive UI components.
@@ -180,20 +188,38 @@ You are knowledgeable, helpful, and provide clear, detailed responses.`,
     let errorMessage = "An error occurred while processing your request.";
     let statusCode = 500;
 
-    if ((error as Error).message?.includes("connect") || (error as Error).message?.includes("ECONNREFUSED")) {
-      errorMessage = `Unable to connect to Ollama server at ${baseURL}. Please ensure Ollama is running.`;
-      statusCode = 503;
-    } else if ((error as Error).message?.includes("model") || (error as Error).message?.includes("not found")) {
-      errorMessage = `Model "${modelName}" not found. Please ensure the model is available in Ollama. Try running: ollama pull ${modelName}`;
-      statusCode = 404;
-    } else if ((error as Error).message) {
-      errorMessage = (error as Error).message;
+    if (provider === 'anthropic') {
+      // Anthropic-specific error handling
+      if ((error as Error).message?.includes("API key") || (error as Error).message?.includes("authentication")) {
+        errorMessage = `Invalid Anthropic API key. Please check your Settings.`;
+        statusCode = 401;
+      } else if ((error as Error).message?.includes("model")) {
+        errorMessage = `Model "${modelName}" not found or not available. Available models: claude-3-5-sonnet-20241022, claude-3-5-haiku-20241022`;
+        statusCode = 404;
+      } else if ((error as Error).message?.includes("rate limit")) {
+        errorMessage = `Anthropic API rate limit exceeded. Please try again later.`;
+        statusCode = 429;
+      } else if ((error as Error).message) {
+        errorMessage = (error as Error).message;
+      }
+    } else {
+      // Ollama-specific error handling
+      if ((error as Error).message?.includes("connect") || (error as Error).message?.includes("ECONNREFUSED")) {
+        errorMessage = `Unable to connect to Ollama server at ${baseURL}. Please ensure Ollama is running.`;
+        statusCode = 503;
+      } else if ((error as Error).message?.includes("model") || (error as Error).message?.includes("not found")) {
+        errorMessage = `Model "${modelName}" not found. Please ensure the model is available in Ollama. Try running: ollama pull ${modelName}`;
+        statusCode = 404;
+      } else if ((error as Error).message) {
+        errorMessage = (error as Error).message;
+      }
     }
 
     return new Response(JSON.stringify({
       error: errorMessage,
+      provider,
       model: modelName,
-      baseURL
+      baseURL: provider === 'ollama' ? baseURL : undefined
     }), {
       status: statusCode,
       headers: { "Content-Type": "application/json" }
